@@ -1,0 +1,300 @@
+<?php
+/**
+ * @file
+ * Main OpenLayers Field File
+ *
+ * This file holds the main Drupal hook functions.
+ */
+ 
+/**
+ * @todo
+ *   - basics are all done
+ */
+
+/**
+ * Implements hook_help().
+ */
+function openlayers_field_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#openlayers_field':
+      $output = '<p>' . t('Provides a field type for OpenLayers maps.') . '</p>';
+  }
+  return '';
+}
+
+/**
+ * Implements hook_field_info().
+ */
+function openlayers_field_field_info() {
+  return array(
+    'openlayers_field' => array(
+      'label' => t('OpenLayers Map'),
+      'description' => t('This field stores a reference to an OpenLayers Map.'),
+      'default_widget' => 'openlayers_field_map',
+      'default_formatter' => 'openlayers_field_formatter_map',
+      'settings' => array('exclude_maps' => array()),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_settings_form().
+ */
+function openlayers_field_field_settings_form($field, $instance, $has_data) {
+  $settings = $field['settings'];
+  $form = array();
+  return $form;
+}
+
+/**
+ * Implements hook_field_instance_settings_form().
+ */
+function openlayers_field_field_instance_settings_form($field, $instance) {
+  $settings = $instance['settings'];
+  $form = array();
+  
+  // Options to exclude certain maps
+  $form['exclude_maps'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Exclude maps'),
+    '#description' => t('Exclude these maps from being available to choose.'),
+    '#default_value' => !empty($settings['exclude_maps']) ? $settings['exclude_maps'] : array(),
+    '#options' => _openlayers_field_map_options(array(), FALSE),
+  );
+  
+  return $form;
+}
+
+/**
+ * Implements hook_field_validate().
+ */
+function openlayers_field_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
+  $settings = !empty($instance['settings']) ? $instance['settings'] : array();
+  
+  foreach ($items as $delta => $item) {
+    if ($item['value'] != '') {
+      // @TODO: Check if valid map
+      if (true == false) {
+        $errors[$field['field_name']][$langcode][$delta][] = array(
+          'error' => 'openlayers_field_invalid',
+          'message' => t('%name: this is not a valid OpenLayers Map.', array('%name' => $instance['label'])),
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_field_is_empty().
+ */
+function openlayers_field_field_is_empty($item, $field) {
+  if (empty($item['value']) || $item['value'] == 'none') {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function openlayers_field_field_formatter_info() {
+  return array(
+    'openlayers_field_formatter_map' => array(
+      'label' => t('OpenLayers Map'),
+      'field types' => array('openlayers_field'),
+      'settings' =>  array(
+        'width' => '',
+        'height' => '',
+      ),
+    ),
+    'openlayers_field_formatter_map_title' => array(
+      'label' => t('Map Title'),
+      'field types' => array('openlayers_field'),
+    ),
+    'openlayers_field_formatter_map_name' => array(
+      'label' => t('Map Name'),
+      'field types' => array('openlayers_field'),
+    ),
+    'openlayers_field_formatter_map_description' => array(
+      'label' => t('Map Description'),
+      'field types' => array('openlayers_field'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ */
+function openlayers_field_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+  $element = array();
+  
+  if ($display['type'] == 'openlayers_field_formatter_map') {
+    $element['width'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Width'),
+      '#description' => t('This will override the map\'s width.  Use a valid CCS value.'),
+      '#size' => 10,
+      '#default_value' => !empty($settings['width']) ? $settings['width'] : '',
+    );
+    $element['height'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Height'),
+      '#description' => t('This will override the map\'s height.  Use a valid CCS value.'),
+      '#size' => 10,
+      '#default_value' => !empty($settings['height']) ? $settings['height'] : '',
+    );
+  }
+  
+  return $element;
+}
+
+/**
+ * Implements hook_field_formatter_settings_summary().
+ */
+function openlayers_field_field_formatter_settings_summary($field, $instance, $view_mode) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+  $summary = '';
+  
+  if ($display['type'] == 'openlayers_field_formatter_map') {
+    $summary = t('Override the map\'s height and width.');
+  }
+
+  return $summary;
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function openlayers_field_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+  $settings = $display['settings'];
+
+  switch ($display['type']) {
+    case 'openlayers_field_formatter_map':
+      foreach ($items as $delta => $item) {
+        // Check if settings for width and height are set
+        if (!empty($settings['width']) || !empty($settings['height'])) {
+          $map = openlayers_map_load(check_plain($item['value']));
+          $map->data['width'] = !empty($settings['width']) ? $settings['width'] : $map->data['width'];
+          $map->data['height'] = !empty($settings['height']) ? $settings['height'] : $map->data['height'];
+          $output = openlayers_render_map_data($map->data, $map->name);
+        }
+        else {
+          $output = openlayers_render_map(check_plain($item['value']));
+        }
+        $element[$delta] = array('#markup' => $output);
+      }
+      break;
+
+    case 'openlayers_field_formatter_map_title':
+      foreach ($items as $delta => $item) {
+        $map = openlayers_map_load(check_plain($item['value']));
+        $output = check_plain($map->title);
+        $element[$delta] = array('#markup' => $output);
+      }
+      break;
+
+    case 'openlayers_field_formatter_map_name':
+      foreach ($items as $delta => $item) {
+        $map = openlayers_map_load(check_plain($item['value']));
+        $output = check_plain($map->name);
+        $element[$delta] = array('#markup' => $output);
+      }
+      break;
+
+    case 'openlayers_field_formatter_map_description':
+      foreach ($items as $delta => $item) {
+        $map = openlayers_map_load(check_plain($item['value']));
+        $output = check_plain($map->description);
+        $element[$delta] = array('#markup' => $output);
+      }
+      break;
+  }
+
+  return $element;
+}
+
+/**
+ * Implements hook_field_widget_info().
+ */
+function openlayers_field_field_widget_info() {
+  return array(
+    'openlayers_field_select' => array(
+      'label' => t('Map Select'),
+      'field types' => array('openlayers_field'),
+      'settings' => array(
+        'exclude_maps' => array(),
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_widget_settings_form().
+ */
+function openlayers_field_field_widget_settings_form($field, $instance) {
+  $widget = $instance['widget'];
+  $settings = $widget['settings'];
+  $form = array();
+
+  if ($widget['type'] == 'openlayers_field_select') {
+    $form = array();
+  }
+
+  return $form;
+}
+
+/**
+ * Implements hook_field_widget_form().
+ */
+function openlayers_field_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+  $value = isset($items[$delta]['value']) ? $items[$delta]['value'] : '';
+  $type = $instance['widget']['type'];
+
+  // Get maps
+  $options = _openlayers_field_map_options(isset($instance['settings']['exclude_maps']) ?
+    $instance['settings']['exclude_maps'] : array(), TRUE);
+  $element += array(
+    '#type' => 'select',
+    '#options' => $options,
+    '#default_value' => $value,
+  );
+
+  return array('value' => $element);
+}
+
+/**
+ * Implements hook_field_widget_error().
+ */
+function openlayers_field_field_widget_error($element, $error, $form, &$form_state) {
+  form_error($element['value'], $error['message']);
+}
+
+/**
+ * Create options for a FAPI item of OpenLayers map.
+ */
+function _openlayers_field_map_options($exclude = array(), $include_none = FALSE) {
+  $options = array();
+  $exclude = !is_array($exclude) ? array() : $exclude;
+  if ($include_none) {
+    $options = array('none' => t('<None>'));
+  }
+
+  // Get maps
+  $maps = openlayers_maps();
+  foreach ($maps as $m => $map) {
+    if (empty($exclude[$m])) {
+      $options[$map->name] = check_plain($map->title);
+    }
+  }
+  
+  // Exclude
+  if (is_array($exclude) && count($exclude) > 0) {
+  
+  }
+  
+  return $options;
+}

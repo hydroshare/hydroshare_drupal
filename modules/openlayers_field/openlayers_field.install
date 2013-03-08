@@ -1,0 +1,37 @@
+<?php
+// $Id:
+
+/**
+ * Implements hook_uninstall().
+ */
+function openlayers_field_uninstall() {
+  // Get module variables
+  $variables = db_query("SELECT v.name FROM {variable} AS v WHERE v.name LIKE ':pattern'",
+    array(':pattern' => db_like('openlayers_field_') . '%'))->fetchAll();
+  // Remove variables
+  foreach ($variables as $v) {
+    variable_del($v);
+  }
+}
+
+/**
+ * Implements hook_field_schema().
+ */
+function openlayers_field_field_schema($field) {
+  switch ($field['type']) {
+    case 'openlayers_field':
+      $columns = array(
+        'value' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => FALSE,
+        ),
+      );
+      break;
+      
+  }
+  
+  return array(
+    'columns' => $columns,
+  );
+}

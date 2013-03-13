@@ -1,0 +1,234 @@
+<?php
+
+/**
+ * @file
+ * Allows administrators to configure the title field from the Field UI.
+ *
+ * @copyright (c) Copyright 2011 Palantir.net
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function title_field_ui_menu() {
+  $items = array();
+
+  // Ensure the following is not executed until field_bundles is working and
+  // tables are updated. Needed to avoid errors on initial installation.
+  if (defined('MAINTENANCE_MODE')) {
+    return $items;
+  }
+
+  $entity_type = 'node';
+  $info = entity_get_info($entity_type);
+  foreach ($info['bundles'] as $bundle_name => $bundle_info) {
+    if (empty($bundle_info['admin']['real path'])) {
+      continue;
+    }
+
+    $path = $bundle_info['admin']['real path'];
+
+    // Extract access information, providing defaults.
+    $access = array_intersect_key($bundle_info['admin'], drupal_map_assoc(array('access callback', 'access arguments')));
+    $access += array(
+      'access callback' => 'user_access',
+      'access arguments' => array('administer site configuration'),
+    );
+
+    $items["$path/fields/title"] = array(
+      'title' => 'Title',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('title_field_ui_edit_form', $entity_type, $bundle_name),
+      'file' => 'title_field_ui.admin.inc',
+    ) + $access;
+    $items["$path/fields/title/edit"] = array(
+      'title' => 'Edit',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('title_field_ui_edit_form', $entity_type, $bundle_name),
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'file' => 'title_field_ui.admin.inc',
+    ) + $access;
+    $items["$path/fields/title/disable"] = array(
+      'title' => 'Disable',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('title_field_ui_disable_form', $entity_type, $bundle_name),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 10,
+      'file' => 'title_field_ui.admin.inc',
+    ) + $access;
+  }
+
+  return $items;
+}
+
+/**
+ * Implements hook_form_node_type_form_alter().
+ *
+ * Disable the title field on the node type form.
+ */
+function title_field_ui_form_node_type_form_alter(&$form, &$form_state) {
+  $form['submission']['title_label']['#attributes'] = array('disabled' => 'disabled');
+  $admin_path = _field_ui_bundle_admin_path('node', $form['#node_type']->type) . '/fields';
+  $admin_path = url($admin_path, array('query' => drupal_get_destination()));
+  $form['submission']['title_label']['#description'] = t('To edit the title field, use the <a href="@field-ui">Manage fields interface</a>.', array('@field-ui' => $admin_path));
+  $form['submission']['title_label']['#required'] = FALSE;
+}
+
+/**
+ * Implements hook_field_attach_form().
+ */
+function title_field_ui_field_attach_form($entity_type, $entity, &$form, &$form_state, $langcode) {
+  $info = entity_get_info($entity_type);
+  if (!empty($info['entity keys']['label'])) {
+    $label_key = $info['entity keys']['label'];
+    if (!empty($form[$label_key]) && $title_field = title_field_ui_load($entity_type, $form['#bundle'])) {
+      $label_field = &$form[$label_key];
+      if (!empty($title_field['label'])) {
+        $label_field['#title'] = check_plain($title_field['label']);
+      }
+      if (!empty($title_field['description'])) {
+        $label_field['#description'] = field_filter_xss($title_field['description']);
+      }
+      if (!empty($title_field['size'])) {
+        $label_field['#size'] = $title_field['size'];
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function title_field_ui_form_field_ui_field_overview_form_alter(&$form, &$form_state) {
+  // For now, only work on node entities.
+  if ($form['#entity_type'] != 'node') {
+    return;
+  }
+
+  $info = entity_get_info($form['#entity_type']);
+  $label_key = !empty($info['entity keys']['label']) ? $info['entity keys']['label'] : FALSE;
+
+  if (!empty($label_key) && !empty($form['fields'][$label_key])) {
+    $bundle_path = _field_ui_bundle_admin_path($form['#entity_type'], $form['#bundle']);
+
+    unset($form['fields'][$label_key]['edit']);
+    unset($form['fields'][$label_key]['delete']);
+    unset($form['fields'][$label_key]['type']['#cell_attributes']);
+
+    $form['fields'][$label_key]['widget_type'] = array(
+      '#markup' => t('Text field'),
+    );
+
+    $title_field = title_field_ui_load($form['#entity_type'], $form['#bundle']);
+    if (!empty($title_field['label'])) {
+      $form['fields'][$label_key]['edit'] = array(
+        '#type' => 'link',
+        '#title' => t('edit'),
+        '#href' => $bundle_path . '/fields/title',
+        '#options' => array(
+          'attributes' => array(
+            'title' => t('Edit title settings.'),
+          ),
+        ),
+      );
+      $form['fields'][$label_key]['delete'] = array(
+        '#type' => 'link',
+        '#title' => t('disable'),
+        '#href' => $bundle_path . '/fields/title/disable',
+        '#options' => array(
+          'attributes' => array(
+            'title' => t('Disable title.'),
+          ),
+        ),
+      );
+    }
+    else {
+      $form['fields'][$label_key]['edit'] = array(
+        '#type' => 'link',
+        '#title' => t('enable'),
+        '#href' => $bundle_path . '/fields/title',
+        '#options' => array(
+          'attributes' => array(
+            'title' => t('Enable title.'),
+          ),
+        ),
+      );
+      $form['fields'][$label_key]['delete'] = array(
+        '#markup' => '',
+      );
+    }
+  }
+}
+
+function title_field_ui_load($entity_type, $bundle) {
+  $title_field = variable_get('title_field_' . $entity_type . ':' . $bundle, array());
+  if ($entity_type == 'node') {
+    $node_type = node_type_get_type($bundle);
+    if ($node_type->has_title) {
+      $title_field['label'] = $node_type->title_label;
+    }
+    else {
+      $title_field['label'] = '';
+    }
+  }
+  return $title_field;
+}
+
+function title_field_ui_save($entity_type, $bundle, array $title_field) {
+  variable_set('title_field_' . $entity_type . ':' . $bundle, $title_field);
+  if ($entity_type == 'node') {
+    $node_type = node_type_get_type($bundle);
+    $node_type->has_title = 1;
+    $node_type->title_label = $title_field['label'];
+    node_type_save($node_type);
+  }
+}
+
+function title_field_ui_disable($entity_type, $bundle) {
+  variable_del('title_field_' . $entity_type . ':' . $bundle);
+  if ($entity_type == 'node') {
+    $node_type = node_type_get_type($bundle);
+    $node_type->has_title = 0;
+    node_type_save($node_type);
+  }
+}
+
+/**
+ * Implements hook_field_extra_fields_alter().
+ *
+ * Because node_field_extra_fields() does add a 'title' extra field for any
+ * node types with titles disabled, we have to add them ourselves.
+ */
+function title_field_ui_field_extra_fields_alter(&$info) {
+  foreach ($info['node'] as &$bundle) {
+    if (!isset($bundle['form']['title'])) {
+      $bundle['form']['title'] = array(
+        'label' => t('Title (disabled)'),
+        'description' => t('Node module element'),
+        'weight' => -5,
+      );
+    }
+  }
+}
+
+function _title_field_ui_get_instance($entity_type, $bundle) {
+  $title_field = title_field_ui_load($entity_type, $bundle);
+
+  $instance = array(
+    'field_name' => 'title',
+    'widget' => array(
+      'type' => 'text_textfield',
+      'settings' => array(
+        'size' => isset($title_field['size']) ? $title_field['size'] : 60,
+      ),
+      'weight' => -5,
+    ),
+    'settings' => array(
+      'text_processing' => FALSE,
+    ),
+    'label' => isset($title_field['label']) ? $title_field['label'] : 'Title',
+    'description' => isset($title_field['description']) ? $title_field['description'] : '',
+  );
+
+  return $instance;
+}

@@ -1,0 +1,190 @@
+<?php
+
+
+function data_model_make_data_path( $title, $real_path, &$new_path ) {
+
+    // =-=-=-=-=-=-=-
+    // remove spaces from title to simplify
+    $stripped_title = str_replace( " ", "", $title );
+        
+    drupal_set_message( "data_model_make_data_path :: stripped title [$stripped_title]" );
+
+    // =-=-=-=-=-=-=-
+    // determine if the file in question is already in the 
+    // Data Model Directory
+    if( strpos( $real_path, $stripped_title ) != false ) {
+        // =-=-=-=-=-=-=-
+        // determine if the file in question is already in the 
+        $new_path = $real_path;
+        return true;
+    }
+
+    // =-=-=-=-=-=-=-
+    // otherwise we build a new path
+    $root_dir = drupal_dirname( $real_path );
+    $tmp_dir = $root_dir . $stripped_title;
+    drupal_set_message( "data_model_make_data_path :: new dir path [$tmp_dir]" );
+
+    // =-=-=-=-=-=-=-
+    // test if the dir exists, if it fails we add a counter to it and try again.
+    $ctr = 0;
+    $ret = true;
+    while( $ret ) {
+        $ret = file_prepare_directory( $tmp_dir );
+   
+        // =-=-=-=-=-=-=-
+        // failed, add a ctr to it as it is a collision
+        if( true == $ret ) {
+            $tmp_dir = $tmp_dir . "." . (string)$ctr;
+            drupal_set_message( "data_model_make_data_path :: new collided dir path [$tmp_dir]" );
+        }
+
+        // =-=-=-=-=-=-=-
+        // if the counter is greater than a perhaps large number
+        // we should break as something must be wrong.
+        if( true == $ret && $ctr > 10 ) {
+            break;
+        }
+        
+    }
+
+    if( true == $ret ) {
+        $new_path = NULL;
+        return false;
+    } else {
+        $new_path = $tmp_dir;
+        drupal_set_message( "data_model_make_data_path :: final new path [$new_path]" );
+        return true;
+    }
+
+} // data_model_make_data_path
+
+// =-=-=-=-=-=-=-
+// hook to move file into Data Model Directory for this Resource
+function data_model_node_presave( $node ) {
+
+    // =-=-=-=-=-=-=-
+    // get the title and use this as the directory name
+    $title_items = field_get_items( 'node', $node, 'field_title' );
+        
+    $title = NULL;
+    if( NULL != $title_items ) {
+        $title_item = array_shift( $title_items ); 
+        $title = $title_item[ 'value' ];
+        drupal_set_message( "data_model_node_presave :: title name [$title]" );
+    }
+
+    // =-=-=-=-=-=-=-
+    // See if a file has been added
+    $real_path = NULL;
+    $file      = NULL;
+    if ($file_items = field_get_items('node', $node, 'field_file')) {
+        // Get the first file item
+        $file_item = array_shift($file_items);
+        $file = file_load( $file_item['fid'] );
+
+        $real_path = $file->uri;//drupal_realpath( $file->uri );
+        drupal_set_message( "data_model_node_presave :: file name [$real_path]" );
+
+    }
+
+    // =-=-=-=-=-=-=-
+    // something bad happened
+    if( NULL == $title && NULL == $real_path ) {
+        drupal_set_message( "data_model_node_presave :: NULL title and real_path" );
+        return;
+    }
+    
+    // =-=-=-=-=-=-=-
+    // get the new path, if there is one.  if the real and new paths dont
+    // match we need to make the Data Model Directory and then move the file
+    $new_path = NULL;
+    if( data_model_make_data_path( $title, $real_path, $new_path ) ) {
+        // =-=-=-=-=-=-=-
+        // if new_path != real_path then we need to make a dir and
+        // move the file.
+        if( $real_path != $new_path ) {
+            // =-=-=-=-=-=-=-
+            // make the directory
+            drupal_set_message( "data_model_node_presave :: new data model dir [$new_path]" );
+            if( !drupal_mkdir( $new_path ) ) {
+                drupal_set_message( "data_model_node_presave :: drupal_mkdir( $new_path ) failed." );
+                return false;
+
+            }
+
+            // =-=-=-=-=-=-=-
+            // move the file
+            $new_path = $new_path . "/" . drupal_basename( $real_path );
+            $fn  = drupal_basename( $real_path );
+            drupal_set_message( "data_model_node_presave :: move [$real_path] to [$new_path]" );
+            if( !file_move( $file, $new_path ) ) {
+            //if( !drupal_move_uploaded_file( $fn, $url ) ) {
+                drupal_set_message( "data_model_node_presave :: file_move( $real_path, $new_path ) failed." );
+                //drupal_set_message( "data_model_node_presave :: drupal_move_uploaded_file( $fn, $url ) failed." );
+
+            }
+        }
+
+    } else {
+        drupal_set_message( "data_model_node_presave :: data_model_make_data_path failed." );
+
+    }
+    
+    
+    // =-=-=-=-=-=-=-
+    // handle capture and writing of metadata here.
+
+} // data_model_node_presave
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

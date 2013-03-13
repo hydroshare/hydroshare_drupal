@@ -1,0 +1,4 @@
+name = Hydroshare Data Model
+description = A series of hook implementations to support the Hydroshare Data Model
+core = 7.x
+

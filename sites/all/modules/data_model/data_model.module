@@ -60,6 +60,27 @@ function data_model_make_data_path( $title, $real_path, &$new_path ) {
 } // data_model_make_data_path
 
 // =-=-=-=-=-=-=-
+// get the file url from the node if any
+function data_model_get_file_from_node( $node, &$file ) {
+    // =-=-=-=-=-=-=-
+    // See if a file has been added
+    $file      = NULL;
+    if ($file_items = field_get_items('node', $node, 'field_file')) {
+        // Get the first file item
+        $file_item = array_shift($file_items);
+        $file = file_load( $file_item['fid'] );
+
+        return true;
+    } else {
+        $file = NULL;
+        return false;
+    
+    }
+
+} // data_model_get_file_from_node
+
+
+// =-=-=-=-=-=-=-
 // hook to move file into Data Model Directory for this Resource
 function data_model_node_presave( $node ) {
 
@@ -74,18 +95,14 @@ function data_model_node_presave( $node ) {
         drupal_set_message( "data_model_node_presave :: title name [$title]" );
     }
 
+    
     // =-=-=-=-=-=-=-
-    // See if a file has been added
-    $real_path = NULL;
+    // get the file objecdt from the node
     $file      = NULL;
-    if ($file_items = field_get_items('node', $node, 'field_file')) {
-        // Get the first file item
-        $file_item = array_shift($file_items);
-        $file = file_load( $file_item['fid'] );
-
+    $real_path = NULL;
+    if( true == data_model_get_file_from_node( $node, $file ) ) { 
         $real_path = $file->uri;//drupal_realpath( $file->uri );
         drupal_set_message( "data_model_node_presave :: file name [$real_path]" );
-
     }
 
     // =-=-=-=-=-=-=-
@@ -136,6 +153,110 @@ function data_model_node_presave( $node ) {
     // handle capture and writing of metadata here.
 
 } // data_model_node_presave
+
+
+// =-=-=-=-=-=-=-
+// add a explort button
+function data_model_zip_dir( $dir, &$file_name ) {
+    // =-=-=-=-=-=-=-
+    // get the current directory 
+    $curr_dir = getcwd();
+
+    // =-=-=-=-=-=-=-
+    // peel of the last dir in the path as it
+    // should be our Data Model Directory
+    $base = basename( $dir );
+    $dir  = dirname( $dir );
+
+    // =-=-=-=-=-=-=-
+    // change to that dir to add the files
+    chdir( $dir );
+
+    // =-=-=-=-=-=-=-
+    // build a zip file name from the base name
+    $zip_file = $base . ".zip";
+
+    // =-=-=-=-=-=-=-
+    // set the outvariable with the whole path to the zip
+    $file_name = $dir . "/" . $zip_file;
+
+    // =-=-=-=-=-=-=-
+    // create a new archive
+    $arch = new ZipArchive();
+    if( !$arch->open( $zip_file, ZIPARCHIVE::OVERWRITE ) ) {
+        error_log("Failed to create archive: $zip_file\n");
+        return false;
+    }
+
+    // =-=-=-=-=-=-=-
+    // add all the files in the base directory
+    $arch->addGlob("$base/*.*");
+    if (!$arch->status == ZIPARCHIVE::ER_OK) {
+        error_log( "Failed to write files to zip\n" );
+        return false;
+    }
+    
+    // =-=-=-=-=-=-=-
+    // close out the archive 
+    $arch->close();
+
+    // =-=-=-=-=-=-=-
+    // go back to our orig dir
+    chdir( $curr_dir );
+
+    // =-=-=-=-=-=-=-
+    // and... were done.
+    return true;
+
+} // data_model_zip_dir
+
+// =-=-=-=-=-=-=-
+// add a explort button
+function data_model_node_view($node, $view_mode ) {
+ 
+    // =-=-=-=-=-=-=-
+    // get the file objecdt from the node
+    $file      = NULL;
+    $real_path = NULL;
+    if( true == data_model_get_file_from_node( $node, $file ) ) { 
+        $real_path = drupal_realpath( $file->uri );
+    } else {
+        error_log( "data_model_node_view :: failed to get file for node" );
+        return NULL;
+
+    }
+
+    // =-=-=-=-=-=-=-
+    // get the file directory
+    $dir = drupal_dirname( $real_path );
+
+    // =-=-=-=-=-=-=-
+    // zip the directory
+    if( data_model_zip_dir( $dir, $zip_file ) == false ) {
+        error_log( "data_model_node_view :: data_model_zip_dir failed for $dir" );
+        return NULL;
+
+    }
+    
+    // =-=-=-=-=-=-=-
+    // build the java script operation
+    $op = "parent.location='http://avogadro.renci.org/export.php?file=" . $zip_file . "'";
+
+    // =-=-=-=-=-=-=-
+    // wire it to a button
+    $node->content['button'] = array(
+          '#type' => 'button',
+          '#value' => t('Explort'),
+          '#weight' => 50,
+          '#attributes' => array('onClick' => $op),
+          );
+
+    // =-=-=-=-=-=-=-
+    // win!!111one
+    return $node;
+
+} // data_model_node_view
+
 
 
 

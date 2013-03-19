@@ -1,13 +1,14 @@
 <?php
 
+require 'data_model_file_ops.php';
 
+// =-=-=-=-=-=-=-
+// helper function to work out the new RDM Directory given a new file
 function data_model_make_data_path( $title, $real_path, &$new_path ) {
 
     // =-=-=-=-=-=-=-
     // remove spaces from title to simplify
     $stripped_title = str_replace( " ", "", $title );
-        
-    drupal_set_message( "data_model_make_data_path :: stripped title [$stripped_title]" );
 
     // =-=-=-=-=-=-=-
     // determine if the file in question is already in the 
@@ -22,8 +23,7 @@ function data_model_make_data_path( $title, $real_path, &$new_path ) {
     // =-=-=-=-=-=-=-
     // otherwise we build a new path
     $root_dir = drupal_dirname( $real_path );
-    $tmp_dir = $root_dir . $stripped_title;
-    drupal_set_message( "data_model_make_data_path :: new dir path [$tmp_dir]" );
+    $tmp_dir = $root_dir . "/" . $stripped_title;
 
     // =-=-=-=-=-=-=-
     // test if the dir exists, if it fails we add a counter to it and try again.
@@ -36,7 +36,6 @@ function data_model_make_data_path( $title, $real_path, &$new_path ) {
         // failed, add a ctr to it as it is a collision
         if( true == $ret ) {
             $tmp_dir = $tmp_dir . "." . (string)$ctr;
-            drupal_set_message( "data_model_make_data_path :: new collided dir path [$tmp_dir]" );
         }
 
         // =-=-=-=-=-=-=-
@@ -53,7 +52,6 @@ function data_model_make_data_path( $title, $real_path, &$new_path ) {
         return false;
     } else {
         $new_path = $tmp_dir;
-        drupal_set_message( "data_model_make_data_path :: final new path [$new_path]" );
         return true;
     }
 
@@ -79,6 +77,150 @@ function data_model_get_file_from_node( $node, &$file ) {
 
 } // data_model_get_file_from_node
 
+// =-=-=-=-=-=-=-
+// get the metadata field value from the node if any
+function data_model_get_node_metadata_field_value( $node, $name, &$value ) {
+    // =-=-=-=-=-=-=-
+    // get the coverage
+    $field_name = "field_" . $name;
+    $items = field_get_items( 'node', $node, $field_name );
+        
+    $value = NULL;
+    if( NULL != $items ) {
+        $item = array_shift( $items ); 
+        $value = $item[ 'value' ];
+        return true;
+    }
+
+    return false;
+
+} // data_model_get_node_metadata_field_value
+
+// =-=-=-=-=-=-=-
+// write out an xml file given metadata from the node ( dublin core++ )
+function data_model_write_science_metadata( $node, $dir ) {
+    // =-=-=-=-=-=-=-
+    // 
+    $user = user_load( $node->uid );
+    $user_name = $user->name;
+
+    $contributor = NULL;
+    data_model_get_node_metadata_field_value( $node, "contributor", $contributor );
+
+    $subject = NULL;
+    data_model_get_node_metadata_field_value( $node, "subject", $subject );
+
+    $relation = NULL;
+    data_model_get_node_metadata_field_value( $node, "relation", $relation );
+
+    $source = NULL;
+    data_model_get_node_metadata_field_value( $node, "source", $source );
+
+    $type = NULL;
+    data_model_get_node_metadata_field_value( $node, "type", $type );
+
+    $rights = NULL;
+    data_model_get_node_metadata_field_value( $node, "rights", $rights );
+ 
+    $format = NULL;
+    data_model_get_node_metadata_field_value( $node, "format", $format );
+
+    $coverage = NULL;
+    data_model_get_node_metadata_field_value( $node, "coverage", $coverage );
+
+    $title = NULL;
+    data_model_get_node_metadata_field_value( $node, "title", $title );
+    
+    $body = NULL;
+    data_model_get_node_metadata_field_value( $node, "body", $body );
+
+    $url = url() . "/node/" . $node->nid;
+
+    $date = date( "Y-m-d" );
+
+    $NA = "no_value";
+    $meta_data = "
+<?xml version=\"1.0\"?>
+<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"
+xmlns:dc=\"http://purl.org/dc/elements/1.1/\">  
+<rdf:Description>
+    <dc:creator>$user_name</dc:creator>
+    <dc:contributor>$contributor</dc:contributor>
+    <dc:publisher>HydroShare</dc:publisher>
+    <dc:subject>$subject</dc:subject>
+    <dc:description>$body</dc:description>
+    <dc:identifier>$url</dc:identifier>
+    <dc:relation>$relation</dc:relation>
+    <dc:source>$source</dc:source>
+    <dc:rights>$rights</dc:rights>
+    <dc:format>$format</dc:format>
+    <dc:type>$type</dc:type>
+    <dc:title>$title</dc:title>
+    <dc:date>$date</dc:date>
+    <dc:coverage>$coverage</dc:coverage>
+    <dc:language>$NA</dc:language>
+</rdf:Description>
+</rdf:RDF>";
+
+    // =-=-=-=-=-=-=-
+    // actually write the file
+    file_put_contents( "$dir/science_metadata.xml", $meta_data );
+
+    return true;
+
+} // data_model_write_science_metadata
+
+// =-=-=-=-=-=-=-
+// write out an xml file given metadata from the node ( dublin core++ )
+function data_model_write_system_metadata( $node, $dir ) {
+    $meta_data = 
+"<?xml version=\"1.0\"?>
+<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"
+xmlns:dc=\"http://purl.org/dc/elements/1.1/\">
+</rdf:RDF>";
+
+    // =-=-=-=-=-=-=-
+    // actually write the file
+    file_put_contents( "$dir/system_metadata.xml", $meta_data );
+
+    return true;
+
+} // data_model_write_system_metadata
+
+// =-=-=-=-=-=-=-
+// write out the BagIt metadata: manifest-sha1.txt & bagit.txt
+function data_model_write_bagit_metadata( $dir ) {
+    // =-=-=-=-=-=-=-
+    // strip off the 'data' portion of the dir
+    $rdm_dir = dirname( $dir );
+    
+    // =-=-=-=-=-=-=-
+    // write the bagit file
+    $meta_data = "BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8";
+    file_put_contents( "$rdm_dir/bagit.txt", $meta_data );
+
+    // =-=-=-=-=-=-=-
+    // iterate over the data dir and compute checksums
+    // then write them to the manifest file
+    $files = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $dir ), 
+                                            RecursiveIteratorIterator::SELF_FIRST );
+    foreach( $files as $file ) {
+        // =-=-=-=-=-=-=-
+        // compute the sha1 and put it in the manifest
+        $sha1 = sha1_file( $file );
+        
+        // =-=-=-=-=-=-=-
+        // trim the path to the data directory and beyond
+        $trim_pos = strrpos( $file, "data" );
+        $line     = $sha1 . " " . substr( $file, $trim_pos );
+        file_put_contents( "$rdm_dir/manifest-sha1.txt", $line );
+
+    } // foreach $file
+
+    return true;
+
+} // data_model_write_system_metadata
+
 
 // =-=-=-=-=-=-=-
 // hook to move file into Data Model Directory for this Resource
@@ -89,137 +231,110 @@ function data_model_node_presave( $node ) {
     $title_items = field_get_items( 'node', $node, 'field_title' );
         
     $title = NULL;
-    if( NULL != $title_items ) {
-        $title_item = array_shift( $title_items ); 
-        $title = $title_item[ 'value' ];
-        drupal_set_message( "data_model_node_presave :: title name [$title]" );
-    }
-
+    data_model_get_node_metadata_field_value( $node, "title", $title );
     
     // =-=-=-=-=-=-=-
-    // get the file objecdt from the node
+    // get the file object from the node
     $file      = NULL;
     $real_path = NULL;
     if( true == data_model_get_file_from_node( $node, $file ) ) { 
-        $real_path = $file->uri;//drupal_realpath( $file->uri );
-        drupal_set_message( "data_model_node_presave :: file name [$real_path]" );
+        $file_uri = $file->uri;
     }
 
     // =-=-=-=-=-=-=-
     // something bad happened
-    if( NULL == $title && NULL == $real_path ) {
-        drupal_set_message( "data_model_node_presave :: NULL title and real_path" );
+    if( NULL == $title && NULL == $file_uri ) {
+        drupal_set_message( "data_model_node_presave :: NULL title and file_uri" );
         return;
     }
     
     // =-=-=-=-=-=-=-
     // get the new path, if there is one.  if the real and new paths dont
     // match we need to make the Data Model Directory and then move the file
-    $new_path = NULL;
-    if( data_model_make_data_path( $title, $real_path, $new_path ) ) {
+    $new_uri_path = NULL;
+    if( data_model_make_data_path( $title, $file_uri, $new_uri_path ) ) {
         // =-=-=-=-=-=-=-
-        // if new_path != real_path then we need to make a dir and
+        // if new_uri_path != file_uri then we need to make a dir and
         // move the file.
-        if( $real_path != $new_path ) {
+        if( $file_uri != $new_uri_path ) {
             // =-=-=-=-=-=-=-
-            // make the directory
-            drupal_set_message( "data_model_node_presave :: new data model dir [$new_path]" );
-            if( !drupal_mkdir( $new_path ) ) {
-                drupal_set_message( "data_model_node_presave :: drupal_mkdir( $new_path ) failed." );
+            // make the base directory
+            if( !drupal_mkdir( $new_uri_path ) ) {
+                drupal_set_message( "data_model_node_presave :: drupal_mkdir( $new_uri_path ) failed." );
                 return false;
 
             }
 
             // =-=-=-=-=-=-=-
-            // move the file
-            $new_path = $new_path . "/" . drupal_basename( $real_path );
-            $fn  = drupal_basename( $real_path );
-            drupal_set_message( "data_model_node_presave :: move [$real_path] to [$new_path]" );
-            if( !file_move( $file, $new_path ) ) {
-            //if( !drupal_move_uploaded_file( $fn, $url ) ) {
-                drupal_set_message( "data_model_node_presave :: file_move( $real_path, $new_path ) failed." );
-                //drupal_set_message( "data_model_node_presave :: drupal_move_uploaded_file( $fn, $url ) failed." );
+            // make the data directory per BagIt spec
+            if( !drupal_mkdir( "$new_uri_path/data" ) ) {
+                drupal_set_message( "data_model_node_presave :: drupal_mkdir( $new_uri_path/data ) failed." );
+                return false;
 
+            }
+
+            // =-=-=-=-=-=-=-
+            // move the file 
+            // NOTE:: file_move requires a stream wrapper URI which is
+            //        decidedly not an actual file path.
+            $new_uri_path = $new_uri_path . "/data/" . drupal_basename( $file_uri );
+            $fn  = drupal_basename( $file_uri );
+            if( !file_move( $file, $new_uri_path ) ) {
+                drupal_set_message( "data_model_node_presave :: file_move( $file_uri, $new_uri_path ) failed." );
+                return false;
             }
         }
 
     } else {
         drupal_set_message( "data_model_node_presave :: data_model_make_data_path failed." );
+        return false;
+    }
+ 
+    // =-=-=-=-=-=-=-
+    // we need to operate on actual file paths now
+    $new_file_path = drupal_realpath( $new_uri_path );
+
+    // =-=-=-=-=-=-=-
+    // write the science metadata file
+    if( !data_model_write_science_metadata( $node, drupal_dirname( $new_file_path ) ) ) {
+        drupal_set_message( "data_model_node_view :: failed to write science metadata for $new_file_path" );
+        return NULL;
 
     }
-    
-    
+ 
     // =-=-=-=-=-=-=-
-    // handle capture and writing of metadata here.
+    // write the system metadata file
+    if( !data_model_write_system_metadata( $node, drupal_dirname( $new_file_path ) ) ) {
+        drupal_set_message( "data_model_node_view :: failed to write system metadata for $new_file_path" );
+        return NULL;
+
+    }
+
+    // =-=-=-=-=-=-=-
+    // write the BagIt metadata files
+    if( !data_model_write_bagit_metadata( drupal_dirname( $new_file_path ) ) ) {
+        drupal_set_message( "data_model_node_view :: failed to write bagit metadata for $new_file_path" );
+        return NULL;
+    }
 
 } // data_model_node_presave
 
-
 // =-=-=-=-=-=-=-
 // add a explort button
-function data_model_zip_dir( $dir, &$file_name ) {
+function data_model_node_view( $node, $view_mode ) {
     // =-=-=-=-=-=-=-
-    // get the current directory 
-    $curr_dir = getcwd();
-
-    // =-=-=-=-=-=-=-
-    // peel of the last dir in the path as it
-    // should be our Data Model Directory
-    $base = basename( $dir );
-    $dir  = dirname( $dir );
-
-    // =-=-=-=-=-=-=-
-    // change to that dir to add the files
-    chdir( $dir );
-
-    // =-=-=-=-=-=-=-
-    // build a zip file name from the base name
-    $zip_file = $base . ".zip";
-
-    // =-=-=-=-=-=-=-
-    // set the outvariable with the whole path to the zip
-    $file_name = $dir . "/" . $zip_file;
-
-    // =-=-=-=-=-=-=-
-    // create a new archive
-    $arch = new ZipArchive();
-    if( !$arch->open( $zip_file, ZIPARCHIVE::OVERWRITE ) ) {
-        error_log("Failed to create archive: $zip_file\n");
-        return false;
+    // only explort on full view
+    if( "full" != $view_mode ) {
+        return $node;
     }
-
-    // =-=-=-=-=-=-=-
-    // add all the files in the base directory
-    $arch->addGlob("$base/*.*");
-    if (!$arch->status == ZIPARCHIVE::ER_OK) {
-        error_log( "Failed to write files to zip\n" );
-        return false;
-    }
-    
-    // =-=-=-=-=-=-=-
-    // close out the archive 
-    $arch->close();
-
-    // =-=-=-=-=-=-=-
-    // go back to our orig dir
-    chdir( $curr_dir );
-
-    // =-=-=-=-=-=-=-
-    // and... were done.
-    return true;
-
-} // data_model_zip_dir
-
-// =-=-=-=-=-=-=-
-// add a explort button
-function data_model_node_view($node, $view_mode ) {
  
     // =-=-=-=-=-=-=-
-    // get the file objecdt from the node
+    // get the file object from the node
     $file      = NULL;
     $real_path = NULL;
     if( true == data_model_get_file_from_node( $node, $file ) ) { 
         $real_path = drupal_realpath( $file->uri );
+    
     } else {
         error_log( "data_model_node_view :: failed to get file for node" );
         return NULL;
@@ -229,11 +344,13 @@ function data_model_node_view($node, $view_mode ) {
     // =-=-=-=-=-=-=-
     // get the file directory
     $dir = drupal_dirname( $real_path );
+    $dir = drupal_dirname( $dir );
 
     // =-=-=-=-=-=-=-
-    // zip the directory
-    if( data_model_zip_dir( $dir, $zip_file ) == false ) {
-        error_log( "data_model_node_view :: data_model_zip_dir failed for $dir" );
+    // get the zip name of the directory
+    $zip_file = NULL;
+    if( data_model_zip_file_name( $dir, $zip_file ) == false ) {
+        error_log( "data_model_node_view :: data_model_zip_file_name failed for $dir" );
         return NULL;
 
     }

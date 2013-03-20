@@ -99,9 +99,7 @@ function data_model_zip_dir( $file_name ) {
     // recursively zip the whole directory
     $ret = data_model_recur_zip_dir( $zip_name, $file_name );
     if( ZIPARCHIVE::ER_OK != $ret ) {
-        if( $arch->status != ZIPARCHIVE::ER_OK ) {
-            error_log( "Failed to write files to zip\n" );
-        }
+        error_log( "Failed to write files to zip\n" );
     }
 
     // =-=-=-=-=-=-=-

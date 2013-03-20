@@ -174,10 +174,7 @@ xmlns:dc=\"http://purl.org/dc/elements/1.1/\">
 // write out an xml file given metadata from the node ( dublin core++ )
 function data_model_write_system_metadata( $node, $dir ) {
     $meta_data = 
-"<?xml version=\"1.0\"?>
-<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"
-xmlns:dc=\"http://purl.org/dc/elements/1.1/\">
-</rdf:RDF>";
+"<?xml version=\"1.0\"?>\n<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\n</rdf:RDF>";
 
     // =-=-=-=-=-=-=-
     // actually write the file
@@ -196,31 +193,41 @@ function data_model_write_bagit_metadata( $dir ) {
     
     // =-=-=-=-=-=-=-
     // write the bagit file
-    $meta_data = "BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8";
+    $meta_data = "BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8\n";
     file_put_contents( "$rdm_dir/bagit.txt", $meta_data );
 
     // =-=-=-=-=-=-=-
     // iterate over the data dir and compute checksums
     // then write them to the manifest file
-    $files = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $dir ), 
-                                            RecursiveIteratorIterator::SELF_FIRST );
+    $vals  = array();
+    $files = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $dir ) );//, 
+                                            //RecursiveIteratorIterator::CHILD_FIRST );
     foreach( $files as $file ) {
-        // =-=-=-=-=-=-=-
-        // compute the sha1 and put it in the manifest
-        $sha1 = sha1_file( $file );
-        
-        // =-=-=-=-=-=-=-
-        // trim the path to the data directory and beyond
-        $trim_pos = strrpos( $file, "data" );
-        $line     = $sha1 . " " . substr( $file, $trim_pos );
-        file_put_contents( "$rdm_dir/manifest-sha1.txt", $line );
+        if( false == is_dir( $file ) ) {
+            error_log( "XXXX - data_model_write_bagit_metadata :: [$file]" ); 
+            // =-=-=-=-=-=-=-
+            // compute the sha1 and put it in the manifest
+            $sha1 = sha1_file( $file );
+
+            // =-=-=-=-=-=-=-
+            // trim the path to the data directory and beyond
+            $trim_pos = strrpos( $file, "/" );
+            $sub_path = substr( $file, $trim_pos );
+            $line     = $sha1 . " data" . substr( $file, $trim_pos ) . "\n";
+           
+            error_log( "XXXX - data_model_write_bagit_metadata :: [$sub_path]" ); 
+           
+            
+            array_push( $vals, $line );
+        }
 
     } // foreach $file
+        
+    file_put_contents( "$rdm_dir/manifest-sha1.txt", $vals );
 
     return true;
 
 } // data_model_write_system_metadata
-
 
 // =-=-=-=-=-=-=-
 // hook to move file into Data Model Directory for this Resource
@@ -357,7 +364,8 @@ function data_model_node_view( $node, $view_mode ) {
     
     // =-=-=-=-=-=-=-
     // build the java script operation
-    $op = "parent.location='http://avogadro.renci.org/export.php?file=" . $zip_file . "'";
+    $hostname = gethostname();
+    $op = "parent.location='http://$hostname/export.php?file=" . $zip_file . "'";
 
     // =-=-=-=-=-=-=-
     // wire it to a button

@@ -204,7 +204,6 @@ function data_model_write_bagit_metadata( $dir ) {
                                             //RecursiveIteratorIterator::CHILD_FIRST );
     foreach( $files as $file ) {
         if( false == is_dir( $file ) ) {
-            error_log( "XXXX - data_model_write_bagit_metadata :: [$file]" ); 
             // =-=-=-=-=-=-=-
             // compute the sha1 and put it in the manifest
             $sha1 = sha1_file( $file );
@@ -215,9 +214,6 @@ function data_model_write_bagit_metadata( $dir ) {
             $sub_path = substr( $file, $trim_pos );
             $line     = $sha1 . " data" . substr( $file, $trim_pos ) . "\n";
            
-            error_log( "XXXX - data_model_write_bagit_metadata :: [$sub_path]" ); 
-           
-            
             array_push( $vals, $line );
         }
 

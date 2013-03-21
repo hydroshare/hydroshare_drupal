@@ -1,0 +1,62 @@
+<?php 
+global $user;
+//if no operation was set default to "All Groups"
+if (isset($_GET['op'])) {
+  $op = $_GET['op'];
+} else {
+  $op = '1';
+}
+?>
+<select onchange="selectFilter(this)" >
+<?php if ($op == '0') { ?>
+	<option value="0" selected>Groups Created By User</option>
+<?php } else { ?>
+	<option value="0">Groups Created By User</option>
+<?php } ?>
+<?php if ($op == '1') { ?>
+	<option value="1" selected>All Groups</option>
+<?php } else { ?>
+	<option value="1">All Groups</option>
+<?php } ?>
+<?php if ($op == '2') { ?>
+	<option value="2" selected>Groups You Created</option>
+<?php } else { ?>
+	<option value="2">Groups You Created</option>
+<?php } ?>
+<?php if ($op == '3') { ?>
+	<option value="3" selected>Groups You Follow</option>
+<?php } else { ?>
+	<option value="3">Groups You Follow</option>
+<?php } ?>
+</select>
+<br/>
+<br/>
+<hr width="100%" >
+<br/>
+<a href="/hydroshare/?q=collaboration/#overlay=%3Fq%3Dnode%252Fadd%252Fhydroshare"  ><span style="color:black"><h2  style="border-bottom: 0px">CREATE GROUP +</h2></span></a>
+<br/>
+
+<script language="javascript">
+
+function selectFilter(elem) {
+  if (elem.selectedIndex == 3 ) {
+     window.location = "/hydroshare/?q=collaboration-mygroups&op=3";
+     return;
+  }
+  if (elem.selectedIndex == 2 ) {
+     window.location = "/hydroshare/?q=collaboration/<?php print $user->uid ?>&op=2";
+     return;
+  }
+  if (elem.selectedIndex == 1) {
+     window.location = "/hydroshare/?q=collaboration&op=1";
+     return;
+  }
+  if (elem.selectedIndex == 0) {
+     window.location = "/hydroshare/?q=collaboration-by-user&op=0";
+     return;
+  }
+  alert("Unknown collaboration operation!");
+  alert("Coming soon!");
+};
+
+</script>

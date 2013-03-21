@@ -1,0 +1,14 @@
+INSTALLATION NOTES
+
+Create a "Custom Block" to be positioned in region "Sidebar1".
+
+Paste the contents of FilteredGroups.txt into the block content.
+
+The block should be configured as follows:
+
+Title: FILTER GROUPS:
+Description:   Filter Collaboration Groups View
+Text Format:  PHP Code  ** You will need to enable the PHP input filter module
+
+On "Visibility Settings->Pages" check "Only the listed pages"
+Enter the following value for pages:  collaboration*

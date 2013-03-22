@@ -1,0 +1,46 @@
+<?php
+
+function time_series_visualization_preprocess_node( &$variables ) {
+    drupal_add_js('http://d3js.org/d3.v3.js', 'external');
+    drupal_add_css(drupal_get_path('module','time_series_visualization').'/time_series_visualization.css', 'file');
+    drupal_add_js(drupal_get_path('module','time_series_visualization').'/singlefile.js', 'file');
+}
+
+function time_series_visualization_node_view( $node, $view_mode = 'full') {
+
+    // only if in full mode and time_series
+    if( $view_mode == "full" && $node->type == "time_series" ) {
+ 
+        // inject target div
+        $node->content['render_target'] = array(
+            '#markup' => $node->type.'<div id="hydroshare_time_series_target"></div>',
+            '#weight' => 0,
+        );
+
+        // get the file object from the node
+        $file      = NULL;
+        $real_path = NULL;
+        if( true == data_model_get_file_from_node( $node, $file ) ) {
+            $web_path = file_create_url( $file->uri );
+        } else {
+            error_log( "time_series_visualization_node_view :: failed to get file for node" );
+            return NULL;
+        }
+
+        // get file metadata
+        $source = NULL;
+        data_model_get_node_metadata_field_value( $node, "source", $source );
+        $title = NULL;
+        data_model_get_node_metadata_field_value( $node, "title", $title );
+
+        // call render
+        $node->content['render_single'] = array(
+            '#markup' => "<script>render_single_time_series('$web_path','$title','$source')</script>",
+            '#weight' => 50,
+        );
+
+    }
+
+    return $node;
+
+} // time_series_visualization_node_view

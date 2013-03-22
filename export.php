@@ -8,7 +8,7 @@ $path = $_GET["file"];
 // zip the data model directory to export it to
 // the user per the request
 if( !data_model_zip_dir( $path ) ) {
-    error_log( "export.php - error in creating archive file for [$pat]" );
+    error_log( "export.php - error in creating archive file for [$path]" );
     return;
 }
 

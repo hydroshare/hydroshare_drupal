@@ -200,8 +200,8 @@ function data_model_write_bagit_metadata( $dir ) {
     // iterate over the data dir and compute checksums
     // then write them to the manifest file
     $vals  = array();
-    $files = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $dir ) );//, 
-                                            //RecursiveIteratorIterator::CHILD_FIRST );
+    $files = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $dir ) );
+                                            
     foreach( $files as $file ) {
         if( false == is_dir( $file ) ) {
             // =-=-=-=-=-=-=-
@@ -228,6 +228,10 @@ function data_model_write_bagit_metadata( $dir ) {
 // =-=-=-=-=-=-=-
 // hook to move file into Data Model Directory for this Resource
 function data_model_node_presave( $node ) {
+    $pos = strpos( $node->type, 'hydroshare_' );
+    if( false === $pos ) { 
+       return NULL; 
+    }
 
     // =-=-=-=-=-=-=-
     // get the title and use this as the directory name
@@ -325,6 +329,13 @@ function data_model_node_presave( $node ) {
 // =-=-=-=-=-=-=-
 // add a explort button
 function data_model_node_view( $node, $view_mode ) {
+    // =-=-=-=-=-=-=-
+    // only explort for hydroshare type content
+    $pos = strpos( $node->type, 'hydroshare_' );
+    if( false === $pos ) { 
+       return NULL; 
+    }
+
     // =-=-=-=-=-=-=-
     // only explort on full view
     if( "full" != $view_mode ) {

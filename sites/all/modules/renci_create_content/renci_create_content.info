@@ -1,0 +1,4 @@
+name = RENCI add content form
+description = Custom look for node add content
+package = Other
+core = 7.x

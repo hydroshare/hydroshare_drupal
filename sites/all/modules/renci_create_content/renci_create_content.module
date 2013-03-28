@@ -1,0 +1,31 @@
+<?php
+
+/**
+ * Implements hook_theme().
+ */
+function renci_create_content_theme($existing, $type, $theme, $path) {
+  return array(
+    'hydroshare_node_form' => array(
+      'render element' => 'form',
+      'template' => 'hydroshare-node-form',
+      // this will set to module/theme path to let drupal know where to find the form template:
+      'path' => drupal_get_path('module', 'renci_create_content'),
+    ),
+  );
+}
+
+// Hook where we will add the custom submit handler for each form id
+function renci_create_content_form_alter(&$form, &$form_state, $form_id){
+	
+  // Add custom form ids here
+  if($form_id=='hydroshare_node_form') {
+    $form['actions']['submit']['#submit'][] ='hyrdoshare_node_form_submit';
+  }
+  
+}
+
+// Define custom submit handler for Group/Hydroshare add form
+function hyrdoshare_node_form_submit(&$form, &$form_state){
+  $form_state['redirect'] = 'collaboration';
+}
+?>

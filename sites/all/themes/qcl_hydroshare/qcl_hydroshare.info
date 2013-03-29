@@ -1,0 +1,26 @@
+name = QCL HYDROSHARE
+description = Theme based on HYDROSHARE html template
+version = VERSION
+core = 7.x
+engine = phptemplate
+
+scripts[] = js/custom-form-elements.js
+stylesheets[all][] = css/style.css
+
+
+regions[header] = Header
+regions[footer] = Footer
+regions[menu] = menu
+regions[content] = content
+regions[banner] = banner
+regions[contentbottom] = Content Bottom
+regions[right] = right Block
+regions[left] = Left Block
+regions[subheader] = sub header
+
+
+
+
+
+
+

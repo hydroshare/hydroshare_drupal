@@ -19,6 +19,10 @@ ErrorDocument 404 /index.php
 # Set the default handler.
 DirectoryIndex index.php index.html index.htm
 
+# set upload size to 2G
+php_value upload_max_filesize 2048M
+php_value post_max_size 2048M
+
 # Override PHP settings that cannot be changed at runtime. See
 # sites/default/default.settings.php and drupal_environment_initialize() in
 # includes/bootstrap.inc for settings that can be changed at runtime.

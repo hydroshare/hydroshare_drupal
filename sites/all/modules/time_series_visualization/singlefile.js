@@ -11,7 +11,7 @@ var margin_context = {top:200, right: 10, bottom:20, left: 40};
     height_context = plotHt - margin_context.top - margin_context.bottom;
     height2  = plotHt - margin2.top - margin2.bottom;
 
-var parseDate = d3.time.format("%m/%d/%Y").parse;
+var parseDate = d3.time.format("%m/%d/%Y %H:%M").parse; // hydroshare default
 
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 // Scales.                                              //
@@ -88,8 +88,10 @@ d3.csv( csvfilename, function(src1) {
 
 	// Extract date and value from each file.				
 	data0[0].forEach( function(d,i){
-		d.date = parseDate(d.date);
-		d.value = (+d.value);
+//		d.date = parseDate(d.date);
+//		d.value = (+d.value);
+                d.date = parseDate(d.DateTimeUTC);   // hydroshare format
+                d.value = (+d.DataValue);            // hydroshare format
 	});
 	data0[0].mean = 0;
 				

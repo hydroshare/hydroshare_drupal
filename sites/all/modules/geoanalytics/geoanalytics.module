@@ -53,7 +53,7 @@ function ga_api_post($endpoint, $payload) { //Initiate cURL request and send bac
     
     $headers = http_response_headers($results);
     foreach ($headers as $header) {
-        $str = http_response_code($header);
+        $str = ga_http_response_code($header);
         if($str == "500") {
             error_log($results);
         }
@@ -90,7 +90,7 @@ function http_response_header_lines($hdr_str)
     return $hdr_arr;
 }
 
-function http_response_code($str)
+function ga_http_response_code($str)
 {
     return substr(trim(strstr($str, ' ')), 0, 3);
 }

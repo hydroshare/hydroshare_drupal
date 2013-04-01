@@ -228,6 +228,8 @@ function data_model_write_bagit_metadata( $dir ) {
 // =-=-=-=-=-=-=-
 // hook to move file into Data Model Directory for this Resource
 function data_model_node_presave( $node ) {
+    // =-=-=-=-=-=-=-
+    // filter out non hydroshare content types
     $pos = strpos( $node->type, 'hydroshare_' );
     if( false === $pos ) { 
        return NULL; 
@@ -235,10 +237,7 @@ function data_model_node_presave( $node ) {
 
     // =-=-=-=-=-=-=-
     // get the title and use this as the directory name
-    $title_items = field_get_items( 'node', $node, 'field_title' );
-        
-    $title = NULL;
-    data_model_get_node_metadata_field_value( $node, "title", $title );
+    $title = $node->title;
     
     // =-=-=-=-=-=-=-
     // get the file object from the node
@@ -327,17 +326,26 @@ function data_model_node_presave( $node ) {
 } // data_model_node_presave
 
 // =-=-=-=-=-=-=-
-// add a explort button
+// add a export button
 function data_model_node_view( $node, $view_mode ) {
     // =-=-=-=-=-=-=-
-    // only explort for hydroshare type content
+    // only export for hydroshare type content
+    $pos = strpos( $node->type, 'hydroshare_' );
+    if( false === $pos ) { 
+       return NULL; 
+    }
+
+
+
+    // =-=-=-=-=-=-=-
+    // only export for hydroshare type content
     $pos = strpos( $node->type, 'hydroshare_' );
     if( false === $pos ) { 
        return NULL; 
     }
 
     // =-=-=-=-=-=-=-
-    // only explort on full view
+    // only export on full view
     if( "full" != $view_mode ) {
         return $node;
     }
@@ -378,7 +386,7 @@ function data_model_node_view( $node, $view_mode ) {
     // wire it to a button
     $node->content['button'] = array(
           '#type' => 'button',
-          '#value' => t('Explort'),
+          '#value' => t('Export'),
           '#weight' => 50,
           '#attributes' => array('onClick' => $op),
           );

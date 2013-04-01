@@ -1,0 +1,22 @@
+.body { bgcolor: blue; }
+
+svg {
+  font: 11px sans-serif;
+  background: #f8f8f8;
+}
+
+.clip_temp {
+  fill: red;
+}
+
+.axis path, .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.brush .extent {
+  stroke: #fff;
+  fill-opacity: .125;
+  shape-rendering: crispEdges;
+}

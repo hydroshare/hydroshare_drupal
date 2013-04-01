@@ -1,0 +1,202 @@
+<?php
+
+
+function slugify($text)
+{ 
+  // replace non letter or digits by -
+  $text = preg_replace('~[^\\pL\d]+~u', '-', $text);
+
+  // trim
+  $text = trim($text, '-');
+
+  // transliterate
+  $text = iconv('utf-8', 'us-ascii//TRANSLIT', $text);
+
+  // lowercase
+  $text = strtolower($text);
+
+  // remove unwanted characters
+  $text = preg_replace('~[^-\w]+~', '', $text);
+
+  if (empty($text))
+  {
+      return 'n-a';
+  }
+
+  return $text;
+}
+
+function ga_api_post($endpoint, $payload) { //Initiate cURL request and send back the result
+    // these must be set in order for the module to work
+    $GA_URL = 'http://152.54.9.1:8000';
+    $GA_USERNAME = 'ga';
+    $GA_API_KEY = '6c1f25b484dd81305c10aaaee5731daa7e1bade5';
+
+    $endpoint .= "?format=json&username=" . $GA_USERNAME . "&api_key=" . $GA_API_KEY;
+    error_log(json_encode($payload));
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json','Accept: text/plain'));
+    curl_setopt($ch, CURLOPT_URL, $GA_URL . $endpoint);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HEADER, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+    curl_setopt($ch, CURLOPT_VERBOSE, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+    curl_setopt($ch, CURLOPT_POST, true); 
+    $results = curl_exec($ch);
+    if (curl_errno($ch)) {
+        print curl_error($ch);
+    } else {
+        curl_close($ch);
+    }
+    
+    $headers = http_response_headers($results);
+    foreach ($headers as $header) {
+        $str = http_response_code($header);
+        if($str == "500") {
+            error_log($results);
+        }
+        $hdr_arr = http_response_header_lines($header);
+        if (isset($hdr_arr['Location'])) {
+            return substr($hdr_arr['Location'], strlen($GA_URL));
+        }
+        else {
+            return $GA_URL;
+        }
+    }
+}
+
+function http_response_headers($ret_str)
+{
+    $hdrs = array();
+    $arr = explode("\r\n\r\n", $ret_str);
+    foreach ($arr as $each) {
+        if (substr($each, 0, 4) == 'HTTP') {
+            $hdrs[] = $each;
+        }
+    }
+    return $hdrs;
+}
+
+function http_response_header_lines($hdr_str)
+{
+    $lines = explode("\n", $hdr_str);
+    $hdr_arr['status_line'] = trim(array_shift($lines));
+    foreach ($lines as $line) {
+        list($key, $val) = explode(':', $line, 2);
+        $hdr_arr[trim($key)] = trim($val);
+    }
+    return $hdr_arr;
+}
+
+function http_response_code($str)
+{
+    return substr(trim(strstr($str, ' ')), 0, 3);
+}
+
+
+/**
+ * This and _update will cause files that were uploaded into HydroShare to propagate into Geoanalytics
+ */
+function geoanalytics_node_presave( $node ) {
+    $GA_URL = 'http://152.54.9.1:8000';
+    $GA_USERNAME = 'ga';
+    $GA_API_KEY = '6c1f25b484dd81305c10aaaee5731daa7e1bade5';
+
+    if($node->type == "geoanalytics") {
+        // get the file object from the node
+        $file = array_shift(field_get_items('node', $node, 'field_resource_file'));
+        $file_path = file_load($file['fid']);
+        $web_path = file_create_url($file_path->uri);
+
+        // get file metadata
+        $title = $node->title;
+        $body = $node->body['und'][0]['value'];
+        $driver = $node->field_driver['und'][0]['value'];
+        $style = $node->field_style['und'][0]['value'];
+
+        // POST a new DataResource record to the geoanalytics API 
+        $ga_dataresource_ref = ga_api_post('/ga_resources/resources/v1/data/', array(
+            'resource_url' => $web_path,
+            'content' => $body,
+            'title' => $title,
+            'driver' => $driver
+        ));
+
+        // POST a style record to the geoanalytics API as "default-style"
+        $ga_style_ref = ga_api_post('/ga_resources/styles/v1/style/', array(
+            'stylesheet' => $style,
+            'title' => $title . ' default style',
+            'content' => $body
+        ));
+        $style = slugify($title . ' default style');
+
+        // POST a new RenderedLayer record to the geoanalytics API as "wms"
+        $ga_renderedlayer_ref = ga_api_post('/ga_resources/layers/v1/rendered_layer/', array(
+            'default_style' => $ga_style_ref,
+            'styles' => array($ga_style_ref),
+            'data_resource' => $ga_dataresource_ref,
+            'title' => $title . ' layer',
+            'content' => $body
+        ));
+        $layer = slugify($title . ' layer');
+        $wms = $GA_URL . '/ga_resources/wms/';
+
+        $node->field_webservice['und'][0]['value'] = $wms;
+        $node->field_style_id['und'][0]['value'] = $style;
+        $node->field_layer_id['und'][0]['value'] = $layer;
+    }
+}
+
+function geoanalytics_node_update( $node ) {
+    if($node->type == "geoanalytics") {
+        // PUT a DataResource record to the geoanalytics API
+        // PUT a style record to the geoanalytics API
+        // PUT a RenderedLayer record to the geoanalytics API
+    }
+}
+
+
+/**
+ * This will insert the CSS and JS needed to make our Geoanalytics webservice show up as an OpenLayers map
+ */
+function geoanalytics_preprocess_node( &$variables ) {
+    drupal_add_js('http://maps.google.com/maps/api/js?v=3&sensor=false');
+    drupal_add_js('http://openlayers.org/dev/OpenLayers.js');
+    drupal_add_css('http://openlayers.org/dev/theme/default/style.css');
+    drupal_add_css('http://openlayers.org/dev/theme/default/google.css');
+    drupal_add_css('http://openlayers.org/dev/examples/style.css');
+    drupal_add_js(drupal_get_path('module','geoanalytics').'/singlefile.js', 'file');
+}
+
+/**
+ * This will actually do all the heavy lifting associated with displayig the map
+ */
+function geoanalytics_node_view( $node, $view_mode = 'full') {
+
+    // only if in full mode and time_series
+    if( $view_mode == "full" && $node->type == "geoanalytics" ) {
+ 
+        // inject target div
+        $node->content['render_target'] = array(
+            '#markup' => $node->type.'<div id="map" style="height:340px;"></div>',
+            '#weight' => 0,
+        );
+
+        // get the WMS service address from the node
+        $wms = $node->field_webservice['und'][0]['value'];
+        $style= $node->field_style_id['und'][0]['value'];
+        $layer= $node->field_layer_id['und'][0]['value'];
+
+        // call render
+        $node->content['render_single'] = array(
+            '#markup' => "<script>hydroshareMakeMap('$wms', '$layer', '$style');</script>",
+            '#weight' => 50,
+        );
+
+    }
+
+    return $node;
+
+} // geoanalytics_node_view

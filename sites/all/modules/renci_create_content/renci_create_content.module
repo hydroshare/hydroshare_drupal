@@ -17,6 +17,16 @@ function renci_create_content_theme($existing, $type, $theme, $path) {
 // Hook where we will add the custom submit handler for each form id
 function renci_create_content_form_alter(&$form, &$form_state, $form_id){
 
+  // Hide options
+  hide($form['additional_settings']);
+
+  // Set published
+  $form['options']['status']['#default_value'] = TRUE;
+  $form['options']['status']['#input'] = TRUE;
+  $form['options']['status']['#return_value'] = TRUE;
+  $form['options']['status']['#value'] = TRUE;
+  $form['options']['status']['#checked'] = TRUE;
+
   // Add custom form ids here
   if($form_id=='hydroshare_node_form') {
     $form['actions']['submit']['#submit'][] ='hyrdoshare_node_form_submit';

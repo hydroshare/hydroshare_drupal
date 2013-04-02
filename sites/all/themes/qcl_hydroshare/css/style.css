@@ -56,8 +56,8 @@ body li.first {
 ul {
 	margin: 0;
 }
-body { 
-	margin: 0; 
+body {
+	margin: 0;
 	font-family: georgia;
 	color: #73777c;
 	font-size: 12px;
@@ -88,7 +88,14 @@ img.png, .banner img, table img {
 	background: -ms-linear-gradient(top,  rgba(240,240,240,1) 0%,rgba(255,255,255,1) 100%); /* IE10+ */
 	background: linear-gradient(to bottom,  rgba(240,240,240,1) 0%,rgba(255,255,255,1) 100%); /* W3C */
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f0f0f0', endColorstr='#ffffff',GradientType=0 ); /* IE6-8 */
-	
+
+}
+
+#edit-uid{
+	width: 300px;
+}
+.view-content {
+	float:left;
 }
 .gradientUp{
 	background: rgb(255,255,255); /* Old browsers */
@@ -101,7 +108,7 @@ img.png, .banner img, table img {
 	background: -ms-linear-gradient(top,  rgba(255,255,255,1) 0%,rgba(240,240,240,1) 100%); /* IE10+ */
 	background: linear-gradient(to bottom,  rgba(255,255,255,1) 0%,rgba(240,240,240,1) 100%); /* W3C */
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#f0f0f0',GradientType=0 ); /* IE6-8 */
-	
+
 }
 .bold {
 	font-weight: bold;
@@ -314,7 +321,7 @@ span.navDescription {
 /* 	width: 200px; */
 	margin: 0;
 }
-.recentActivity ul { 
+.recentActivity ul {
 	font-size: 14px;
 	font-family: bebasNeue;
 	font-weight: lighter;
@@ -384,7 +391,7 @@ ul.activityNav li {
 	margin: 0;
 	font-size: 14px;
 }
-.activityMap { 
+.activityMap {
 	float: right;
 /*  margin-top: 10px; */
 /* 	background: white; */
@@ -417,7 +424,7 @@ ul.activityNav li {
 
 /* Resource column */
 .resourceWrapper {
-/* 	float: right; */ 
+/* 	float: right; */
   margin-top: -40px;
 	overflow: hidden;
 	width: 278px;
@@ -436,12 +443,12 @@ float: left;
 	padding:10px;
 	color: #fff;
 	overflow: hidden;
-	line-height: 1.3; 
+	line-height: 1.3;
 }
 .profile a {
 	color: #fff;
 	font-style: italic;
-	
+
 }
 .profile .title {
 	font-size: 18px;
@@ -620,7 +627,7 @@ a.checkbox:hover {
 }
 .contentListWrapper .resultsDisplay a {
  	float: left;
-	margin-top: 15px; 
+	margin-top: 15px;
 	margin-right:10px;
 	color: #3773cb;
 }
@@ -666,7 +673,7 @@ a.checkbox:hover {
 		display: block;
 		height: 22px;
 		width: 22px;
-		float: left; 
+		float: left;
 	}
 	.myContentSubInner h2, .myContentSubInner h3 {
 		clear: left;
@@ -681,7 +688,7 @@ a.checkbox:hover {
 		width: 292px;
 	}
 	.fileFeedWrapper .comments {
-		
+
 	}
 	.fileFeedWrapper .comments h3 {
 		font-size: 18px;
@@ -754,7 +761,7 @@ a.checkbox:hover {
 		margin: 3px 0 0 0;
 		letter-spacing: 0;
 	}
-	.commentWrapper { 
+	.commentWrapper {
 		margin-top: 0;
 		border-bottom: 1px solid #d9d9d9;
 		background: #f0f0f0;
@@ -790,7 +797,7 @@ a.checkbox:hover {
 	}
 	.shareForm label, .settingForm label, .settingForm .select, .settingForm a {
 		float: left;
-		margin: 0 0 14px 5px; 
+		margin: 0 0 14px 5px;
 	}
 	.settingForm a {
 		color: #3672ca;
@@ -849,7 +856,7 @@ a.checkbox:hover {
 #search label, form#search input, form#search select{
 	float: left;
 	height: 28px;
-	
+
 }
 #search input, #search select {
 	margin-left: 10px;
@@ -949,7 +956,7 @@ float:left;
 .searchResults p {
 	margin: 0 0 5px;
 }
-.searchResults a { 
+.searchResults a {
 	color: #73777c;
 	font-weight: normal;
 	}
@@ -1159,7 +1166,7 @@ a.view {
 	margin-left: 13px;
 }
 .discussionItem p {
-	margin: 0 18px 5px 81px; 
+	margin: 0 18px 5px 81px;
 }
 .memberItem {
 	margin-bottom: 7px;
@@ -1182,7 +1189,7 @@ a.view {
 	float: left;
 /* 	padding: 0 15px 15px; */
 }
-.groupResource #search select.eDate, 
+.groupResource #search select.eDate,
 .groupResource #search select.eResource, .groupResource #search #keyword {
 	width: 241px;
 }
@@ -1219,7 +1226,7 @@ a.view {
 	width: 590px;
 	height: 316px;
 	color: #efefef;
-	padding: 30px 0 0 50px; 
+	padding: 30px 0 0 50px;
 	float: right;
 }
 .createAccount .createBlurb, .createAccount .newUserWrapper {
@@ -1314,7 +1321,7 @@ a.view {
 .shadow-inner {
 	height: 400px;
 	background: white;
-	
+
 }
 ul.forget {
 	float: left;

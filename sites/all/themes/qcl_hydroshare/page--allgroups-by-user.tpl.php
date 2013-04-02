@@ -13,13 +13,14 @@
 
 			<div class="pageWrapper">
 				<!-- content -->
+					<div class="collaborate">
 
-					<?php if($page['content']): print render($page['content']); endif; ?>
-
-					<?php if($page['right']): print render($page['right']); endif; ?>
-
+					<?php if($page['subheader']): print render($page['subheader']); endif; ?>
+					<div style="width:300px;float:left"><?php if($page['left']): print render($page['left']); endif; ?></div>
+					<div style="float:left;width:600px"><?php if($page['content']): print render($page['content']); endif; ?></div>
 					<?php if($page['contentbottom']): print render($page['contentbottom']); endif;?>
-
+					<?php if($page['right']): print render($page['right']); endif; ?>
+					</div>
 			</div>
 		</div>
 		<!-- footer -->

@@ -12,23 +12,65 @@
         <div class="myContentSub">
             <div class="myContentSubInner">
                 <?php
+                    if( $content ) {
+file_put_contents( "/projects/hydroshare/my_file.txt", print_r( $content, true ) );
                     // =-=-=-=-=-=-=-
                     // wire up export button
                     // NOTE:: this was extraced from printing the $content variable.
                     //        there HAS to be a better way....
                     $real_path = drupal_realpath( $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_file['und'][0]['uri'] ); 
-                    
-                    
+
+ 
                     // =-=-=-=-=-=-=-
                     // extract the metadata and display it 
-                    $contrib = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_contributor['und'][0]['safe_value']; 
-                    $subject = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_subject['und'][0]['safe_value']; 
-                    $relation = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_relation['und'][0]['safe_value']; 
-                    $source = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_source['und'][0]['safe_value']; 
-                    $type = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_type['und'][0]['safe_value']; 
-                    $coverage = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_coverage['und'][0]['safe_value']; 
-                    $rights = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_rights['und'][0]['safe_value']; 
-                    $format = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_format['und'][0]['safe_value']; 
+
+                    $contrib = "";
+                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_contributor;
+                    if( !empty( $tmp_arr ) ) {
+                        $contrib = $tmp_arr['und'][0]['safe_value']; 
+                    }
+
+                    $subject = "";
+                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_subject;
+                    if( !empty( $tmp_arr ) ) {
+                        $subject = $tmp_arr['und'][0]['safe_value']; 
+                    }
+                    
+                    $relation = "";
+                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_relation;
+                    if( !empty( $tmp_arr ) ) {
+                        $relation = $tmp_arr['und'][0]['safe_value']; 
+                    }
+                    
+                    $source = "";
+                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_source;
+                    if( !empty( $tmp_arr ) ) {
+                        $source = $tmp_arr['und'][0]['safe_value']; 
+                    }
+                    
+                    $type = "";
+                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_type;
+                    if( !empty( $tmp_arr ) ) {
+                        $type = $tmp_arr['und'][0]['safe_value']; 
+                    }
+                    
+                    $coverage = "";
+                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_coverage;
+                    if( !empty( $tmp_arr ) ) {
+                        $coverage = $tmp_arr['und'][0]['safe_value']; 
+                    }
+                    
+                    $rights = "";
+                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_rights;
+                    if( !empty( $tmp_arr ) ) {
+                        $rights = $tmp_arr['und'][0]['safe_value']; 
+                    }
+                    
+                    $format = "";
+                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_format;
+                    if( !empty( $tmp_arr ) ) {
+                        $format = $tmp_arr['und'][0]['safe_value']; 
+                    }
 
                     // =-=-=-=-=-=-=-
                     // get the file directory
@@ -50,12 +92,13 @@
                     $op = "http://$hostname/export.php?file=" . $zip_file;
  
                     $edit_url = "http://$hostname/?q=node/" . $content[ 'comments' ][ 'comment_form' ][ '#node' ]->nid . "/edit";
+                    $delete_url = "http://$hostname/?q=node/" . $content[ 'comments' ][ 'comment_form' ][ '#node' ]->nid . "/delete";
                     print( '<div class="contentListWrapper">');
                         print( '<a href="" class="greyButton">EXECUTE</a>');
                         print( '<a href="" class="greyButton">SHARE</a>');
                         print( '<a href="'.$op.'" class="greyButton">EXPORT</a>');
                         print( '<a href="'.$edit_url.'" class="greyButton">EDIT</a>');
-                        print( '<a href="" class="greyButton">DELETE</a>');
+                        print( '<a href="'.$delete_url.'" class="greyButton">DELETE</a>');
                     print( '</div> <!-- contentListWrapper --> ');
 
 
@@ -89,6 +132,7 @@
                         print( '<p><span class="bold">Rights: </span>'.$rights.'</p>');
                         print( '<p><span class="bold">Format: </span>'.$format.'</p>');
                     print( '</div> <!-- half-column -->' );
+                   }
                 ?>
 
 

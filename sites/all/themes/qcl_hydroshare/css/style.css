@@ -343,7 +343,7 @@ ul.activityNav li {
 	font-weight: lighter;
 	font-size: 18px;
 	padding: 6px 28px;
-	display: block;
+    display:block;
 	color: white;
 	margin-bottom: 15px;
 	border-right: solid 1px #e2e3e3;
@@ -371,6 +371,16 @@ ul.activityNav li {
 	background: linear-gradient(to bottom,  rgba(55,115,203,1) 0%,rgba(49,102,181,1) 100%); /* W3C */
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#3773cb', endColorstr='#3166b5',GradientType=0 ); /* IE6-8 */
 }
+
+.greyButtonRight {
+	font-size: 14px;
+    width:auto;
+    height:auto;
+	overflow: hidden;
+    float: right;
+}
+
+
 .activityStream a.moreButton {
 /* 	width: 98px; */
 /* 	height: 34px; */
@@ -577,8 +587,10 @@ width: 98%;
 	text-align: center;
 }
 .contentTable {
-	width: 100%;
+	width: auto;
 	border-collapse:collapse;
+	padding-left: 2px;
+	padding-right: 2px;
 }
 .contentTable a {
 	color: #3773cb;
@@ -593,6 +605,7 @@ width: 98%;
 	background: white;
 	border: 1px solid #bdbfc1;
 	padding-left: 8px;
+	padding-right: 8px;
 }
 .contentTable .tCheckBox {
 	width: 48px;
@@ -659,6 +672,12 @@ a.checkbox:hover {
 	.myContentSubInner .half-column {
 		font-size: 14px;
 		margin-left: 10px;
+        float:left;
+	}
+	.myContentSubInner .half-column-right {
+		font-size: 14px;
+		margin-left: 10px;
+        float:right;
 	}
 	.starRating.selected, .starRating:hover {
 		background-position: 0 0;

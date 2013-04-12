@@ -7,10 +7,8 @@
     <div class="subHeader">
         <h1>My Resources</h1>
         <p>All your resources in one place</p>
-    </div><!-- subHeader 
-        
-    <a href="http://avogadro.renci.org/?q=node/add" class="greyButton greyButtonRight">UPLOAD</a>
--->
+    </div><!-- subHeader -->
+
     <div class="mycontentHome">
         <div class="contentListWrapper">
     

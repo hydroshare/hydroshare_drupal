@@ -335,8 +335,6 @@ function data_model_node_view( $node, $view_mode ) {
        return NULL; 
     }
 
-
-
     // =-=-=-=-=-=-=-
     // only export for hydroshare type content
     $pos = strpos( $node->type, 'hydroshare_' );
@@ -388,6 +386,7 @@ function data_model_node_view( $node, $view_mode ) {
           '#type' => 'button',
           '#value' => t('Export'),
           '#weight' => 50,
+          '#class' => 'greyButton',
           '#attributes' => array('onClick' => $op),
           );
 
@@ -396,6 +395,22 @@ function data_model_node_view( $node, $view_mode ) {
     return $node;
 
 } // data_model_node_view
+
+function data_model_views_api() {
+      return array(
+          'api' => 3.0,
+      );
+}
+
+function data_model_views_pre_render(&$view) {
+    error_log( "XXXX - data_model_views_pre_render" );
+    //print_r( $view );
+}
+
+function data_model_views_pre_view(&$view) {
+    error_log( "XXXX - data_model_views_pre_view" );
+    //print_r( $view );
+}
 
 
 

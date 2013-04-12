@@ -180,7 +180,7 @@ function geoanalytics_node_view( $node, $view_mode = 'full') {
  
         // inject target div
         $node->content['render_target'] = array(
-            '#markup' => $node->type.'<div id="map" style="height:340px;"></div>',
+            '#markup' => $node->type.'<div id="hydroshare_vizualization" style="height:340px;"></div>',
             '#weight' => 0,
         );
 

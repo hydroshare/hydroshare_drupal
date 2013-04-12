@@ -49,6 +49,7 @@ function views_bulk_operations_load_action_includes() {
     'modify.action.inc',
     'script.action.inc',
     'user_roles.action.inc',
+    'export.action.inc',
   );
 
   if (!$loaded) {

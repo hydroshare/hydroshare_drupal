@@ -116,6 +116,17 @@
                         print( '<p><span class="bold">Resource Type:</span> '.$type.'</p>');
                         print( '<p><span class="bold">Created by:</span> '.$author.'</p>');
                         print( '<p><span class="bold">Created: </span>'.$created.'</p>');
+                        // ratings
+                        print( '<div class="starWrapper">');
+                            print( render( $content['field_rating'] ) );
+                        print('</div>');
+                        // tags
+                        $tags = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_tags['und'];
+                        print( '<p><span class="bold">Tags: </span>' );
+                        foreach( $tags as $tag ) {
+                            print( $tag['taxonomy_term']->name.', ');
+                        }
+                        print( '</p>' );
                     print( '</div> <!-- half-column -->' );
       
                     print( '<div class="half-column-right">' );
@@ -130,25 +141,25 @@
                     print( '</div> <!-- half-column -->' );
       
                     print('<div class="full-column">');
- 			print( '<div class="starWrapper">');
-			    print( render( $content['field_rating'] ) ); 
-			print('</div>');
-
-			print( '<span class="bold">Tags: </span>' );
-			$tags = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_tags['und'];
-			foreach( $tags as $tag ) {
-			    print( $tag['taxonomy_term']->name.', ');
-			}
-                   
                         print('<h2>Resource Description</h2>');
                         print( render( $content['body'] ) );
- 
                     print( '</div> <!-- full-column -->' );
               
-        
-                print( '</div> <!-- myContentSubInner -->');
+                    print( '<div class="half-column">');
+                        if (!empty($content['links'])) {
+                            print( ' <div class="links">' );
+                                print render($content['links']);            
+                            print( '</div>');
+                        }
+                    print( '</div>' );
 
-print('</div> <!-- mycontentSub -->');
+                print( '</div> <!-- myContentSubInner -->');
+	     
+          print('</div> <!-- mycontentSub -->');
+
+          print('<div style="clear:both"></div>');
+          print( render($content['comments']) ); 
+
     } else {
 
 	  print( '<div class = "content clearfix">');// . $content_attributes.' >');

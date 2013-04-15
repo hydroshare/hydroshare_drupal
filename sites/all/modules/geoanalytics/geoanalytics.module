@@ -28,9 +28,9 @@ function slugify($text)
 
 function ga_api_post($endpoint, $payload) { //Initiate cURL request and send back the result
     // these must be set in order for the module to work
-    $GA_URL = 'http://152.54.9.1:8000';
-    $GA_USERNAME = 'ga';
-    $GA_API_KEY = '6c1f25b484dd81305c10aaaee5731daa7e1bade5';
+    $GA_URL = 'http://ga.renci.org';
+    $GA_USERNAME = 'hydroshare';
+    $GA_API_KEY = 'ee0047730e15969bad30c523f953fac0991dcabc';
 
     $endpoint .= "?format=json&username=" . $GA_USERNAME . "&api_key=" . $GA_API_KEY;
     error_log(json_encode($payload));
@@ -100,9 +100,9 @@ function ga_http_response_code($str)
  * This and _update will cause files that were uploaded into HydroShare to propagate into Geoanalytics
  */
 function geoanalytics_node_presave( $node ) {
-    $GA_URL = 'http://152.54.9.1:8000';
-    $GA_USERNAME = 'ga';
-    $GA_API_KEY = '6c1f25b484dd81305c10aaaee5731daa7e1bade5';
+    $GA_URL = 'http://ga.renci.org';
+    $GA_USERNAME = 'hydroshare';
+    $GA_API_KEY = 'ee0047730e15969bad30c523f953fac0991dcabc';
 
     if($node->type == "geoanalytics") {
         // get the file object from the node

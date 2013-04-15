@@ -672,12 +672,11 @@ a.checkbox:hover {
 	.myContentSubInner .half-column {
 		font-size: 14px;
 		margin-left: 10px;
-        float:left;
+                float:left;
 	}
 	.myContentSubInner .half-column-right {
 		font-size: 14px;
-		margin-left: 10px;
-        float:right;
+                float:right;
 	}
 	.starRating.selected, .starRating:hover {
 		background-position: 0 0;

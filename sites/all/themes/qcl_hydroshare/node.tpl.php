@@ -1,29 +1,24 @@
 <div id="node-<?php print $node->nid; ?>" class="<?php print $classes; ?>"<?php print $attributes; ?>>
 
-  <?php print $user_picture; ?>
-
-  <?php print render($title_prefix); ?>
-
-    <div class="subHeader">
-        <h1<?php print $title_attributes; ?>><a href="<?php print $node_url; ?>"><?php print $title; ?></a></h1>
-        <p>Resource Details</p>
-    </div>
-<BR><BR><BR>
-        <div class="myContentSub">
-            <div class="myContentSubInner">
-                <?php
-                    if( $content ) {
-file_put_contents( "/projects/hydroshare/my_file.txt", print_r( $content, true ) );
+    <?php 
+    if( !empty( $content ) and !empty($content['body']) and ( strpos( $content['body']['#bundle'], "hydroshare_" ) !== false ) ) {
+        print $user_picture; 
+        print render($title_prefix); 
+	    print( '<div class="subHeader">' );
+	    print( '<h1'. $title_attributes.'><a href="'.$node_url.'">'.$title.'</a></h1>');
+	    print('<p>Resource Details</p>
+	           </div><!-- subHeader -->
+	    <BR><BR><BR>
+		<div class="myContentSub">
+		    <div class="myContentSubInner">');
                     // =-=-=-=-=-=-=-
                     // wire up export button
                     // NOTE:: this was extraced from printing the $content variable.
                     //        there HAS to be a better way....
                     $real_path = drupal_realpath( $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_file['und'][0]['uri'] ); 
-
  
                     // =-=-=-=-=-=-=-
                     // extract the metadata and display it 
-
                     $contrib = "";
                     $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_contributor;
                     if( !empty( $tmp_arr ) ) {
@@ -122,6 +117,7 @@ file_put_contents( "/projects/hydroshare/my_file.txt", print_r( $content, true )
                         print( '<p><span class="bold">Created by:</span> '.$author.'</p>');
                         print( '<p><span class="bold">Created: </span>'.$created.'</p>');
                     print( '</div> <!-- half-column -->' );
+      
                     print( '<div class="half-column-right">' );
                         print( '<p><span class="bold">Contributors: </span>'.$contrib.'</p>');
                         print( '<p><span class="bold">Subject: </span>'.$subject.'</p>');
@@ -132,43 +128,55 @@ file_put_contents( "/projects/hydroshare/my_file.txt", print_r( $content, true )
                         print( '<p><span class="bold">Rights: </span>'.$rights.'</p>');
                         print( '<p><span class="bold">Format: </span>'.$format.'</p>');
                     print( '</div> <!-- half-column -->' );
-                   }
-                ?>
+      
+                    print('<div class="full-column">');
+ 			print( '<div class="starWrapper">');
+			    print( render( $content['field_rating'] ) ); 
+			print('</div>');
 
+			print( '<span class="bold">Tags: </span>' );
+			$tags = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_tags['und'];
+			foreach( $tags as $tag ) {
+			    print( $tag['taxonomy_term']->name.', ');
+			}
+                   
+                        print('<h2>Resource Description</h2>');
+                        print( render( $content['body'] ) );
+ 
+                    print( '</div> <!-- full-column -->' );
+              
+        
+                print( '</div> <!-- myContentSubInner -->');
 
-                <div class="full-column">
-                    <div class="starWrapper">
-                        <?php print( render( $content['field_rating'] ) ); ?>
-                    </div>
-                    <h2>Resource Description</h2>
-                    <?php print( render( $content['body'] ) ); ?>
-                </div> <!-- full-column -->
+print('</div> <!-- mycontentSub -->');
+    } else {
 
-            </div> <!-- myContentSubInner -->
+	  print( '<div class = "content clearfix">');// . $content_attributes.' >');
+	      print( render( $content[ 'comments' ] ) ); 
+	  print( '</div>' );
 
-        </div> <!-- mycontentSub -->
+	  print( render($title_suffix) );
+          print( '<div class="content clearfix">');// . $content_attributes . ' >');
+              //if( !empty( $content['comments'] ) {
+	      //    print( hide($content['comments']) );
+              //}
+              //if( !empty( $content['links'] ) {
+	      //    print( hide($content['links']) );
+              //}
+	      print( render($content) );
+	  print( '</div>' );
 
+	  print( '<div class="clearfix">');
+	      if (!empty($content['links'])) { 
+	           print( ' <div class="links">' );
+                   print render($content['links']); 
+                   print( '</div>');
+	      }
 
-<!--
-  <div class = "content clearfix"<?php print $content_attributes; ?>>
-      <?php print( render( $content[ 'comments' ] ) ); ?>
-  </div>
+	      print( render($content['comments']) ); 
+	  print( '</div>' );
 
-  <?php print render($title_suffix); ?>
-  <div class="content clearfix"<?php print $content_attributes; ?>>
-    <?php
-      hide($content['comments']);
-      hide($content['links']);
-      print render($content);
-    ?>
-  </div>
-
-  <div class="clearfix">
-    <?php if (!empty($content['links'])): ?>
-      <div class="links"><?php print render($content['links']); ?></div>
-    <?php endif; ?>
-
-    <?php print render($content['comments']); ?>
-  </div>
--->
+    } 
+?>
+   
 </div>

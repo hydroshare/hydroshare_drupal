@@ -1,4 +1,4 @@
-function render_single_time_series( csvfilename, file_metadata_title, file_metadata_source ){
+function hydroshare_viz_script_render_single_time_series( csvfilename, file_metadata_title, file_metadata_source ){
 
 var plotHt = 280;
 

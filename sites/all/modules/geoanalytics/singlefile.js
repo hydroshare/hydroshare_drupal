@@ -1,7 +1,7 @@
 var map;
 
-function hydroshareMakeMap(wms, layer, style) {
-    map = new OpenLayers.Map('hydroshare_visualization', {
+function hydroshare_viz_script_makemap(wms, layer, style) {
+    map = new OpenLayers.Map('hydroshare_vizualization', {
         projection: 'EPSG:3857',
         layers: [
             new OpenLayers.Layer.Google(

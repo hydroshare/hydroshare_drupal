@@ -33,7 +33,7 @@ function time_series_visualization_node_view( $node, $view_mode = 'full') {
 
         // call render
         $node->content['render_single'] = array(
-            '#markup' => "<script>render_single_time_series('$web_path','$node->title','$source')</script>",
+            '#markup' => "<script>hydroshare_viz_script_render_single_time_series('$web_path','$node->title','$source')</script>",
             '#weight' => 50,
         );
 

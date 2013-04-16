@@ -1,7 +1,11 @@
 <div id="node-<?php print $node->nid; ?>" class="<?php print $classes; ?>"<?php print $attributes; ?>>
 
     <?php 
-    if( !empty( $content ) and !empty($content['body']) and ( strpos( $content['body']['#bundle'], "hydroshare_" ) !== false ) ) {
+    if( !empty( $content ) and 
+        !empty( $content['comments'] ) and 
+        !empty( $content['comments']['comment_form'] ) and 
+        !empty( $content['comments']['comment_form']['#node'] ) and 
+        ( strpos( $content['comments']['comment_form']['#node']->type, "hydroshare_" ) !== false ) ) {
         print $user_picture; 
         print render($title_prefix); 
 	    print( '<div class="subHeader">' );
@@ -99,8 +103,8 @@
 
                     $render = render( $content );
                     $matches = NULL;
-                    print( '<div id="hydroshare_vizualization"></div>' );
-                    $ret = preg_match( '/<script>render_single_time_series.*<\/script>/i', $render, $matches );
+                    print( '<div id="hydroshare_vizualization" style="height:340px"></div>' );
+                    $ret = preg_match( '/<script>hydroshare_viz_script.*<\/script>/i', $render, $matches );
                     if( $ret ) {
                         print( $matches[0] );
                     } 
@@ -111,7 +115,9 @@
                     $type    = "Time Series";
                     $author  = substr( $submitted, $pos0, $pos1 - $pos0 );
                     $created = substr( $submitted, $pos1, strlen( $submitted ) - $pos1 );
-                    print( '<BR><BR>' );
+
+                    print('<div style="clear:left"><br /><br /><br /></div>');
+
                     print( '<div class="half-column">' );
                         print( '<p><span class="bold">Resource Type:</span> '.$type.'</p>');
                         print( '<p><span class="bold">Created by:</span> '.$author.'</p>');
@@ -138,8 +144,10 @@
                         print( '<p><span class="bold">Coverage: </span>'.$coverage.'</p>');
                         print( '<p><span class="bold">Rights: </span>'.$rights.'</p>');
                         print( '<p><span class="bold">Format: </span>'.$format.'</p>');
-                    print( '</div> <!-- half-column -->' );
+                    print( '</div> <!-- half-column-right -->' );
       
+                    print('<div style="clear:both"></div>');
+
                     print('<div class="full-column">');
                         print('<h2>Resource Description</h2>');
                         print( render( $content['body'] ) );
@@ -161,7 +169,6 @@
           print( render($content['comments']) ); 
 
     } else {
-
 	  print( '<div class = "content clearfix">');// . $content_attributes.' >');
 	      print( render( $content[ 'comments' ] ) ); 
 	  print( '</div>' );

@@ -51,6 +51,10 @@ class openlayers_views_style_map extends views_plugin_style {
       $this->view->query->fields = array();
     }
     $this->view->executed = TRUE;
+    $this->view->result = TRUE;
+    $map = openlayers_map_load($this->options['map']);
+    $render = openlayers_render_map($map, $map->name);
+    $this->view->result = $render || !$map->data['hide_empty_map'] ? TRUE : FALSE;
   }
 
   /**

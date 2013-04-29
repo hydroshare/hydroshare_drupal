@@ -364,7 +364,7 @@ class OgMetaData extends DrupalWebTestCase {
     $settings = array();
     $settings['type'] = 'article';
 
-    // Create group enteties.
+    // Create group entities.
     foreach (og_group_content_states() as $state => $value) {
       $node = $this->drupalCreateNode($settings);
 
@@ -457,6 +457,15 @@ class OgGroupAndUngroup extends DrupalWebTestCase {
     $settings['type'] = 'article';
     $settings['uid'] = $user2->uid;
     $node = $this->drupalCreateNode($settings);
+
+    // Exception on OG membership for anonymous user.
+    try {
+      og_membership_create('entity_test', $entity1->pid, 'user', 0, OG_AUDIENCE_FIELD)->save();
+      $this->fail('OG membership can be created for anonymous user.');
+    }
+    catch (OgException $e) {
+      $this->pass('OG membership can not be created for anonymous user.');
+    }
 
     $this->assertFalse(og_is_member('entity_test', $entity1->pid, 'node', $node), t('Node is not assigned to group1.'));
     $values = array('entity_type' => 'node', 'entity' => $node);
@@ -1632,12 +1641,11 @@ class OgDeleteOrphansTestCase extends DrupalWebTestCase {
       'name' => 'OG orphan delete',
       'description' => 'Verifying for deleting orphan group content.',
       'group' => 'Organic groups',
-      'dependencies' => array('advancedqueue'),
     );
   }
 
   function setUp() {
-    parent::setUp('og_test', 'advancedqueue');
+    parent::setUp('og_test');
 
     // Create a group content type.
     $group = $this->drupalCreateContentType();
@@ -1682,7 +1690,7 @@ class OgDeleteOrphansTestCase extends DrupalWebTestCase {
     // Execute manually the queue worker.
     $queue = DrupalQueue::get('og_membership_orphans');
     $item = $queue->claimItem();
-    og_membership_orphans_worker($item);
+    og_membership_orphans_worker($item->data);
 
     // Load the nodes we used during the test.
     $first_node = node_load($first_node->nid);
@@ -1712,7 +1720,7 @@ class OgDeleteOrphansTestCase extends DrupalWebTestCase {
     // Execute manually the queue worker.
     $queue = DrupalQueue::get('og_membership_orphans');
     $item = $queue->claimItem();
-    og_membership_orphans_worker($item);
+    og_membership_orphans_worker($item->data);
 
     // Load the node into a wrapper and verify we moved him to another group.
     $wrapper = entity_metadata_wrapper('node', $first_node->nid);

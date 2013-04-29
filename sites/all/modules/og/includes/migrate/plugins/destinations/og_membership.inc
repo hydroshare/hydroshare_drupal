@@ -64,10 +64,10 @@ class MigrateDestinationOGMembership extends MigrateDestination {
       throw new MigrateException('Missing group ID.');
     }
     if (empty($entity->entity_type)) {
-      throw new MigrateException('Missing enity type.');
+      throw new MigrateException('Missing entity type.');
     }
     if (empty($entity->etid)) {
-      throw new MigrateException('Missing enity ID.');
+      throw new MigrateException('Missing entity ID.');
     }
 
      // Set state, make sure legacy states from OG6 are converted to
@@ -78,15 +78,13 @@ class MigrateDestinationOGMembership extends MigrateDestination {
     else {
       $state = OG_STATE_ACTIVE;
     }
-
-    $values = array(
-      'entity_type' => $entity->entity_type,
-      'entity' => $entity->etid,
-      'state' => $state,
-      'created' => isset($entity->created) ? $entity->created : REQUEST_TIME,
-    );
-
     $this->prepare($entity, $row);
+    // Allow passing OG-membership fields via og_group().
+    $values = (array) $entity;
+    $values['entity'] = $entity->etid;
+    $values['state'] = $state;
+    $values['created'] = isset($entity->created) ? $entity->created : REQUEST_TIME;
+
     $og_membership = og_group($entity->group_type, $entity->gid, $values);
 
     if ($entity->entity_type == 'user') {

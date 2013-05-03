@@ -77,6 +77,14 @@ img.png, .banner img, table img {
 	box-shadow: none;
 	background: none;
 }
+img.olTileImage {
+	padding:0;
+	box-shadow:none;
+	background:none;
+	-moz-box-shadow: none;
+	-webkit-box-shadow:none;
+	border:none;
+}
 .gradientDown {
 	background: rgb(240,240,240); /* Old browsers */
 	/* IE9 SVG, needs conditional override of 'filter' to 'none' */

@@ -1,4 +1,4 @@
-function render_single_time_series( csvfilename, file_metadata_title, file_metadata_source ){
+function hydroshare_viz_script_render_single_time_series( csvfilename, file_metadata_title, file_metadata_source ){
 
 var plotHt = 280;
 
@@ -49,7 +49,7 @@ var area_context = d3.svg.area()
     .y1(function(d) { return y_context(d.value); });
     
 // Attach rectangles to svg elements that mark boundary of each plot.    
-var svg = d3.select("#hydroshare_time_series_target").append("svg")
+var svg = d3.select("#hydroshare_vizualization").append("svg")
     .attr("width", width + margin2.left + margin2.right)
     .attr("height", height2 + margin2.top + margin2.bottom);
 

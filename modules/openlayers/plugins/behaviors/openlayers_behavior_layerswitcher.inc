@@ -93,7 +93,7 @@ class openlayers_behavior_layerswitcher extends openlayers_behavior {
     if ($this->options['sortBaseLayer'] == 'ASC' || $this->options['sortBaseLayer'] == 'DESC') {
       uasort($map['layers'], 'drupal_sort_title');
       if ($this->options['sortBaseLayer'] == 'ASC') {
-        $map['layers'] = array_reverse ($map['layers'], TRUE);
+        $map['layers'] = array_reverse($map['layers'], TRUE);
       }
     }
 

@@ -28,9 +28,9 @@ function slugify($text)
 
 function ga_api_post($endpoint, $payload) { //Initiate cURL request and send back the result
     // these must be set in order for the module to work
-    $GA_URL = 'http://152.54.9.1:8000';
-    $GA_USERNAME = 'ga';
-    $GA_API_KEY = '6c1f25b484dd81305c10aaaee5731daa7e1bade5';
+    $GA_URL = 'http://ga.renci.org';
+    $GA_USERNAME = 'hydroshare';
+    $GA_API_KEY = 'ee0047730e15969bad30c523f953fac0991dcabc';
 
     $endpoint .= "?format=json&username=" . $GA_USERNAME . "&api_key=" . $GA_API_KEY;
     error_log(json_encode($payload));
@@ -100,13 +100,13 @@ function ga_http_response_code($str)
  * This and _update will cause files that were uploaded into HydroShare to propagate into Geoanalytics
  */
 function geoanalytics_node_presave( $node ) {
-    $GA_URL = 'http://152.54.9.1:8000';
-    $GA_USERNAME = 'ga';
-    $GA_API_KEY = '6c1f25b484dd81305c10aaaee5731daa7e1bade5';
+    $GA_URL = 'http://ga.renci.org';
+    $GA_USERNAME = 'hydroshare';
+    $GA_API_KEY = 'ee0047730e15969bad30c523f953fac0991dcabc';
 
-    if($node->type == "geoanalytics") {
+    if($node->type == "hydroshare_geoanalytics") {
         // get the file object from the node
-        $file = array_shift(field_get_items('node', $node, 'field_resource_file'));
+        $file = array_shift(field_get_items('node', $node, 'field_file'));
         $file_path = file_load($file['fid']);
         $web_path = file_create_url($file_path->uri);
 
@@ -150,7 +150,7 @@ function geoanalytics_node_presave( $node ) {
 }
 
 function geoanalytics_node_update( $node ) {
-    if($node->type == "geoanalytics") {
+    if($node->type == "hydroshare_geoanalytics") {
         // PUT a DataResource record to the geoanalytics API
         // PUT a style record to the geoanalytics API
         // PUT a RenderedLayer record to the geoanalytics API
@@ -171,27 +171,27 @@ function geoanalytics_preprocess_node( &$variables ) {
 }
 
 /**
- * This will actually do all the heavy lifting associated with displayig the map
+ * This will actually do all the heavy lifting associated with displaying the map
  */
 function geoanalytics_node_view( $node, $view_mode = 'full') {
 
     // only if in full mode and time_series
-    if( $view_mode == "full" && $node->type == "geoanalytics" ) {
+    if( $view_mode == "full" && $node->type == "hydroshare_geoanalytics" ) {
  
         // inject target div
         $node->content['render_target'] = array(
-            '#markup' => $node->type.'<div id="map" style="height:340px;"></div>',
+            '#markup' => '<div id="hydroshare_vizualization" style="height:340px;"></div>',
             '#weight' => 0,
         );
 
         // get the WMS service address from the node
-        $wms = $node->field_webservice['und'][0]['value'];
-        $style= $node->field_style_id['und'][0]['value'];
-        $layer= $node->field_layer_id['und'][0]['value'];
+        $wms   = $node->field_webservice['und'][0]['value'];
+        $style = $node->field_style_id['und'][0]['value'];
+        $layer = $node->field_layer_id['und'][0]['value'];
 
         // call render
         $node->content['render_single'] = array(
-            '#markup' => "<script>hydroshareMakeMap('$wms', '$layer', '$style');</script>",
+            '#markup' => "<script>hydroshare_viz_script_makemap('$wms', '$layer', '$style');</script>",
             '#weight' => 50,
         );
 

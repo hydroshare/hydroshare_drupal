@@ -26,26 +26,15 @@ function openlayers_openlayers_layer_type_cloudmade_openlayers_layer_types() {
  * OpenLayers CloudMade Layer Type class
  */
 class openlayers_layer_type_cloudmade extends openlayers_layer_type {
-  function __construct($layer = array(), $map = array()) {
-    parent::__construct($layer, $map);
-    if (isset($this->data)) {
-      $this->data += $this->options_init();
-    }
-    else {
-      $this->data = $this->options_init();
-    }
-  }
+
   /**
    * Provide initial values for options.
    */
   function options_init() {
     return array(
-      'layer_type' => 'cloudmade',
       'layer_handler' => 'cloudmade',
       'key' => variable_get('openlayers_layers_cloudmade_api', ''),
-      'projection' => array('900913'),
-      'baselayer' => TRUE,
-    );
+    ) + parent::options_init();
   }
 
   /**
@@ -67,10 +56,6 @@ class openlayers_layer_type_cloudmade extends openlayers_layer_type {
         '#description' => t('Enter the numeric Style ID for a <a href="http://maps.cloudmade.com/editor">Map Style</a> from CloudMade. You can usually find the Style ID in the lower right hand corner of each Map Style box.'),
         '#default_value' => isset($this->data['styleId']) ?
           $this->data['styleId'] : ''
-      ),
-      'layer_type' => array(
-        '#type' => 'hidden',
-        '#value' => 'openlayers_layer_type_cloudmade'
       ),
       $warning
     );
@@ -118,6 +103,5 @@ class openlayers_layer_type_cloudmade extends openlayers_layer_type {
       }
       $cloudmade_maps_included = TRUE;
     }
-    return $this->options;
   }
 }

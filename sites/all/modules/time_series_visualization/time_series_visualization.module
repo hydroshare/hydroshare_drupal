@@ -13,7 +13,7 @@ function time_series_visualization_node_view( $node, $view_mode = 'full') {
 
         // inject target div
         $node->content['render_target'] = array(
-            '#markup' => '<div id="hydroshare_time_series_target"></div>',
+            '#markup' => '<div id="hydroshare_vizualization"></div>',
             '#weight' => 0,
         );
 
@@ -30,12 +30,10 @@ function time_series_visualization_node_view( $node, $view_mode = 'full') {
         // get file metadata
         $source = NULL;
         data_model_get_node_metadata_field_value( $node, "source", $source );
-        $title = NULL;
-        data_model_get_node_metadata_field_value( $node, "title", $title );
 
         // call render
         $node->content['render_single'] = array(
-            '#markup' => "<script>render_single_time_series('$web_path','$title','$source')</script>",
+            '#markup' => "<script>hydroshare_viz_script_render_single_time_series('$web_path','$node->title','$source')</script>",
             '#weight' => 50,
         );
 

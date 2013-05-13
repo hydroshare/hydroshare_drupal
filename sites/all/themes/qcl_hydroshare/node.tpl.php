@@ -1,31 +1,200 @@
 <div id="node-<?php print $node->nid; ?>" class="<?php print $classes; ?>"<?php print $attributes; ?>>
 
-  <?php print $user_picture; ?>
+    <?php 
+    if( !empty( $content ) and 
+        !empty( $content['comments'] ) and 
+        !empty( $content['comments']['comment_form'] ) and 
+        !empty( $content['comments']['comment_form']['#node'] ) and 
+        ( strpos( $content['comments']['comment_form']['#node']->type, "hydroshare_" ) !== false ) ) {
+        print $user_picture; 
+        print render($title_prefix); 
+	    print( '<div class="subHeader">' );
+	    print( '<h1'. $title_attributes.'><a href="'.$node_url.'">'.$title.'</a></h1>');
+	    print('<p>Resource Details</p>
+	           </div><!-- subHeader -->
+	    <BR><BR><BR>
+		<div class="myContentSub">
+		    <div class="myContentSubInner">');
+                    // =-=-=-=-=-=-=-
+                    // wire up export button
+                    // NOTE:: this was extraced from printing the $content variable.
+                    //        there HAS to be a better way....
+                    $real_path = drupal_realpath( $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_file['und'][0]['uri'] ); 
+ 
+                    // =-=-=-=-=-=-=-
+                    // extract the metadata and display it 
+                    $contrib = "";
+                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_contributor;
+                    if( !empty( $tmp_arr ) ) {
+                        $contrib = $tmp_arr['und'][0]['safe_value']; 
+                    }
 
-  <?php print render($title_prefix); ?>
-  <?php if (!$page): ?>
-    <h2<?php print $title_attributes; ?>><a href="<?php print $node_url; ?>"><?php print $title; ?></a></h2>
-  <?php endif; ?>
-  <?php print render($title_suffix); ?>
+                    $subject = "";
+                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_subject;
+                    if( !empty( $tmp_arr ) ) {
+                        $subject = $tmp_arr['und'][0]['safe_value']; 
+                    }
+                    
+                    $relation = "";
+                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_relation;
+                    if( !empty( $tmp_arr ) ) {
+                        $relation = $tmp_arr['und'][0]['safe_value']; 
+                    }
+                    
+                    $source = "";
+                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_source;
+                    if( !empty( $tmp_arr ) ) {
+                        $source = $tmp_arr['und'][0]['safe_value']; 
+                    }
+                    
+                    $type = "";
+                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_type;
+                    if( !empty( $tmp_arr ) ) {
+                        $type = $tmp_arr['und'][0]['safe_value']; 
+                    }
+                    
+                    $coverage = "";
+                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_coverage;
+                    if( !empty( $tmp_arr ) ) {
+                        $coverage = $tmp_arr['und'][0]['safe_value']; 
+                    }
+                    
+                    $rights = "";
+                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_rights;
+                    if( !empty( $tmp_arr ) ) {
+                        $rights = $tmp_arr['und'][0]['safe_value']; 
+                    }
+                    
+                    $format = "";
+                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_format;
+                    if( !empty( $tmp_arr ) ) {
+                        $format = $tmp_arr['und'][0]['safe_value']; 
+                    }
 
-  <?php if ($display_submitted): ?>
-    <span class="submitted"><?php print $submitted ?></span>
-  <?php endif; ?>
+                    // =-=-=-=-=-=-=-
+                    // get the file directory
+                    $dir = drupal_dirname( $real_path );
+                    $dir = drupal_dirname( $dir );
 
-  <div class="content clearfix"<?php print $content_attributes; ?>>
-    <?php
-      hide($content['comments']);
-      hide($content['links']);
-      print render($content);
-    ?>
-  </div>
+                    // =-=-=-=-=-=-=-
+                    // get the zip name of the directory
+                    $zip_file = NULL;
+                    if( data_model_zip_file_name( $dir, $zip_file ) == false ) {
+                        error_log( "data_model_node_view :: data_model_zip_file_name failed for $dir" );
+                        return NULL;
 
-  <div class="clearfix">
-    <?php if (!empty($content['links'])): ?>
-      <div class="links"><?php print render($content['links']); ?></div>
-    <?php endif; ?>
+                    }
+                    
+                    // =-=-=-=-=-=-=-
+                    // build the java script operation
+                    $hostname = $_SERVER['SERVER_NAME'];
+                    $op = "http://$hostname/export.php?file=" . $zip_file;
+ 
+                    $edit_url = "http://$hostname/?q=node/" . $content[ 'comments' ][ 'comment_form' ][ '#node' ]->nid . "/edit";
+                    $delete_url = "http://$hostname/?q=node/" . $content[ 'comments' ][ 'comment_form' ][ '#node' ]->nid . "/delete";
+                    print( '<div class="contentListWrapper">');
+                        print( '<a href="" class="greyButton">EXECUTE</a>');
+                        print( '<a href="" class="greyButton">SHARE</a>');
+                        print( '<a href="'.$op.'" class="greyButton">EXPORT</a>');
+                        print( '<a href="'.$edit_url.'" class="greyButton">EDIT</a>');
+                        print( '<a href="'.$delete_url.'" class="greyButton">DELETE</a>');
+                    print( '</div> <!-- contentListWrapper --> ');
 
-    <?php print render($content['comments']); ?>
-  </div>
 
+                    $render = render( $content );
+                    $matches = NULL;
+                    print( '<div id="hydroshare_vizualization" style="height:340px"></div>' );
+                    $ret = preg_match( '/<script>hydroshare_viz_script.*<\/script>/i', $render, $matches );
+                    if( $ret ) {
+                        print( $matches[0] );
+                    } 
+
+                    $pos0 = strpos( $submitted, "Submitted by " );
+                    $pos1 = strpos( $submitted, " on " );
+
+                    $type    = "Time Series";
+                    $author  = substr( $submitted, $pos0, $pos1 - $pos0 );
+                    $created = substr( $submitted, $pos1, strlen( $submitted ) - $pos1 );
+
+                    print('<div style="clear:left"><br /><br /><br /></div>');
+
+                    print( '<div class="half-column">' );
+                        print( '<p><span class="bold">Resource Type:</span> '.$type.'</p>');
+                        print( '<p><span class="bold">Created by:</span> '.$author.'</p>');
+                        print( '<p><span class="bold">Created: </span>'.$created.'</p>');
+                        // ratings
+                        print( '<div class="starWrapper">');
+                            print( render( $content['field_rating'] ) );
+                        print('</div>');
+                        // tags
+                        $tags = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_tags['und'];
+                        print( '<p><span class="bold">Tags: </span>' );
+                        foreach( $tags as $tag ) {
+                            print( $tag['taxonomy_term']->name.', ');
+                        }
+                        print( '</p>' );
+                    print( '</div> <!-- half-column -->' );
+      
+                    print( '<div class="half-column-right">' );
+                        print( '<p><span class="bold">Contributors: </span>'.$contrib.'</p>');
+                        print( '<p><span class="bold">Subject: </span>'.$subject.'</p>');
+                        print( '<p><span class="bold">Relation: </span>'.$relation.'</p>');
+                        print( '<p><span class="bold">Source: </span>'.$source.'</p>');
+                        print( '<p><span class="bold">Type: </span>'.$type.'</p>');
+                        print( '<p><span class="bold">Coverage: </span>'.$coverage.'</p>');
+                        print( '<p><span class="bold">Rights: </span>'.$rights.'</p>');
+                        print( '<p><span class="bold">Format: </span>'.$format.'</p>');
+                    print( '</div> <!-- half-column-right -->' );
+      
+                    print('<div style="clear:both"></div>');
+
+                    print('<div class="full-column">');
+                        print('<h2>Resource Description</h2>');
+                        print( render( $content['body'] ) );
+                    print( '</div> <!-- full-column -->' );
+              
+                    print( '<div class="half-column">');
+                        if (!empty($content['links'])) {
+                            print( ' <div class="links">' );
+                                print render($content['links']);            
+                            print( '</div>');
+                        }
+                    print( '</div>' );
+
+                print( '</div> <!-- myContentSubInner -->');
+	     
+          print('</div> <!-- mycontentSub -->');
+
+          print('<div style="clear:both"></div>');
+          print( render($content['comments']) ); 
+
+    } else {
+	  print( '<div class = "content clearfix">');// . $content_attributes.' >');
+	      print( render( $content[ 'comments' ] ) ); 
+	  print( '</div>' );
+
+	  print( render($title_suffix) );
+          print( '<div class="content clearfix">');// . $content_attributes . ' >');
+              //if( !empty( $content['comments'] ) {
+	      //    print( hide($content['comments']) );
+              //}
+              //if( !empty( $content['links'] ) {
+	      //    print( hide($content['links']) );
+              //}
+	      print( render($content) );
+	  print( '</div>' );
+
+	  print( '<div class="clearfix">');
+	      if (!empty($content['links'])) { 
+	           print( ' <div class="links">' );
+                   print render($content['links']); 
+                   print( '</div>');
+	      }
+
+	      print( render($content['comments']) ); 
+	  print( '</div>' );
+
+    } 
+?>
+   
 </div>

@@ -31,23 +31,17 @@ class openlayers_layer_type_raw extends openlayers_layer_type {
    */
   function options_init() {
     return array(
-      'layer_type' => 'openlayers_layer_type_raw',
       'layer_handler' => 'openlayers_raw',
       'vector' => TRUE,
-      'baselayer' => FALSE,
-    );
+      'isBaseLayer' => FALSE,
+    ) + parent::options_init();
   }
 
   /**
    * Options form which generates layers
    */
   function options_form($defaults = array()) {
-    return array(
-      array(
-        '#value' => t('Raw layers should not be added
-        through the UI.')
-      )
-    );
+    return array();
   }
 
   /**
@@ -58,7 +52,6 @@ class openlayers_layer_type_raw extends openlayers_layer_type {
       '/plugins/layer_types/openlayers_layer_type_raw.js');
     // $features = ;
     // $this->data['features'] = $features;
-    return $this->options;
   }
 }
 

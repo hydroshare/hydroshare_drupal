@@ -273,8 +273,8 @@ class OpenLayersLayers extends DrupalWebTestCase {
         'title' => 'Unit Layer',
         'description' => 'Unit Layer for Drupal',
       ),
-      'openlayers_layer_type_virtualearth' => array(
-        'name' => 'unitlayervirtualearth',
+      'openlayers_layer_type_bing' => array(
+        'name' => 'unitlayerbing',
         'title' => 'Unit Layer',
         'description' => 'Unit Layer for Drupal',
       ),

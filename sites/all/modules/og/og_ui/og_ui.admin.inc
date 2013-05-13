@@ -76,9 +76,8 @@ function og_ui_admin_settings($form_state) {
   $form['og_use_queue'] = array(
     '#type' => 'checkbox',
     '#title' => t('Use queue'),
-    '#description' => t('Use <a href="@url">Advanced queue</a> module to process operations such as deleting memberships when groups are deleted.', array('@url' => 'http://drupal.org/project/advancedqueue')),
+    '#description' => t("Use the core's queue process to operations such as deleting memberships when groups are deleted."),
     '#default_value' => variable_get('og_use_queue', FALSE),
-    '#disabled' => !module_exists('advancedqueue'),
   );
 
   $form['og_orphans_delete'] = array(
@@ -86,7 +85,6 @@ function og_ui_admin_settings($form_state) {
     '#title' => t('Delete orphans'),
     '#description' => t('Delete "Orphan" group-content (not including useres), when the group is deleted.'),
     '#default_value' => variable_get('og_orphans_delete', FALSE),
-    '#disabled' => !module_exists('advancedqueue'),
     '#states' => array(
       'visible' => array(
         ':input[name="og_use_queue"]' => array('checked' => TRUE),
@@ -134,6 +132,7 @@ function og_ui_add_users($form, &$form_state, $group_type, $gid) {
   og_set_breadcrumb($group_type, $gid, array(l(t('Group'), "$group_type/$gid/group")));
   $group = entity_load_single($group_type, $gid);
   $label = entity_label($group_type, $group);
+  list(,, $bundle) = entity_extract_ids($group_type, $group);
 
   $form['group_type'] = array('#type' => 'value', '#value' => $group_type);
   $form['gid'] = array('#type' => 'value', '#value' => $gid);
@@ -153,6 +152,15 @@ function og_ui_add_users($form, &$form_state, $group_type, $gid) {
     '#type' => 'value',
     '#value' => OG_STATE_ACTIVE,
   );
+
+  // Get all the non-default roles.
+  if ($og_roles = og_roles($group_type, $bundle, $gid, FALSE, FALSE)) {
+    $form['og_user']['roles'] = array(
+      '#type' => 'checkboxes',
+      '#options' => $og_roles,
+      '#title' => t('Roles'),
+    );
+  }
 
   $field_names = og_get_group_audience_fields();
   $field_name = !empty($form_state['values']['field_name']) ? $form_state['values']['field_name'] : key($field_names);
@@ -254,9 +262,105 @@ function og_ui_add_users_submit($form, &$form_state) {
   $og_membership->etid = $account->uid;
   $og_membership->state = $state;
   $og_membership->save();
+  // Assign roles.
+  if (!empty($form_state['values']['roles'])) {
+    foreach ($form_state['values']['roles'] as $rid) {
+      og_role_grant($group_type, $gid, $og_membership->etid, $rid);
+    }
+  }
 
-  drupal_set_message(t('%user has been added to group.', array('%user' => format_username($account))));
+  $group = entity_load_single($group_type, $gid);
+  drupal_set_message(t('%user has been added to the group %group-title.', array('%user' => format_username($account), '%group-title' => entity_label($group_type, $group))));
 }
+
+/**
+ * Add Edit membership form.
+ */
+function og_ui_edit_membership($form, &$form_state, $group_type, $gid, $og_membership) {
+  og_set_breadcrumb($group_type, $gid, array(l(t('Group'), "$group_type/$gid/group")));
+  $group = entity_load_single($group_type, $gid);
+  $label = entity_label($group_type, $group);
+  $account = user_load($og_membership->etid);
+  list(,, $bundle) = entity_extract_ids($group_type, $group);
+  // Get all the non-default roles.
+  $og_roles = og_roles($group_type, $bundle, $gid, FALSE, FALSE);
+
+  $form['group_type'] = array('#type' => 'value', '#value' => $group_type);
+  $form['gid'] = array('#type' => 'value', '#value' => $gid);
+  $form['id'] = array('#type' => 'value', '#value' => $og_membership->id);
+
+  $form['og_user'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Edit a group membership in %group', array('%group' => $label)),
+  );
+  $form['og_user']['name'] = array(
+    '#type' => 'markup',
+    '#title' => t('User name'),
+    '#markup' => $account->name,
+  );
+  if ($og_roles) {
+    $form['og_user']['roles'] = array(
+      '#type' => 'checkboxes',
+      '#options' => $og_roles,
+      '#title' => t('Roles'),
+      '#default_value' => array_keys(og_get_user_roles($group_type, $gid, $account->uid)),
+    );
+  }
+
+ // Add group membership form.
+  $values = array();
+
+  // Add group membership form. We still don't have the user or state.
+  $form_state['og_membership'] = $og_membership;
+
+  $form['membership_fields'] = array(
+    '#prefix' => '<div id="og-ui-field-name">',
+    '#suffix' => '</div>',
+    '#tree' => TRUE,
+    '#parents' => array('membership_fields'),
+  );
+  field_attach_form('og_membership', $og_membership, $form['membership_fields'], $form_state);
+
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array('#type' => 'submit', '#value' => t('Update membership'));
+
+  return $form;
+}
+
+/**
+ * Validate handler; Edit membership in group.
+ */
+function og_ui_edit_membership_validate($form, &$form_state) {
+  $og_membership = $form_state['og_membership'];
+  field_attach_form_validate('og_membership', $og_membership, $form['membership_fields'], $form_state);
+}
+
+/**
+ * Submit handler; Edit membership in group.
+ */
+function og_ui_edit_membership_submit($form, &$form_state) {
+  $group_type = $form_state['values']['group_type'];
+  $gid = $form_state['values']['gid'];
+  $og_membership = $form_state['og_membership'];
+  field_attach_submit('og_membership', $og_membership, $form['membership_fields'], $form_state);
+  $og_membership->save();
+  $account = user_load($og_membership->etid);
+  // Assign roles.
+  $og_roles = og_get_user_roles($group_type, $gid, $account->uid);
+  foreach (array_keys($og_roles) as $rid) {
+    if (!in_array($rid, $form_state['values']['roles'])) {
+      og_role_revoke($group_type, $gid, $account->uid, $rid);
+    }
+  }
+  if (!empty($form_state['values']['roles'])) {
+    foreach ($form_state['values']['roles'] as $rid) {
+      og_role_grant($group_type, $gid, $og_membership->etid, $rid);
+    }
+  }
+  drupal_set_message(t('The membership has been updated.'));
+}
+
+
 
 /**
  * Form builder; OG user administration page.
@@ -751,7 +855,7 @@ function theme_og_ui_admin_permissions($variables) {
 }
 
 /**
- * Allow site admin to add or remove group fields from fieldable enteies.
+ * Allow site admin to add or remove group fields from fieldable entities.
  */
 function og_ui_field_settings($form, &$form_state) {
   $form = array();

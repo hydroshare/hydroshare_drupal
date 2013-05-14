@@ -11,65 +11,70 @@
             <?php if($page['menu']): print render($page['menu']); endif; ?>
         </div>
     </header>
+
     <div class="subHeader">
             <h1>Create Content</h1>
-            <p>Select a content type to create</p>
+            <p>Publish New Content</p>
     </div><!-- subHeader -->
-                            
+
     <div class="pageWrapper">
+    <div class="myContentHome">
+    <div class="contentListWrapper">
             <?php
+                if( array_key_exists( 'content', $page ) and 
+                    array_key_exists( 'system_main', $page['content'] ) and 
+                    array_key_exists( 'main', $page['content']['system_main'] ) and
+                    array_key_exists( "#markup", $page['content']['system_main']['main'] ) ) {
+		print( '<div class="contentList">' ); 
+		print( '<div class="contentTable">' ); 
+		$markup = render( $page['content'] );
+		$final_len = strlen( $markup ); 
 
-                print( '<div class="myContentHome">' ); 
-                print( '<div class="contentListWrapper">' ); 
-                print( '<div class="contentList">' ); 
-                print( '<div class="contentTable">' ); 
-                $markup = render( $page['content'] );
-                $final_len = strlen( $markup ); 
+		$p0 = strpos( $markup, "<dt>" );
+		$p1 = strpos( $markup, "</dd>" );
 
-                $p0 = strpos( $markup, "<dt>" );
-                $p1 = strpos( $markup, "</dd>" );
+		print("<table>" );
+		$done = false;
+		while( $done == false ) {
+		   $item = substr( $markup, $p0, $p1-$p0+5 ); 
+		   $is_hs = strpos( $item, "hydroshare-" );
+		   if( $is_hs ) { 
+		       $end_dt = strpos( $item, "</dt>" );
+		       $title = substr( $item, 4, $end_dt-4 );
 
-                print("<table>" );
-                $done = false;
-                while( $done == false ) {
-                   $item = substr( $markup, $p0, $p1-$p0+5 ); 
+		       $start_dd = strpos( $item, "<dd>" );
+		       $end_dd   = strpos( $item, "</dd>" );
+		       $descr    = substr( $item, $start_dd+4, $end_dd-$start_dd-4 );
 
-                   $is_hs = strpos( $item, "hydroshare-" );
-                   if( $is_hs ) { 
-                       $end_dt = strpos( $item, "</dt>" );
-                       $title = substr( $item, 4, $end_dt-4 );
+		       print( '<tr> <td><span class="bold">'.$title.'</span></td><td>'.$descr.'</td></p>');
 
-                       $start_dd = strpos( $item, "<dd>" );
-                       $end_dd   = strpos( $item, "</dd>" );
-                       $descr    = substr( $item, $start_dd+4, $end_dd-$start_dd-4 );
+		   }
 
-                       print( '<tr> <td><span class="bold">'.$title.'</span></td><td>'.$descr.'</td></p>');
+		   $p0 = strpos( $markup, "<dt>", $p0+4 );
+		   $p1 = strpos( $markup, "</dd>", $p1+5 );
 
-                   }
+		   if( $p0 == false or $p1 == false ) {
+		       $done = true;
+		   }
 
-                   $p0 = strpos( $markup, "<dt>", $p0+4 );
-                   $p1 = strpos( $markup, "</dd>", $p1+5 );
+		} // while
+		print("</table>" );
 
-                   if( $p0 == false or $p1 == false ) {
-                       $done = true;
-                   }
+		print( '</div> <!-- contentTable -->' );
+		print( '</div> <!-- contentList -->' );
+                } else {
+		    if($page['content']){ print (render($page['content']) ); }
+		    if($page['contentbottom']){ print render($page['contentbottom']); }
+		    if($page['subheader']){ print render($page['subheader']); }
+		    if($page['left']){ print render($page['left']); }
+		    if($page['right']){ print render($page['right']); }
 
-                } // while
-                print("</table>" );
-
-                print( '</div> <!-- contentTable -->' );
-                print( '</div> <!-- contentList -->' );
-                print( '</div> <!-- contentListWrapper -->' );
-                print( '</div> <!-- contentHome -->' );
+                } // else
             ?>
-            </div>
-        <!-- content 
-            <?php if($page['content']): print_r ($page['content']); endif; ?>
-            <?php if($page['contentbottom']): print render($page['contentbottom']); endif;?>
-            <?php if($page['subheader']): print render($page['subheader']); endif; ?>
-            <?php if($page['left']): print render($page['left']); endif; ?>
-            <?php if($page['right']): print render($page['right']); endif; ?>
-        -->
+    </div> <!-- contentListWrapper -->
+    </div> <!-- myContentHome -->
+    </div> <!-- pageWrapper -->
+        
     </div>
 </div>
 <!-- footer -->

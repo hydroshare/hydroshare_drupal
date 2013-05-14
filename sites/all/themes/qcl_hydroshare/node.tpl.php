@@ -1,11 +1,9 @@
 <div id="node-<?php print $node->nid; ?>" class="<?php print $classes; ?>"<?php print $attributes; ?>>
 
-    <?php 
+    <?php
+    //print( "<B><H3>THIS IS THE PLAIN OLD NODE FILE</H3></B>");
     if( !empty( $content ) and 
-        !empty( $content['comments'] ) and 
-        !empty( $content['comments']['comment_form'] ) and 
-        !empty( $content['comments']['comment_form']['#node'] ) and 
-        ( strpos( $content['comments']['comment_form']['#node']->type, "hydroshare_" ) !== false ) ) {
+        ( strpos( $node->type, "hydroshare_" ) !== false ) ) {
         print $user_picture; 
         print render($title_prefix); 
 	    print( '<div class="subHeader">' );
@@ -19,54 +17,54 @@
                     // wire up export button
                     // NOTE:: this was extraced from printing the $content variable.
                     //        there HAS to be a better way....
-                    $real_path = drupal_realpath( $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_file['und'][0]['uri'] ); 
+                    $real_path = drupal_realpath( $node->field_file['und'][0]['uri'] ); 
  
                     // =-=-=-=-=-=-=-
                     // extract the metadata and display it 
                     $contrib = "";
-                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_contributor;
+                    $tmp_arr = $node->field_contributor;
                     if( !empty( $tmp_arr ) ) {
                         $contrib = $tmp_arr['und'][0]['safe_value']; 
                     }
 
                     $subject = "";
-                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_subject;
+                    $tmp_arr = $node->field_subject;
                     if( !empty( $tmp_arr ) ) {
                         $subject = $tmp_arr['und'][0]['safe_value']; 
                     }
                     
                     $relation = "";
-                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_relation;
+                    $tmp_arr = $node->field_relation;
                     if( !empty( $tmp_arr ) ) {
                         $relation = $tmp_arr['und'][0]['safe_value']; 
                     }
                     
                     $source = "";
-                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_source;
+                    $tmp_arr = $node->field_source;
                     if( !empty( $tmp_arr ) ) {
                         $source = $tmp_arr['und'][0]['safe_value']; 
                     }
                     
                     $type = "";
-                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_type;
+                    $tmp_arr = $node->field_type;
                     if( !empty( $tmp_arr ) ) {
                         $type = $tmp_arr['und'][0]['safe_value']; 
                     }
                     
                     $coverage = "";
-                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_coverage;
+                    $tmp_arr = $node->field_coverage;
                     if( !empty( $tmp_arr ) ) {
                         $coverage = $tmp_arr['und'][0]['safe_value']; 
                     }
                     
                     $rights = "";
-                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_rights;
+                    $tmp_arr = $node->field_rights;
                     if( !empty( $tmp_arr ) ) {
                         $rights = $tmp_arr['und'][0]['safe_value']; 
                     }
                     
                     $format = "";
-                    $tmp_arr = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_format;
+                    $tmp_arr = $node->field_format;
                     if( !empty( $tmp_arr ) ) {
                         $format = $tmp_arr['und'][0]['safe_value']; 
                     }
@@ -90,8 +88,8 @@
                     $hostname = $_SERVER['SERVER_NAME'];
                     $op = "http://$hostname/export.php?file=" . $zip_file;
  
-                    $edit_url = "http://$hostname/?q=node/" . $content[ 'comments' ][ 'comment_form' ][ '#node' ]->nid . "/edit";
-                    $delete_url = "http://$hostname/?q=node/" . $content[ 'comments' ][ 'comment_form' ][ '#node' ]->nid . "/delete";
+                    $edit_url = "http://$hostname/?q=node/" . $node->nid . "/edit";
+                    $delete_url = "http://$hostname/?q=node/" . $node->nid . "/delete";
                     print( '<div class="contentListWrapper">');
                         print( '<a href="" class="greyButton">EXECUTE</a>');
                         print( '<a href="" class="greyButton">SHARE</a>');
@@ -102,32 +100,31 @@
 
 
                     $render = render( $content );
-                    $matches = NULL;
-                    print( '<div id="hydroshare_vizualization" style="height:340px"></div>' );
-                    $ret = preg_match( '/<script>hydroshare_viz_script.*<\/script>/i', $render, $matches );
-                    if( $ret ) {
-                        print( $matches[0] );
-                    } 
+                    if( strpos( $render, "hydroshare_vizualization" ) != false ) {
+                        $matches = NULL;
+                        print( '<div id="hydroshare_vizualization" style="height:340px"></div>' );
+                        $ret = preg_match( '/<script>hydroshare_viz_script.*<\/script>/i', $render, $matches );
+                        if( $ret ) {
+                            print( $matches[0] );
+                        } 
+                    }
 
-                    $pos0 = strpos( $submitted, "Submitted by " );
-                    $pos1 = strpos( $submitted, " on " );
-
-                    $type    = "Time Series";
-                    $author  = substr( $submitted, $pos0, $pos1 - $pos0 );
-                    $created = substr( $submitted, $pos1, strlen( $submitted ) - $pos1 );
+                    $type    = node_type_get_name( $node ); 
+                    $user = user_load(array('uid' => $node->uid));
+                    $created_date = date("D, j M Y", $$created);
 
                     print('<div style="clear:left"><br /><br /><br /></div>');
 
                     print( '<div class="half-column">' );
                         print( '<p><span class="bold">Resource Type:</span> '.$type.'</p>');
-                        print( '<p><span class="bold">Created by:</span> '.$author.'</p>');
-                        print( '<p><span class="bold">Created: </span>'.$created.'</p>');
+                        print( '<p><span class="bold">Created by:</span> '.$user->name.'</p>');
+                        print( '<p><span class="bold">Created: </span>'.$created_date.'</p>');
                         // ratings
                         print( '<div class="starWrapper">');
                             print( render( $content['field_rating'] ) );
                         print('</div>');
                         // tags
-                        $tags = $content[ 'comments' ][ 'comment_form' ][ '#node' ]->field_tags['und'];
+                        $tags = $node->field_tags['und'];
                         print( '<p><span class="bold">Tags: </span>' );
                         foreach( $tags as $tag ) {
                             print( $tag['taxonomy_term']->name.', ');

@@ -1366,6 +1366,10 @@ ul.forget {
 	float: left;
 }
 
+img.floatLeft {
+    float: left;
+    margin: 4px;
+}
 
 /******************************/
 /********** Footer ************/

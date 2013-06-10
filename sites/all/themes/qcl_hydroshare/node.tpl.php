@@ -11,7 +11,7 @@
         $dir = drupal_dirname( $dir );
 
         if( $teaser ) {
-            print $user_picture; 
+            //print $user_picture; 
             print render($title_prefix); 
         
             // =-=-=-=-=-=-=-

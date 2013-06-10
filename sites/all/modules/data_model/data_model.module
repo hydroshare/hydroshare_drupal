@@ -171,6 +171,23 @@ xmlns:dc=\"http://purl.org/dc/elements/1.1/\">
 } // data_model_write_science_metadata
 
 // =-=-=-=-=-=-=-
+// create the data viz thumbnail and include it in the data model directory
+function data_model_create_viz_thumbnail( $node, $dir ) {
+    // =-=-=-=-=-=-=-
+    // for now rely on the default thumbnail
+    $dst_dir = drupal_dirname( $dir );
+    $src_dir = drupal_dirname( drupal_dirname( $dst_dir ) );
+    $src = $src_dir."/default_thumbnail.png";
+    $dst = $dst_dir."/thumbnail.png";
+  
+    error_log( "SRC:".$src );  
+    error_log( "DST:".$dst );  
+    
+    return file_unmanaged_copy( $src, $dst );
+
+} // data_model_create_viz_thumbnail
+
+// =-=-=-=-=-=-=-
 // write out an xml file given metadata from the node ( dublin core++ )
 function data_model_write_system_metadata( $node, $dir ) {
     $meta_data = 
@@ -309,6 +326,14 @@ function data_model_node_presave( $node ) {
     }
  
     // =-=-=-=-=-=-=-
+    // create the data viz thumbnail
+    if( !data_model_create_viz_thumbnail( $node, drupal_dirname( $new_file_path ) ) ) {
+        drupal_set_message( "data_model_node_view :: failed to data viz thumbnail for $new_file_path" );
+        return NULL;
+
+    }
+
+    // =-=-=-=-=-=-=-
     // write the system metadata file
     if( !data_model_write_system_metadata( $node, drupal_dirname( $new_file_path ) ) ) {
         drupal_set_message( "data_model_node_view :: failed to write system metadata for $new_file_path" );
@@ -403,12 +428,12 @@ function data_model_views_api() {
 }
 
 function data_model_views_pre_render(&$view) {
-    error_log( "XXXX - data_model_views_pre_render" );
+    //error_log( "XXXX - data_model_views_pre_render" );
     //print_r( $view );
 }
 
 function data_model_views_pre_view(&$view) {
-    error_log( "XXXX - data_model_views_pre_view" );
+    //error_log( "XXXX - data_model_views_pre_view" );
     //print_r( $view );
 }
 

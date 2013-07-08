@@ -44,10 +44,70 @@
      
                         // =-=-=-=-=-=-=-
                         // extract the metadata and display it 
-                        $contrib = "";
-                        $tmp_arr = $node->field_contributor;
+                        $creator_name = "";
+                        $tmp_arr = $node->field_name;
                         if( !empty( $tmp_arr ) ) {
-                            $contrib = $tmp_arr['und'][0]['safe_value']; 
+                            $creator_name = $tmp_arr['und'][0]['safe_value']; 
+                        }
+
+                        $creator_email = "";
+                        $tmp_arr = $node->field_email;
+                        if( !empty( $tmp_arr ) ) {
+                            $creator_email = $tmp_arr['und'][0]['safe_value']; 
+                        }
+
+                        $creator_organization = "";
+                        $tmp_arr = $node->field_organization;
+                        if( !empty( $tmp_arr ) ) {
+                            $creator_organization = $tmp_arr['und'][0]['safe_value']; 
+                        }
+
+                        $creator_address = "";
+                        $tmp_arr = $node->field_address;
+                        if( !empty( $tmp_arr ) ) {
+                            $creator_address = $tmp_arr['und'][0]['safe_value']; 
+                        }
+
+                        $creator_phone_number = "";
+                        $tmp_arr = $node->field_phone_number;
+                        if( !empty( $tmp_arr ) ) {
+                            $creator_phone_number = $tmp_arr['und'][0]['safe_value']; 
+                        }
+
+                        $contributor_name = "";
+                        $tmp_arr = $node->field_contributor_name;
+                        if( !empty( $tmp_arr ) ) {
+                            $contributor_name = $tmp_arr['und'][0]['safe_value']; 
+                        }
+
+                        $contributor_email = "";
+                        $tmp_arr = $node->field_contributor_email;
+                        if( !empty( $tmp_arr ) ) {
+                            $contributor_email = $tmp_arr['und'][0]['safe_value']; 
+                        }
+
+                        $contributor_organization = "";
+                        $tmp_arr = $node->field_contributor_organization;
+                        if( !empty( $tmp_arr ) ) {
+                            $contributor_organization = $tmp_arr['und'][0]['safe_value']; 
+                        }
+
+                        $contributor_address = "";
+                        $tmp_arr = $node->field_contributor_address;
+                        if( !empty( $tmp_arr ) ) {
+                            $contributor_address = $tmp_arr['und'][0]['safe_value']; 
+                        }
+
+                        $contributor_phone_number = "";
+                        $tmp_arr = $node->field_contributor_phone;
+                        if( !empty( $tmp_arr ) ) {
+                            $contributor_phone_number = $tmp_arr['und'][0]['safe_value']; 
+                        }
+
+                        $contributor_contribution = "";
+                        $tmp_arr = $node->field_contribution;
+                        if( !empty( $tmp_arr ) ) {
+                            $contributor_contribution = $tmp_arr['und'][0]['safe_value']; 
                         }
 
                         $subject = "";
@@ -56,41 +116,51 @@
                             $subject = $tmp_arr['und'][0]['safe_value']; 
                         }
                         
-                        $relation = "";
-                        $tmp_arr = $node->field_relation;
+                        $references = "";
+                        $tmp_arr = $node->field_references;
                         if( !empty( $tmp_arr ) ) {
-                            $relation = $tmp_arr['und'][0]['safe_value']; 
+                            $references = $tmp_arr['und'][0]['safe_value']; 
                         }
                         
-                        $source = "";
-                        $tmp_arr = $node->field_source;
+                        $source_name = "";
+                        $tmp_arr = $node->field_source_name;
                         if( !empty( $tmp_arr ) ) {
-                            $source = $tmp_arr['und'][0]['safe_value']; 
+                            $source_name = $tmp_arr['und'][0]['safe_value']; 
                         }
-                        
-                        $type = "";
-                        $tmp_arr = $node->field_type;
+  
+                        $source_comments = "";
+                        $tmp_arr = $node->field_source_comments;
                         if( !empty( $tmp_arr ) ) {
-                            $type = $tmp_arr['und'][0]['safe_value']; 
+                            $source_comments = $tmp_arr['und'][0]['safe_value']; 
                         }
-                        
-                        $coverage = "";
-                        $tmp_arr = $node->field_coverage;
+   
+                        $source_id = "";
+                        $tmp_arr = $node->field_source_id;
                         if( !empty( $tmp_arr ) ) {
-                            $coverage = $tmp_arr['und'][0]['safe_value']; 
-                        }
-                        
+                            $source_id = $tmp_arr['und'][0]['safe_value']; 
+                        }                     
+                         
                         $rights = "";
                         $tmp_arr = $node->field_rights;
                         if( !empty( $tmp_arr ) ) {
                             $rights = $tmp_arr['und'][0]['safe_value']; 
                         }
-                        
-                        $format = "";
-                        $tmp_arr = $node->field_format;
+
+                        $coverage_spatial = "";
+                        $tmp_arr = $node->field_coverage_spatial;
                         if( !empty( $tmp_arr ) ) {
-                            $format = $tmp_arr['und'][0]['safe_value']; 
+                            $coverage_spatial = $tmp_arr['und'][0]['safe_value']; 
                         }
+                         
+                        $coverage_temporal = "";
+                        $tmp_arr = $node->field_coverage_temporal;
+                        if( !empty( $tmp_arr ) ) {
+                            $coverage_temporal = $tmp_arr['und'][0]['safe_value']; 
+                        }            
+                                  
+                        $file = NULL;
+                        data_model_get_file_from_node( $node, $file );
+                        $format = $file->filemime;
 
                         // =-=-=-=-=-=-=-
                         // get the file directory
@@ -132,15 +202,19 @@
                             } 
                         }
 
-                        $type    = node_type_get_name( $node ); 
+                        $type = node_type_get_name( $node ); 
                         $user = user_load(array('uid' => $node->uid));
-                        $created_date = date("D, j M Y", $$created);
+                        $created_date = date("D, j M Y", $created);
 
                         print('<div style="clear:left"><br /><br /><br /></div>');
 
                         print( '<div class="half-column">' );
-                            print( '<p><span class="bold">Resource Type:</span> '.$type.'</p>');
-                            print( '<p><span class="bold">Created by:</span> '.$user->name.'</p>');
+                            print( '<p><span class="bold">Resource Type:</span><span style="float:right">'.$type.'</span></p>');
+                            print( '<p><span class="bold">Created by:</span><span style="float:right">'.$user->name.'</span></p>');
+                            print( '<p><span style="float:right">'.$creator_email.'</span></p><br>');
+                            print( '<p><span style="float:right">'.$creator_organization.'</span></p><br>');
+                            print( '<p><span style="float:right">'.$creator_address.'</span></p><br>');
+                            print( '<p><span style="float:right">'.$creator_phone_number.'</span></p><br>');
                             print( '<p><span class="bold">Created: </span>'.$created_date.'</p>');
                             // ratings
                             print( '<div class="starWrapper">');
@@ -156,14 +230,24 @@
                         print( '</div> <!-- half-column -->' );
           
                         print( '<div class="half-column-right">' );
-                            print( '<p><span class="bold">Contributors: </span>'.$contrib.'</p>');
-                            print( '<p><span class="bold">Subject: </span>'.$subject.'</p>');
-                            print( '<p><span class="bold">Relation: </span>'.$relation.'</p>');
-                            print( '<p><span class="bold">Source: </span>'.$source.'</p>');
-                            print( '<p><span class="bold">Type: </span>'.$type.'</p>');
-                            print( '<p><span class="bold">Coverage: </span>'.$coverage.'</p>');
-                            print( '<p><span class="bold">Rights: </span>'.$rights.'</p>');
-                            print( '<p><span class="bold">Format: </span>'.$format.'</p>');
+                            print( '<p><span class="bold">Contributor:</span><span style="float:right">'.$contributor_name.'</span></p>');
+                            print( '<p><span style="float:right">'.$contributor_email.'</span></p><br>');
+                            print( '<p><span style="float:right">'.$contributor_organization.'</span></p><br>');
+                            print( '<p><span style="float:right">'.$contributor_address.'</span></p><br>');
+                            print( '<p><span style="float:right">'.$contributor_phone_number.'</span></p><br>');
+                            print( '<p><span style="float:right">'.$contributor_contribution.'</span></p><br>');
+
+                            print( '<p><span class="bold">Subject:</span><span style="float:right">'.$subject.'</span></p>');
+                            print( '<p><span class="bold">References:</span><span style="float:right">'.$references.'</span></p>');
+                            print( '<p><span class="bold">Source: </span><span style="float:right">'.$source_name.'</span></p>');
+                            print( '<p><span style="float:right">'.$source_comments.'</span></p><br>');
+                            print( '<p><span style="float:right">'.$source_id.'</span></p><br>');
+                            #print( '<p><span class="bold">Relation: </span><span style="float:right">'.$relation.'</span></p>');
+                            print( '<p><span class="bold">Rights: </span><span style="float:right">'.$rights.'</span></p>');
+                            print( '<p><span class="bold">Coverage:</span></p>');
+                            print( '<p><span style="float:right">'.$coverage_spatial.'</span></p><br>');
+                            print( '<p><span style="float:right">'.$coverage_temporal.'</span></p><br>');
+                            print( '<p><span class="bold">Format:</span><span style="float:right">'.$format.'</span></p>');
                         print( '</div> <!-- half-column-right -->' );
           
                         print('<div style="clear:both"></div>');

@@ -5,7 +5,6 @@ require 'data_model_file_ops.php';
 // =-=-=-=-=-=-=-
 // helper function to work out the new RDM Directory given a new file
 function data_model_make_data_path( $title, $real_path, &$new_path ) {
-
     // =-=-=-=-=-=-=-
     // remove spaces from title to simplify
     $stripped_title = str_replace( " ", "", $title );
@@ -100,71 +99,154 @@ function data_model_get_node_metadata_field_value( $node, $name, &$value ) {
 // write out an xml file given metadata from the node ( dublin core++ )
 function data_model_write_science_metadata( $node, $dir ) {
     // =-=-=-=-=-=-=-
-    // 
-    $user = user_load( $node->uid );
-    $user_name = $user->name;
+    // Creator
+    $name = NULL;
+    data_model_get_node_metadata_field_value( $node, "name", $name );
+    
+    $email = NULL;
+    data_model_get_node_metadata_field_value( $node, "email", $email );
+ 
+    $organization = NULL;
+    data_model_get_node_metadata_field_value( $node, "organization", $organization );
 
-    $contributor = NULL;
-    data_model_get_node_metadata_field_value( $node, "contributor", $contributor );
+    $address = NULL;
+    data_model_get_node_metadata_field_value( $node, "address", $address );
+    
+    $phone = NULL;
+    data_model_get_node_metadata_field_value( $node, "phone_number", $phone );
 
+    // =-=-=-=-=-=-=-
+    // Contributor
+    $contributor_name = NULL;
+    data_model_get_node_metadata_field_value( $node, "contributor_name", $contributor_name );
+       
+    $contributor_contribution = NULL;
+    data_model_get_node_metadata_field_value( $node, "contribution", $contributor_contribution );
+     
+    $contributor_email = NULL;
+    data_model_get_node_metadata_field_value( $node, "contributor_email", $contributor_email );
+
+    $contributor_organization = NULL;
+    data_model_get_node_metadata_field_value( $node, "contributor_organization", $contributor_organization );
+    
+    $contributor_address = NULL;
+    data_model_get_node_metadata_field_value( $node, "contributor_address", $contributor_address );
+    
+    $contributor_phone = NULL;
+    data_model_get_node_metadata_field_value( $node, "contributor_phone", $contributor_phone );
+
+    // =-=-=-=-=-=-=-
+    // Date
+    $date = date( "Y-m-d" );
+
+    // =-=-=-=-=-=-=-
+    // Subject
     $subject = NULL;
     data_model_get_node_metadata_field_value( $node, "subject", $subject );
 
-    $relation = NULL;
-    data_model_get_node_metadata_field_value( $node, "relation", $relation );
+    // =-=-=-=-=-=-=-
+    // References
+    $references = NULL;
+    data_model_get_node_metadata_field_value( $node, "references", $references );
 
-    $source = NULL;
-    data_model_get_node_metadata_field_value( $node, "source", $source );
+    // =-=-=-=-=-=-=-
+    // Source
+    $source_name = NULL;
+    data_model_get_node_metadata_field_value( $node, "source_name", $source_name );
+    
+    $source_comments = NULL;
+    data_model_get_node_metadata_field_value( $node, "source_comments", $source_comments );
+    
+    $source_id = NULL;
+    data_model_get_node_metadata_field_value( $node, "source_id", $source_id );
 
-    $type = NULL;
-    data_model_get_node_metadata_field_value( $node, "type", $type );
+    // =-=-=-=-=-=-=-
+    // Type
+    $type = node_type_get_name( $node );
 
+    // =-=-=-=-=-=-=-
+    // Type
     $rights = NULL;
     data_model_get_node_metadata_field_value( $node, "rights", $rights );
- 
-    $format = NULL;
-    data_model_get_node_metadata_field_value( $node, "format", $format );
 
-    $coverage = NULL;
-    data_model_get_node_metadata_field_value( $node, "coverage", $coverage );
+    // =-=-=-=-=-=-=-
+    // Format 
+    $format = "csv";
+    // need to determine format from content type here
 
-    $title = NULL;
-    data_model_get_node_metadata_field_value( $node, "title", $title );
-    
-    $body = NULL;
-    data_model_get_node_metadata_field_value( $node, "body", $body );
+    // =-=-=-=-=-=-=-
+    // Coverage
+    $coverage_spatial = NULL;
+    data_model_get_node_metadata_field_value( $node, "coverage_spatial", $coverage_spatial );
 
-    $url = url() . "/node/" . $node->nid;
+    $coverage_temporal = NULL;
+    data_model_get_node_metadata_field_value( $node, "coverage_temporal", $coverage_temporal );
 
-    $date = date( "Y-m-d" );
+    // =-=-=-=-=-=-=-
+    // Description
+    $body = field_get_items( 'node', $node, 'body' );
+    $description = $body[0]['value'];
 
-    $NA = "no_value";
-    $meta_data = "
-<?xml version=\"1.0\"?>
-<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"
-xmlns:dc=\"http://purl.org/dc/elements/1.1/\">  
-<rdf:Description>
-    <dc:creator>$user_name</dc:creator>
-    <dc:contributor>$contributor</dc:contributor>
-    <dc:publisher>HydroShare</dc:publisher>
-    <dc:subject>$subject</dc:subject>
-    <dc:description>$body</dc:description>
-    <dc:identifier>$url</dc:identifier>
-    <dc:relation>$relation</dc:relation>
-    <dc:source>$source</dc:source>
-    <dc:rights>$rights</dc:rights>
-    <dc:format>$format</dc:format>
-    <dc:type>$type</dc:type>
-    <dc:title>$title</dc:title>
-    <dc:date>$date</dc:date>
-    <dc:coverage>$coverage</dc:coverage>
-    <dc:language>$NA</dc:language>
-</rdf:Description>
-</rdf:RDF>";
+    $hostname = $_SERVER['SERVER_NAME'];
+    $url = "http://". $hostname . "?q=node/" . $node->nid;
+
+    $meta_data = '<?xml version="1.0" encoding="UTF-8"?>
+    <rdf:RDF 
+        xmlns:citoterms="http://purl.org/spar/cito/"
+        xmlns:dc="http://purl.org/dc/elements/1.1/"
+        xmlns:dcterms="http://purl.org/dc/terms/"
+        xmlns:foaf="http://xmlns.com/foaf/0.1/"
+        xmlns:hsterms="http://hydro.urwl.usu.edu/hydroshare/terms/"
+        xmlns:ore="http://www.openarchives.org/ore/terms/"
+        xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        xmlns:rdfsl="http:/www.w3.org/2001/01/rdf-schema#"
+    >
+        <rdf:Description>
+            <dc:creator>
+                <hsterms:name>'.$name.'</hsterms:name>
+                <hsterms:email>'.$email.'</hsterms:email>
+                <hsterms:organization>'.$organization.'</hsterms:organization>
+                <hsterms:address>'.$address.'</hsterms:address>
+                <hsterms:phone>'.$phone.'</hsterms:phone>     
+            </dc:creator>
+            <dc:contributor>
+                <hsterms:name>'.$contributor_name.'</hsterms:name>
+                <hsterms:contribution>'.$contributor_contribution.'</hsterms:contribution>
+                <hsterms:email>'.$contributor_email.'</hsterms:email>
+                <hsterms:address>'.$contributor_address.'</hsterms:address>
+                <hsterms:phone>'.$contributor_phone.'</hsterms:phone>     
+            </dc:contributor>
+            <dcterms:created xsi:type="dcterms:W3CDTF>'.date( "Y-M-D", $node->created).'</dc:created>
+            <dcterms:modified xsi:type="dcterms:W3CDTF>'.$date.'</dc:modified>
+            <dc:publisher>http://'.$hostname.'</dc:publisher>
+            <dc:subject>'.$subject.'</dc:subject>
+            <dc:description>'.$description.'</dc:description>
+            <dc:identifier xsi:type="dcterms:URI">'.$url.'</dc:identifier>
+            <dc:relation>
+                <dcterm:isVersionOf>'.$url.'</dcterm:isVersionOf>
+                <version>1</version> 
+                <dcterm:references>'.$references.'</dcterm:references> 
+            </dc:relation>
+            <dc:source>
+                <hsterms:name>'.$source_name.'</hsterms:name>
+                <hsterms:comments>'.$source_comments.'</hsterms:comments>
+                <hsterms:identifier>'.$source_id.'</hsterms:identifier> 
+            </dc:source>
+            <dc:rights>'.$rights.'</dc:rights>
+            <dc:format>'.$format.'</dc:format>
+            <dc:type>'.$type.'</dc:type>
+            <dc:title>'.$node->title.'</dc:title>
+            <dc:coverage>
+                <hsterms:spatial>'.$coverage_spatial.'</hsterms:spatial>
+                <hsterms:temporal>'.$coverage_temporal.'</hsterms:temporal> 
+            </dc:coverage>
+            <dc:language>eng</dc:language>
+        </rdf:Description>
+    </rdf:RDF>';
 
     // =-=-=-=-=-=-=-
     // actually write the file
-    file_put_contents( "$dir/science_metadata.xml", $meta_data );
+    file_put_contents( "$dir/sciencemetadata.xml", $meta_data );
 
     return true;
 
@@ -190,12 +272,76 @@ function data_model_create_viz_thumbnail( $node, $dir ) {
 // =-=-=-=-=-=-=-
 // write out an xml file given metadata from the node ( dublin core++ )
 function data_model_write_system_metadata( $node, $dir ) {
-    $meta_data = 
-"<?xml version=\"1.0\"?>\n<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\n</rdf:RDF>";
+    $file = NULL;
+    data_model_get_file_from_node( $node, $file );
+  
+    $hostname  = $_SERVER['SERVER_NAME'];
+    $file_uri  = str_replace( 'public://', 'http://'.$hostname.'/sites/default/files/', $file->uri );
+    $file_name = $file->filename;
+    $sci_mdata = drupal_dirname( $file_uri ) . '/sciencemetadata.xml';
+    $sys_mdata = drupal_dirname( $file_uri ) . '/resourcemap.xml';
+    $format    = $file->filemime;
+                        
+    $type = node_type_get_name( $node ); 
+    $user = user_load(array('uid' => $node->uid));
+    $created = date('Y-m-d\TH:i:s', $node->created ); 
+    $meta_data = '<?xml version="1.0" encoding="UTF-8"?>
+    <rdf:RDF 
+        xmlns:citoterms="http://purl.org/spar/cito/"
+        xmlns:dc="http://purl.org/dc/elements/1.1/"
+        xmlns:dcterms="http://purl.org/dc/terms/"
+        xmlns:foaf="http://xmlns.com/foaf/0.1/"
+        xmlns:hsterms="http://hydro.urwl.usu.edu/hydroshare/terms/"
+        xmlns:ore="http://www.openarchives.org/ore/terms/"
+        xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        xmlns:rdfsl="http:/www.w3.org/2001/01/rdf-schema#"
+    >
+        <rdf:description rdf:about=' . $file_uri  . '>
+            <dcterms:identifier>'    . $file_name . '</dcterms:identifier>
+            <dcterms:isAggregatedBy>'. $sci_mdata . '</dcterms:identifier>
+            <dcterms:format>'        . $format    . '</dcterms:format>
+        </rdf:description>
+        <rdf:description rdf:about='        . $sys_mdata   . '>
+            <dcterms:isDocumentedBy>'       . $sci_mdata   . '</dcterms:isDocumentedBy>
+            <dcterms:creator rdf:nodeID="'  . $node->nid   . '"/>
+            <dc:title>'                     . $node->title . '</dc:title>
+            <ore:aggregates rdf:resource="' . $file_uri    . '"/>
+            <ore:aggregates rdf:resource="' . $sci_mdata   . '"/>
+            <dcterms:created>'              . $created     . '</dcterms:created>
+            <rdf:type rdf:resource="http://www.openarchives.org/ore/terms/Aggregation"/>
+            <hsterms:hydroshareResourceType>' . $type . '</hsterms:hydroshareResourceType>
+        </rdf:description>
+        <rdf:description rdf:nodeID="' . $node->nid  . '">
+            <foaf:name>'               . $user->name . '</foaf:name>
+        </rdf:description>
+        <rdf:description rdf:about="http://www.openarchives.org/ore/terms/ResourceMap">
+            <rdfsl:label>ResourceMap</rdfsl:label>
+            <rdfsl:isDefinedBy rdf:resource="http://www.openarchives.org/ore/terms/"/>
+        </rdf:description> 
+        <rdf:description rdf:about="http://www.openarchives.org/ore/terms/Aggregation">
+            <rdfsl:label>Aggregation</rdfsl:label>
+            <rdfsl:isDefinedBy rdf:resource="http://www.openarchives.org/ore/terms/"/>
+        </rdf:description> 
+        <rdf:description rdf:about=' . $sys_mdata  . '>
+            <ore:describes rdf:resource=' . $sys_mdata  . '#aggregation/>
+            <dcterms:creator rdf:resource=HydroShare/>
+            <dc:format></dc:format>
+            <dcterms:modified>' . date('Y-m-d\TH;i:s') . '</dcterms:modified> 
+            <rdf:type rdf:resource="http://www.openarchives.org/ore/terms/ResourceMap"/>
+            <dcterms:created>' . $created . '</dcterms:created>
+        </rdf:description> 
+        <rdf:description rdf:about="' . $sci_mdata . '>
+            <dcterms:identifier>sciencemetadata.xml</dcterms:identifier>
+            <dcterms:isAggregatedBy>' . $sys_mdata . '</dcterms:isAggregatedBy>
+            <citoterms:documents>'    . $sci_mdata . '<citoterms:documents>
+            <dc:title>Science metadata document describing the aggregation </dc:title>
+        </rdf:description>
+   </rdf:RDF>';
+
 
     // =-=-=-=-=-=-=-
     // actually write the file
-    file_put_contents( "$dir/system_metadata.xml", $meta_data );
+    file_put_contents( "$dir/resourcemap.xml", $meta_data );
 
     return true;
 
@@ -240,7 +386,7 @@ function data_model_write_bagit_metadata( $dir ) {
 
     return true;
 
-} // data_model_write_system_metadata
+} // data_model_write_bagit_metadata
 
 // =-=-=-=-=-=-=-
 // hook to move file into Data Model Directory for this Resource

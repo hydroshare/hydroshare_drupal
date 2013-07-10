@@ -16,7 +16,7 @@
 					<?php if($page['banner']): print render($page['banner']); endif; ?>
 				<!-- Content Bottom -->
 					
-					<?php if($page['contentbottom']): print render($page['contentbottom']); endif; ?>
+					<!-- php if($page['contentbottom']): print render($page['contentbottom']); endif;  -->
 				</section>
 			</div>
 		</div>

@@ -8,7 +8,7 @@ function renci_custom_form_alter(&$form, &$form_state, $form_id){
 	  
 		$form['actions']['recover_pwd_btn'] = array(
 		    '#type' => 'button',
-		    '#size' => '300',
+		    '#size' => 300,
 		    '#onclick' => 'window.location="/?q=user/password";',
 		    '#value' => t('Recover Lost Password'),
   );

@@ -10,7 +10,7 @@ function renci_custom_form_alter(&$form, &$form_state, $form_id){
 		    '#type' => 'button',
 		    '#submit' => array('renci_custom_user_login_recover_pwd_submit'),
 		    '#limit_validation_errors' => array(),		
-		    '#attributes' =>  array('style' => array('width:300px'), 'onclick' => array('window.location=/?q=user/pass;return false;')),
+		    '#attributes' =>  array('style' => array('width:300px'), 'onclick' => array('alert(\'Request new password\');window.location=\'/?q=user/pass\';return false;')),
 		    '#value' => t('RECOVER LOST PASSWORD'),
   			);
   }

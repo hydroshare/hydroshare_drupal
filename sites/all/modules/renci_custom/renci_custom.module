@@ -2,8 +2,6 @@
 
 // Hook where we will add the custom submit handler for each form id
 function renci_custom_form_alter(&$form, &$form_state, $form_id){
-
-  
   // Add custom form ids here
   if ($form_id == 'user_login' || $form_id == 'user_login_block') { 
 		$form['actions']['submit']['#value'] = t("SIGN IN");
@@ -14,15 +12,22 @@ function renci_custom_form_alter(&$form, &$form_state, $form_id){
   if ($form_id == 'user_pass') { 
     drupal_set_title(t('Request new password')); 
   }
+  if ($form_id ==  'user_profile') {
+	  $form['account']['pass']['#process'] = array(
+		    'form_process_password_confirm',
+		    'renci_custom_form_process_password_confirm',
+		    'user_form_process_password_confirm'
+	  		);
+  	
+  }
+  if ($form_id ==  'user_profile_form') {
+	  $form['account']['pass']['#process'] = array(
+	    'form_process_password_confirm',
+	    'renci_custom_form_process_password_confirm',
+	    'user_form_process_password_confirm'
+  		); 	
+  }  
   
-}
-
-function renci_custom_form_user_profile_form_alter(&$form, &$form_state, $form_id) {
-  $form['account']['pass']['#process'] = array(
-    'form_process_password_confirm',
-    'renci_custom_form_process_password_confirm',
-    'user_form_process_password_confirm'
-  );
 }
 
 /**

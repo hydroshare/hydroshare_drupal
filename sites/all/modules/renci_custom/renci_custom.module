@@ -12,7 +12,7 @@ function renci_custom_form_alter(&$form, &$form_state, $form_id){
   if ($form_id == 'user_pass') { 
     drupal_set_title(t('Request new password')); 
   }
-  if ($form_id ==  'user_profile') {
+  if ($form_id ==  'user_profile_form') {
 	  $form['account']['pass']['#process'] = array(
 		    'form_process_password_confirm',
 		    'renci_custom_form_process_password_confirm'

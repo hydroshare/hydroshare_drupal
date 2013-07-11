@@ -1,0 +1,18 @@
+<?php
+
+// Hook where we will add the custom submit handler for each form id
+function renci_custom_form_alter(&$form, &$form_state, $form_id){
+
+
+  drupal_set_message($form_id);  // print form ID to messages
+  drupal_set_message(print_r($form, TRUE));  // print array to messages
+  
+  // Add custom form ids here
+  if ($form_id == 'user_login' || $form_id == 'user_login_block') { 
+
+		$form['actions']['submit']['#value'] = t("Hit this to login!");
+  }
+
+}
+
+?>

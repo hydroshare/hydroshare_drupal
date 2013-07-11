@@ -1,0 +1,4 @@
+name = RENCI customizations
+description = Custom look RENCI
+package = Other
+core = 7.x

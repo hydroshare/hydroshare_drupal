@@ -12,14 +12,26 @@ function renci_custom_form_alter(&$form, &$form_state, $form_id){
   if ($form_id == 'user_pass') { 
     drupal_set_title(t('Request new password')); 
   }
-
+  if ($form_id ==  'user_profile') {
+	  $form['account']['pass']['#process'] = array(
+		    'form_process_password_confirm',
+		    'renci_custom_form_process_password_confirm'
+	  		);
+  	
+  }
+  if ($form_id ==  'user_profile_form') {
+	  $form['account']['pass']['#process'] = array(
+	    'form_process_password_confirm',
+	    'renci_custom_form_process_password_confirm'
+  		); 	
+  }  
   
 }
 
 /**
  * Implementation of expand_password_confirm.
  */
-function renci_custom_form_password_confirm($element) {
+function renci_custom_form_process_password_confirm($element) {
   $element['pass1']['#title'] = t("New Password");
   $element['pass2']['#title'] = t("Confirm New Password");
   return $element;

@@ -8,7 +8,8 @@ function renci_custom_form_alter(&$form, &$form_state, $form_id){
   if ($form_id == 'user_login' || $form_id == 'user_login_block') { 
 		$form['actions']['submit']['#value'] = t("SIGN IN");
   }
-  if ($form_id == 'user_profile') { 
+  if ($form_id == 'user_profile') {
+  	  drupal_set_title(t('HYDROSHARE User Profile'));  
       $form['account']['pass']['#process'] = array('form_process_password_confirm', 'renci_custom_password_confirm');
   }
   if ($form_id == 'user_register_form') { 

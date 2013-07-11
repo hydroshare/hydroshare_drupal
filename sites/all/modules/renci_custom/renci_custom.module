@@ -3,16 +3,30 @@
 // Hook where we will add the custom submit handler for each form id
 function renci_custom_form_alter(&$form, &$form_state, $form_id){
 
-
-  drupal_set_message($form_id);  // print form ID to messages
-  drupal_set_message(print_r($form, TRUE));  // print array to messages
   
   // Add custom form ids here
   if ($form_id == 'user_login' || $form_id == 'user_login_block') { 
-
-		$form['actions']['submit']['#value'] = t("Hit this to login!");
+		$form['actions']['submit']['#value'] = t("SIGN IN");
   }
+  if ($form_id == 'user_profile') { 
+      $form['account']['pass']['#process'] = array('expand_password_confirm', 'renci_custom_password_confirm');
+  }
+  if ($form_id == 'user_register_form') { 
+    drupal_set_title(t('Create new account')); 
+  } 
+  if ($form_id == 'user_pass') { 
+    drupal_set_title(t('Request new password')); 
+  }
+  
+}
 
+/**
+ * Implementation of expand_password_confirm.
+ */
+function renci_custom_password_confirm($element) {
+  $element['pass1']['#title'] = t("New Password");
+  $element['pass2']['#title'] = t("Confirm New Password");
+  return $element;
 }
 
 ?>

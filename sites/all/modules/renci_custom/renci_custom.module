@@ -9,7 +9,7 @@ function renci_custom_form_alter(&$form, &$form_state, $form_id){
 		$form['actions']['submit']['#value'] = t("SIGN IN");
   }
   if ($form_id == 'user_profile') { 
-      $form['account']['pass']['#process'] = array('expand_password_confirm', 'renci_custom_password_confirm');
+      $form['account']['pass']['#process'] = array('form_process_password_confirm', 'renci_custom_password_confirm');
   }
   if ($form_id == 'user_register_form') { 
     drupal_set_title(t('Create new account')); 

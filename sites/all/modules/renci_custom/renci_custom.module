@@ -6,7 +6,7 @@ function renci_custom_form_alter(&$form, &$form_state, $form_id){
   if ($form_id == 'user_login' || $form_id == 'user_login_block') { 
 		$form['actions']['submit']['#value'] = t("SIGN IN");
 	  
-		$form['actions']['recover_pwd_btn'] = array(
+		$form['recover_pwd_btn'] = array(
 		    '#type' => 'button',
 		    '#submit' => array('renci_custom_user_login_recover_pwd_submit'),
 		    '#limit_validation_errors' => array(),		

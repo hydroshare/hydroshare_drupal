@@ -5,6 +5,11 @@ function renci_custom_form_alter(&$form, &$form_state, $form_id){
   // Add custom form ids here
   if ($form_id == 'user_login' || $form_id == 'user_login_block') { 
 		$form['actions']['submit']['#value'] = t("SIGN IN");
+	  
+		$form['actions']['recover_pwd_btn'] = array(
+		    '#type' => 'button',
+		    '#value' => t('Recover Lost Password'),
+  );
   }
   if ($form_id == 'user_register_form') { 
     drupal_set_title(t('Create new account')); 

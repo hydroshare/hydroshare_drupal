@@ -18,7 +18,7 @@ function renci_custom_form_alter(&$form, &$form_state, $form_id){
  		$form['actions']['submit']['#value'] = t("Request New Account");
   } 
   if ($form_id == 'user_pass') { 
-    drupal_set_title(t('Request new password')); 
+    $form['actions']['submit']['#attributes'] = array('style' => array('width:300px'));
   }
   if ($form_id ==  'user_profile_form') {
 	  $form['account']['pass']['#process'] = array(

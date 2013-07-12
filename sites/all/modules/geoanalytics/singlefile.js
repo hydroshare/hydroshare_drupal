@@ -28,21 +28,17 @@ function hydroshare_viz_script_makemap(wms, layer, style) {
     var svc = new OpenLayers.Layer.WMS(wms, wms, {isBaseLayer:false, transparent:true, layers:[layer], styles:[style]});            
     map.addLayers([svc]);
     
-    var url = 'http://ga.renci.org/ga_resources/extent/' + layer + "?srid=3857&callback=?";
+    var url = 'http://ga.renci.org/ga_resources/extent/' + layer.slice(0, layer.length-6) + "?srid=3857&callback=?";
     var extent = null;
     $.ajax({
-        type: 'GET',
-        url: url,
-        async: false,
-        jsonpCallback: 'jsonCallback',
-        contentType: "application/json",
+        url:url,
         dataType: 'jsonp', 
         success: function(json) {
            extent = json;
+           map.zoomToExtent(extent);
         },
         error: function(e) {
            console.log(e.message);
         }
     });
-    map.zoomToExtent(extent);
 }

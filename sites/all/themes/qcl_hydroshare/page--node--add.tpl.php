@@ -37,8 +37,7 @@
 		$done = false;
 		while( $done == false ) {
 		   $item = substr( $markup, $p0, $p1-$p0+5 ); 
-           print( $item );
-		   $is_hs = strpos( $item, "hydroshare_" );
+		   $is_hs = strpos( $item, "hydroshare-" );
 		   if( $is_hs ) { 
 		       $end_dt = strpos( $item, "</dt>" );
 		       $title = substr( $item, 4, $end_dt-4 );

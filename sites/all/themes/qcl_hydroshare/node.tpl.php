@@ -184,8 +184,6 @@
                         $edit_url = "http://$hostname/?q=node/" . $node->nid . "/edit";
                         $delete_url = "http://$hostname/?q=node/" . $node->nid . "/delete";
                         print( '<div class="contentListWrapper">');
-                            print( '<a href="" class="greyButton">EXECUTE</a>');
-                            print( '<a href="" class="greyButton">SHARE</a>');
                             print( '<a href="'.$op.'" class="greyButton">EXPORT</a>');
                             print( '<a href="'.$edit_url.'" class="greyButton">EDIT</a>');
                             print( '<a href="'.$delete_url.'" class="greyButton">DELETE</a>');
@@ -209,50 +207,62 @@
                         print('<div style="clear:left"><br /><br /><br /></div>');
 
                         print( '<div class="half-column">' );
-                            print( '<p><span class="bold">Resource Type:</span><span style="float:right">'.$type.'</span></p>');
-                            print( '<p><span class="bold">Created by:</span><span style="float:right">'.$user->name.'</span></p>');
-                            print( '<p><span style="float:right">'.$creator_email.'</span></p><br>');
-                            print( '<p><span style="float:right">'.$creator_organization.'</span></p><br>');
-                            print( '<p><span style="float:right">'.$creator_address.'</span></p><br>');
-                            print( '<p><span style="float:right">'.$creator_phone_number.'</span></p><br>');
-                            print( '<p><span class="bold">Created: </span>'.$created_date.'</p>');
-                            // ratings
-                            print( '<div class="starWrapper">');
-                                print( render( $content['field_rating'] ) );
-                            print('</div>');
-                            // tags
-                            $tags = $node->field_tags['und'];
-                            print( '<p><span class="bold">Tags: </span>' );
-                            foreach( $tags as $tag ) {
-                                print( $tag['taxonomy_term']->name.', ');
-                            }
-                            print( '</p>' );
-                        print( '</div> <!-- half-column -->' );
-          
-                        print( '<div class="half-column-right">' );
-                            print( '<p><span class="bold">Contributor:</span><span style="float:right">'.$contributor_name.'</span></p>');
-                            print( '<p><span style="float:right">'.$contributor_email.'</span></p><br>');
-                            print( '<p><span style="float:right">'.$contributor_organization.'</span></p><br>');
-                            print( '<p><span style="float:right">'.$contributor_address.'</span></p><br>');
-                            print( '<p><span style="float:right">'.$contributor_phone_number.'</span></p><br>');
-                            print( '<p><span style="float:right">'.$contributor_contribution.'</span></p><br>');
+                            print( '<table border=0 valign=top cellpadding=5>' );
+				    print( '<tr style="padding-bottom: 10px">' );
+				    print( '<td align=left style="padding-right: 10px"><span class="bold">Resource Type:</span></td>');
+                                    print( '<td><span style="float:left">'.$type.'</span></td>');
+				    print( '<td><span class="bold">Subject:</span></td><td><span style="float:left">'.$subject.'</span></td>');
+				    print( '</tr><tr>' );
+				    print( '<td align=left valign=top><span class="bold">Created by:</span></td>' );
+				    print( '<td>' );
+					    print( '<span style="float:left">'.$user->name.'</span><br>');
+					    print( '<span style="float:left">'.$creator_email.'</span><br>');
+					    print( '<span style="float:left">'.$creator_organization.'</span><br>');
+					    print( '<span style="float:left">'.$creator_address.'</span><br>');
+					    print( '<span style="float:left">'.$creator_phone_number.'</span><br>');
+				    print( '</td>' );
+				    print( '<td align=left valign=top style="padding-right: 10px"><span class="bold">Contributor:</span></td>' );
+			            print( '<td>' );
+				        print( '<span style="float:left">'.$contributor_name.'</span>');
+					print( '<span style="float:left">'.$contributor_email.'</span><br>');
+					print( '<span style="float:left">'.$contributor_organization.'</span><br>');
+					print( '<span style="float:left">'.$contributor_address.'</span><br>');
+					print( '<span style="float:left">'.$contributor_phone_number.'</span><br>');
+					print( '<span style="float:left">'.$contributor_contribution.'</span><br>');
+				    print( '</td>' );
 
-                            print( '<p><span class="bold">Subject:</span><span style="float:right">'.$subject.'</span></p>');
-                            print( '<p><span class="bold">References:</span><span style="float:right">'.$references.'</span></p>');
-                            print( '<p><span class="bold">Source: </span><span style="float:right">'.$source_name.'</span></p>');
-                            print( '<p><span style="float:right">'.$source_comments.'</span></p><br>');
-                            print( '<p><span style="float:right">'.$source_id.'</span></p><br>');
-                            #print( '<p><span class="bold">Relation: </span><span style="float:right">'.$relation.'</span></p>');
-                            print( '<p><span class="bold">Rights: </span><span style="float:right">'.$rights.'</span></p>');
-                            print( '<p><span class="bold">Coverage:</span></p>');
-                            print( '<p><span style="float:right">'.$coverage_spatial.'</span></p><br>');
-                            print( '<p><span style="float:right">'.$coverage_temporal.'</span></p><br>');
-                            print( '<p><span class="bold">Format:</span><span style="float:right">'.$format.'</span></p>');
-                        print( '</div> <!-- half-column-right -->' );
+				    print( '</tr><tr valign=top>' );
+				    print( '<td><span class="bold">Created: </span></td>' );
+				    print( '<td><span style="float:left">'.$created_date.'</span></td>');
+				    print( '<td><span class="bold">References:</span></td><td><span style="float:left">'.$references.'</span></td>');
+				    print( '</tr>' );
+				    
+				    print( '<tr valign=top><td><div class="starWrapper">');
+					    print( render( $content['field_rating'] ) );
+				    print('</div></td><td></td>');
+				    print( '<td><span class="bold">Source: </span></td>' );
+				    print( '<td>' );
+					print( '<span style="float:left">'.$source_name    .'</span><br>');
+					print( '<span style="float:left">'.$source_comments.'</span><br>');
+					print( '<span style="float:left">'.$source_id      .'</span>');
+				    print( '</td>' );
+				    print( '<tr valign=top><td><span class="bold">Tags: </span></td><td>' );
+				        $tags = $node->field_tags['und'];
+				        foreach( $tags as $tag ) {
+					    print( $tag['taxonomy_term']->name.', ');
+				        }
+				    print( '</td>' );
+				    print( '<td><span class="bold">Rights: </span></td><td><span style="float:left">'.$rights.'</span></td></tr>');
+				    print( '<tr><td><span class="bold">Format:</span></td><td><span style="float:left">'.$format.'</span></td></tr>');
+                            print( '</table>' );
+                        print( '</div> <!-- half-column -->' );
           
                         print('<div style="clear:both"></div>');
 
                         print('<div class="full-column">');
+                            print( '<p><span class="bold">Coverage:</span></p>');
+                            print( '<p><span style="float:left">'.$coverage_spatial.'</span></p><br>');
+                            print( '<p><span style="float:left">'.$coverage_temporal.'</span></p><br>');
                             print('<h2>Resource Description</h2>');
                             print( render( $content['body'] ) );
                         print( '</div> <!-- full-column -->' );
@@ -261,9 +271,9 @@
                             if (!empty($content['links'])) {
                                 print( ' <div class="links">' );
                                     print render($content['links']);            
-                                print( '</div>');
+                                print( '</div><!-- links -->');
                             }
-                        print( '</div>' );
+                        print( '</div><!--half-column-->' );
 
                     print( '</div> <!-- myContentSubInner -->');
              

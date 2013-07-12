@@ -264,8 +264,13 @@ function data_model_create_viz_thumbnail( $node, $dir ) {
   
     error_log( "SRC:".$src );  
     error_log( "DST:".$dst );  
-    
-    return file_unmanaged_copy( $src, $dst );
+
+    $ret = true;   
+    if( !file_exists( $dst_dir ) ) { 
+        $ret = file_unmanaged_copy( $src, $dst );
+    }
+
+    return $ret;
 
 } // data_model_create_viz_thumbnail
 

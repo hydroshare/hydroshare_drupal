@@ -24,8 +24,11 @@
 		        $hostname = $_SERVER['SERVER_NAME'];
                         $ts_icon='<img src="http://'.  $hostname . '/sites/all/themes/qcl_hydroshare/images/excel_icon.jpg"></td>';
                         $ga_icon='<img src="http://' . $hostname . '/sites/all/themes/qcl_hydroshare/images/globe_icon.jpg"></td>';
+                        $uk_icon='<img src="http://' . $hostname . '/sites/all/themes/qcl_hydroshare/images/unknown_icon.jpg"></td>';
                         $rows = str_replace( "Time Series          </td>",  $ts_icon, $rows );
                         $rows = str_replace( "Geoanalytics          </td>", $ga_icon, $rows );
+                        $rows = str_replace( "Other          </td>",        $uk_icon, $rows );
+
                         print( $rows );   
                     ?>
                 </div> <!-- contentTable -->

@@ -5,10 +5,15 @@
     if( !empty( $content ) and 
         ( strpos( $node->type, "hydroshare_" ) !== false ) ) {
         // =-=-=-=-=-=-=-
-        // get the file directory
-        $real_path = ( $node->field_file['und'][0]['uri'] ); 
-        $dir = drupal_dirname( $real_path );
-        $dir = drupal_dirname( $dir );
+        // get the file directory         
+        $data_model_file = NULL;
+        data_model_get_file_from_node( $node, $data_model_file );
+        $format = $data_model_file->filemime;
+        
+        $real_path = drupal_realpath( $data_model_file->uri );
+        $data_model_dir = drupal_dirname( $real_path );
+        $data_model_dir = drupal_dirname( $data_model_dir );
+
 
         if( $teaser ) {
             //print $user_picture; 
@@ -16,7 +21,7 @@
         
             // =-=-=-=-=-=-=-
             // display the viz thumbnail
-            $img_url = file_create_url( $dir.'/thumbnail.png' );
+            $img_url = file_create_url( $data_model_dir.'/thumbnail.png' );
             $img_tag = '<a href="'.$node_url.'"><img src='.$img_url.' width=160 height=120 class=floatLeft ></a>';
             print( $img_tag );
         
@@ -40,8 +45,6 @@
                         // wire up export button
                         // NOTE:: this was extraced from printing the $content variable.
                         //        there HAS to be a better way....
-                        $real_path = drupal_realpath( $node->field_file['und'][0]['uri'] ); 
-     
                         // =-=-=-=-=-=-=-
                         // extract the metadata and display it 
                         $creator_name = "";
@@ -157,25 +160,16 @@
                         if( !empty( $tmp_arr ) ) {
                             $coverage_temporal = $tmp_arr['und'][0]['safe_value']; 
                         }            
-                                  
-                        $file = NULL;
-                        data_model_get_file_from_node( $node, $file );
-                        $format = $file->filemime;
-
-                        // =-=-=-=-=-=-=-
-                        // get the file directory
-                        $dir = drupal_dirname( $real_path );
-                        $dir = drupal_dirname( $dir );
 
                         // =-=-=-=-=-=-=-
                         // get the zip name of the directory
                         $zip_file = NULL;
-                        if( data_model_zip_file_name( $dir, $zip_file ) == false ) {
-                            error_log( "data_model_node_view :: data_model_zip_file_name failed for $dir" );
+                        if( data_model_zip_file_name( $data_model_dir, $zip_file ) == false ) {
+                            error_log( "data_model_node_view :: data_model_zip_file_name failed for $data_model_dir" );
                             return NULL;
 
-                        }
-                        
+                        }  
+                                               
                         // =-=-=-=-=-=-=-
                         // build the java script operation
                         $hostname = $_SERVER['SERVER_NAME'];

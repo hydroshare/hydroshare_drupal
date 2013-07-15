@@ -1,0 +1,42 @@
+<?php
+
+/**
+ * Implements hook_form_FORM_ID_alter();
+ */
+function allow_all_file_extensions_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id) {
+  if($form['#field']['type'] == 'file') {
+    $form['instance']['settings']['file_extensions']['#type'] = 'textarea';
+    $form['instance']['settings']['file_extensions']['#description'] = t('Separate extensions with a space or comma and do not include the leading dot.  Leave this blank to allow all file types <strong>(security warning: only trusted users should be able to upload files of arbitrary type)</strong>.');
+    $form['instance']['settings']['file_extensions']['#maxlength'] = 2048;
+    $form['instance']['settings']['file_extensions']['#required'] = FALSE;
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter();
+ */
+function allow_all_file_extensions_form_alter(&$form, &$form_state, $form_id) {
+  _allow_all_file_extensions_fix_validator($form);
+}
+
+/**
+ * This ugly little hack of a function recursively crawls through the form and adds
+ * an empty file_validate_extensions array to every managed_file element that doesn't
+ * already contain one.  I shouldn't have had to do it this way, but unfortunately
+ * Drupal 7's smarter-than-you file extension validation code is added while the form
+ * is being generated, so there's really no other way.
+ */
+function _allow_all_file_extensions_fix_validator(&$element) {
+  if(isset($element['#type']) && $element['#type'] == 'managed_file') {
+    if(!isset($element['#upload_validators']['file_validate_extensions'])) {
+      $element['#upload_validators']['file_validate_extensions'] = array();
+    }
+  }
+  $children = element_children($element);
+
+  if(is_array($children)) {
+    foreach($children as $child) {
+      _allow_all_file_extensions_fix_validator($element[$child]);
+    }
+  }
+}

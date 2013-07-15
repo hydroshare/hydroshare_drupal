@@ -59,20 +59,22 @@ function data_model_make_data_path( $title, $real_path, &$new_path ) {
 // =-=-=-=-=-=-=-
 // get the file url from the node if any
 function data_model_get_file_from_node( $node, &$file ) {
-    // =-=-=-=-=-=-=-
-    // See if a file has been added
-    $file      = NULL;
-    if ($file_items = field_get_items('node', $node, 'field_file')) {
-        // Get the first file item
-        $file_item = array_shift($file_items);
-        $file = file_load( $file_item['fid'] );
 
-        return true;
-    } else {
-        $file = NULL;
-        return false;
-    
+    $fields = field_info_instances( "node", $node->type );
+
+    $field_name  = "";
+    $found = false;
+    foreach( $fields as $key => $value ) {
+        if( false !== strpos( $key, "field_file_" ) ) {
+            $items     = field_get_items( 'node', $node, $key );
+            $file_item = array_shift($items);
+            $file      = file_load( $file_item['fid'] );
+            $stuff     = print_r( $file, true );
+            return true;
+        }
     }
+
+    return false;
 
 } // data_model_get_file_from_node
 
@@ -262,9 +264,6 @@ function data_model_create_viz_thumbnail( $node, $dir ) {
     $src = $src_dir."/default_thumbnail.png";
     $dst = $dst_dir."/thumbnail.png";
   
-    error_log( "SRC:".$src );  
-    error_log( "DST:".$dst );  
-
     $ret = true;   
     if( !file_exists( $dst_dir ) ) { 
         $ret = file_unmanaged_copy( $src, $dst );
@@ -412,14 +411,19 @@ function data_model_node_presave( $node ) {
     $file      = NULL;
     $real_path = NULL;
     if( true == data_model_get_file_from_node( $node, $file ) ) { 
+        $stuff = print_r( $file, true );
         $file_uri = $file->uri;
+    
+    } else {
+        error_log( "data_model_node_presave :: failed to get file object from node" );
+        drupal_set_message( "data_model_node_presave :: failed to get file object from node" );
     }
 
     // =-=-=-=-=-=-=-
     // something bad happened
     if( NULL == $title && NULL == $file_uri ) {
+        error_log( "data_model_node_presave :: NULL title and file_uri" );
         drupal_set_message( "data_model_node_presave :: NULL title and file_uri" );
-        return;
     }
     
     // =-=-=-=-=-=-=-
@@ -500,77 +504,6 @@ function data_model_node_presave( $node ) {
     }
 
 } // data_model_node_presave
-
-// =-=-=-=-=-=-=-
-// add a export button
-function data_model_node_view( $node, $view_mode ) {
-    // =-=-=-=-=-=-=-
-    // only export for hydroshare type content
-    $pos = strpos( $node->type, 'hydroshare_' );
-    if( false === $pos ) { 
-       return NULL; 
-    }
-
-    // =-=-=-=-=-=-=-
-    // only export for hydroshare type content
-    $pos = strpos( $node->type, 'hydroshare_' );
-    if( false === $pos ) { 
-       return NULL; 
-    }
-
-    // =-=-=-=-=-=-=-
-    // only export on full view
-    if( "full" != $view_mode ) {
-        return $node;
-    }
- 
-    // =-=-=-=-=-=-=-
-    // get the file object from the node
-    $file      = NULL;
-    $real_path = NULL;
-    if( true == data_model_get_file_from_node( $node, $file ) ) { 
-        $real_path = drupal_realpath( $file->uri );
-    
-    } else {
-        error_log( "data_model_node_view :: failed to get file for node" );
-        return NULL;
-
-    }
-
-    // =-=-=-=-=-=-=-
-    // get the file directory
-    $dir = drupal_dirname( $real_path );
-    $dir = drupal_dirname( $dir );
-
-    // =-=-=-=-=-=-=-
-    // get the zip name of the directory
-    $zip_file = NULL;
-    if( data_model_zip_file_name( $dir, $zip_file ) == false ) {
-        error_log( "data_model_node_view :: data_model_zip_file_name failed for $dir" );
-        return NULL;
-
-    }
-    
-    // =-=-=-=-=-=-=-
-    // build the java script operation
-    $hostname = $_SERVER['SERVER_NAME'];
-    $op = "parent.location='http://$hostname/export.php?file=" . $zip_file . "'";
-
-    // =-=-=-=-=-=-=-
-    // wire it to a button
-    $node->content['button'] = array(
-          '#type' => 'button',
-          '#value' => t('Export'),
-          '#weight' => 50,
-          '#class' => 'greyButton',
-          '#attributes' => array('onClick' => $op),
-          );
-
-    // =-=-=-=-=-=-=-
-    // win!!111one
-    return $node;
-
-} // data_model_node_view
 
 function data_model_views_api() {
       return array(

@@ -1,0 +1,10 @@
+; $Id: views_jqfx.info $
+name = Views jQfx
+description = Applies jQuery effects to views output.
+dependencies[] = views
+package = Views
+core = 7.x
+files[] = views_jqfx.module
+files[] = views_jqfx.theme.inc
+files[] = views_jqfx.views.inc
+files[] = views_jqfx_plugin_style_jqfx.inc

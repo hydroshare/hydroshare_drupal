@@ -1,9 +1,11 @@
 <?php
   global $user;
-  $uid_filter = "";
+  $uid_filter = " and uid = :uid ";
+  $title = "MY ACTIVITY";
   if (isset($_GET["op"]) ) {
-  	if ($_GET["op"] == "my") {
-  		$uid_filter = " and uid = :uid ";
+  	if ($_GET["op"] == "all") {
+  		$uid_filter = "";
+                $title = "ALL ACTIVITY";
   	}
   }
   $limit = "4";
@@ -19,7 +21,7 @@
   $selected = "";
 ?>
 <div class="recentActivity gradientDown">
-	<h1>RECENT ACTIVITY</h1>
+	<h1><?php echo $title ?></h1>
 
 	<ul class="activityNav">
 		<li>
@@ -31,7 +33,7 @@
 	</ul>
 	<div class="activityStream">
 		<?php
-		  $sql = "SELECT nid, title, created FROM {node} where type <> 'page' ".$uid_filter." order by created desc limit ".$limit;
+		  $sql = "SELECT nid, title, created FROM {node} where (type = 'hydroshare_geoanalytics' or type = 'hydroshare_time_series' or type = 'hydroshare_other_content') ".$uid_filter." order by created desc limit ".$limit;
 		  $result = db_query($sql, array(':uid' => $user->uid));
           foreach ($result as $record) {
           	    if ($nid == 0	 ) {
@@ -69,12 +71,6 @@
 		</p>
 		<p>
 		<?php   print $rendered_teaser;  ?>
-		</p>
-		<p class="title">
-		KEYWORDS
-		</p>
-		<p>
-		Coming Soon!
 		</p>
 		<?php } ?>
 	</div>

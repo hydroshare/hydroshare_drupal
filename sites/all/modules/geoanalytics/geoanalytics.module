@@ -106,7 +106,7 @@ function geoanalytics_node_presave( $node ) {
 
     if($node->type == "hydroshare_geoanalytics") {
         // get the file object from the node
-        $file = array_shift(field_get_items('node', $node, 'field_file'));
+        $file = array_shift(field_get_items('node', $node, 'field_file_geoanalytics'));
         $file_path = file_load($file['fid']);
         $web_path = file_create_url($file_path->uri);
 
@@ -117,6 +117,7 @@ function geoanalytics_node_presave( $node ) {
         $style = $node->field_style['und'][0]['value'];
 
         // POST a new DataResource record to the geoanalytics API 
+        error_log($web_path);
         $ga_dataresource_ref = ga_api_post('/ga_resources/resources/v1/data/', array(
             'resource_url' => $web_path,
             'content' => $body,

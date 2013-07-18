@@ -1,0 +1,134 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Views jQfx: cycle.
+ */
+
+/**
+ * Implements hook_init().
+ */
+function views_jqfx_cycle_init() {
+  // Set location of the libraries directory.
+  $libraries_path = 'sites/all/libraries';
+
+  //This assumes the cycle plugin is in the libraries folder.
+  if (file_exists($libraries_path . '/jquery.cycle/jquery.cycle.all.min.js')) {
+    drupal_add_js($libraries_path . '/jquery.cycle/jquery.cycle.all.min.js');
+  }
+
+  //Adds the module specific css and js
+  $module_path = drupal_get_path('module', 'views_jqfx_cycle');
+  drupal_add_js($module_path . '/views_jqfx_cycle.js');
+  drupal_add_css($module_path . '/views_jqfx_cycle.css');
+}
+
+/**
+ * Implements hook_theme().
+ */
+function views_jqfx_cycle_theme($existing, $type, $theme, $path) {
+  return array(
+    'views_jqfx_cycle' => array(
+      'variables' => array('view' => NULL, 'options' => array(), 'rows' => array(), 'title' => ''),
+      'template' => 'theme/views-jqfx-cycle',
+      'file' => 'theme/views_jqfx_cycle.theme.inc',
+    ),
+    'views_jqfx_cycle_controls' => array(
+      'variables' => array('vss_id' => '', 'view' => NULL, 'options' => array()),
+      'template' => 'theme/views-jqfx-cycle-controls',
+      'file' => 'theme/views_jqfx_cycle.theme.inc',
+    ),
+    'views_jqfx_cycle_control_previous' => array(
+      'variables' => array('vss_id' => '', 'view' => NULL, 'options' => array()),
+      'template' => 'theme/views-jqfx-cycle-control-previous',
+      'file' => 'theme/views_jqfx_cycle.theme.inc',
+    ),
+    'views_jqfx_cycle_control_pause' => array(
+      'variables' => array('vss_id' => '', 'view' => NULL, 'options' => array()),
+      'template' => 'theme/views-jqfx-cycle-control-pause',
+      'file' => 'theme/views_jqfx_cycle.theme.inc',
+    ),
+    'views_jqfx_cycle_control_next' => array(
+      'variables' => array('vss_id' => '', 'view' => NULL, 'options' => array()),
+      'template' => 'theme/views-jqfx-cycle-control-next',
+      'file' => 'theme/views_jqfx_cycle.theme.inc',
+    ),
+    'views_jqfx_cycle_pager' => array(
+      'variables' => array('vss_id' => '', 'view' => NULL, 'options' => array()),
+      'file' => 'theme/views_jqfx_cycle.theme.inc',
+    ),
+    'views_jqfx_cycle_pager_numbered' => array(
+      'variables' => array('view' => NULL, 'attributes_array' => NULL, 'options' => array()),
+      'template' => 'theme/views-jqfx-cycle-pager-numbered',
+      'file' => 'theme/views_jqfx_cycle.theme.inc',
+    ),
+    'views_jqfx_cycle_pager_thumbnails' => array(
+      'variables' => array('view' => NULL, 'attributes_array' => NULL, 'options' => array()),
+      'template' => 'theme/views-jqfx-cycle-pager-thumbnails',
+      'file' => 'theme/views_jqfx_cycle.theme.inc',
+    ),
+    'views_jqfx_cycle_pager_field' => array(
+      'variables' => array('vss_id' => NULL, 'attributes_array' => NULL, 'options' => array()),
+      'template' => 'theme/views-jqfx-cycle-pager-field',
+      'file' => 'theme/views_jqfx_cycle.theme.inc',
+    ),
+    'views_jqfx_cycle_pager_field_field' => array(
+      'variables' => array('view' => NULL, 'field' => NULL, 'count' => NULL),
+      'template' => 'theme/views-jqfx-cycle-pager-field-field',
+      'file' => 'theme/views_jqfx_cycle.theme.inc',
+    ),
+    'views_jqfx_cycle_pager_field_item' => array(
+      'variables' => array('item' => NULL, 'vss_id' => NULL, 'count' => NULL),
+      'template' => 'theme/views-jqfx-cycle-pager-field-item',
+      'file' => 'theme/views_jqfx_cycle.theme.inc',
+    ),
+    'views_jqfx_cycle_slide_counter' => array(
+      'variables' => array('vss_id' => '', 'view' => NULL, 'options' => array()),
+      'template' => 'theme/views-jqfx-cycle-slide-counter',
+      'file' => 'theme/views_jqfx_cycle.theme.inc',
+    ),
+    'views_jqfx_cycle_main_frame' => array(
+      'variables' => array('view' => NULL, 'rows' => NULL, 'vss_id' => NULL, 'mode' => NULL),
+      'template' => 'theme/views-jqfx-cycle-main-frame',
+      'file' => 'theme/views_jqfx_cycle.theme.inc',
+    ),
+    'views_jqfx_cycle_main_frame_row' => array(
+      'variables' => array('items' => NULL, 'vss_id' => NULL, 'count' => NULL),
+      'template' => 'theme/views-jqfx-cycle-main-frame-row',
+      'file' => 'theme/views_jqfx_cycle.theme.inc',
+    ),
+    'views_jqfx_cycle_main_frame_row_item' => array(
+      'variables' => array('item' => NULL, 'item_count' => NULL),
+      'template' => 'theme/views-jqfx-cycle-main-frame-row-item',
+      'file' => 'theme/views_jqfx_cycle.theme.inc',
+    ),
+  );
+}
+
+/**
+ * Implements hook_help().
+ */
+function views_jqfx_cycle_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#views_jqfx_cycle':
+      if (module_exists('advanced_help')) {
+        $output = '<p>' . l(t('Click here to view the documentation for Views Jqfx Cycle.'),  'admin/advanced_help/views_jqfx_cycle') . '</p>';
+      }
+      else {
+        $output = '<p>' . t('Views Jqfx Cycle help can be found by installing and enabling the !advanced_help',  array('!advanced_help' => l('Advanced Help module', 'http://drupal.org/project/advanced_help'))) . '</p>';
+      }
+      return $output;
+  }
+}
+
+/**
+ * Implements hook_views_cycle_skins().
+ */
+function views_jqfx_cycle_views_jqfx_cycle_skins() {
+  $skins['default'] = array(
+    'title' => t('Default'),
+  );
+
+  return $skins;
+}

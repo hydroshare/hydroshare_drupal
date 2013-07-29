@@ -1,0 +1,4 @@
+name = Hydrology Model Visualization
+description = Provides display of model simulation output
+core = 7.x
+package = HydroShare

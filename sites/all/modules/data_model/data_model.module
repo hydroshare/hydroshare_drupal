@@ -65,7 +65,7 @@ function data_model_get_file_from_node( $node, &$file ) {
     $field_name  = "";
     $found = false;
     foreach( $fields as $key => $value ) {
-        if( false !== strpos( $key, "field_file_" ) ) {
+        if( false !== strpos( $key, "field_file" ) ) {
             $items     = field_get_items( 'node', $node, $key );
             $file_item = array_shift($items);
             $file      = file_load( $file_item['fid'] );
@@ -398,6 +398,9 @@ function data_model_node_presave( $node ) {
     // =-=-=-=-=-=-=-
     // filter out non hydroshare content types
     $pos = strpos( $node->type, 'hydroshare_' );
+    //if ( $pos ==0 ){
+    //  $pos = strpos($node->type, 'hydrology_');
+    //}
     if( false === $pos ) { 
        return NULL; 
     }

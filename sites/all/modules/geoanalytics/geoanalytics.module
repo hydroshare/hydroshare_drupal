@@ -109,7 +109,15 @@ function geoanalytics_node_presave( $node ) {
         $file = array_shift(field_get_items('node', $node, 'field_file'));
         $file_path = file_load($file['fid']);
         $web_path = file_create_url($file_path->uri);
-
+        
+        //$scheme = file_uri_scheme($file_path->uri);
+        //$wrapper = file_stream_wrapper_valid_scheme($scheme);
+        //$web_path = $wrapper->getLocalPath($file);
+        //$web_path = drupal_realpath($file_path->uri);
+        
+        $url = parse_url($web_path);
+        $path = $url['path'];
+        
         // get file metadata
         $title = $node->title;
         $body = $node->body['und'][0]['value'];

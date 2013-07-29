@@ -1,0 +1,5 @@
+name = Hydrology Model
+description = This module is used to create hydrology model instances
+core = 7.x
+package = HydroShare
+version = 0.1

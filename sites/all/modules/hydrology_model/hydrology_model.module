@@ -1,0 +1,608 @@
+<?php
+
+
+/**
+ *
+ * Implements hook_form_alter()
+ */
+function hydrology_model_form_alter(&$form, &$form_state, $form_id){
+
+  if ($form_id == 'hydroshare_hydrology_model_node_form'){
+      
+    // organize form fields within fieldsets
+    hydrology_model_build_form($form);
+  
+  }
+}
+
+/**
+ *
+ * Fills form fields with model metadata using model input/output files
+ * and calculated values.
+ */
+function hydrology_model_populate_fields($form, &$form_state){
+  
+
+  //***************************
+  //* Parse the Spatial Input *  //TODO
+  //***************************
+  
+  // Read Tiff File
+  $tiff_fid = $form_state['values']['field_spatial_coverage']['und'][0]['fid'];
+  $tiff = file_load($tiff_fid);
+  if($tiff){
+    $url = file_create_url($tiff->uri);
+    $exif = exif_read_data($url, 'ANY_TAG', TRUE);
+    foreach($exif as $key => $section){
+      foreach ($section as $name => $val){
+        log_to_file($key.$name.':'.$val.'\n');
+      }
+    }
+  }
+  
+    //*************************
+    //* Parse the Model Input *  
+    //*************************
+    
+    // create a file instance from uploaded model
+    //$fid =  $form_state['values']['field_model_archive']['und'][0]['fid'];
+    $fid =  $form_state['values']['field_file']['und'][0]['fid'];
+    $f = file_load($fid);   
+    $url = file_create_url($f->uri);
+
+    // get the absolute path of the upload file
+    $wrapper = file_stream_wrapper_get_instance_by_uri($f->uri);
+    $real_path = $wrapper->realpath();
+    $path_array = explode('/',$real_path);
+    
+    // get the name of the folder the model is unzipped in
+    $unzip_folder = substr(array_pop($path_array),0,-4);
+    
+    // get the directory of the upload file
+    $path = pathinfo(realpath($real_path), PATHINFO_DIRNAME) . '/'.$unzip_folder;
+
+    // unzip model
+    $zip = new ZipArchive;
+    $res = $zip->open($real_path);
+    if ($res == TRUE){
+      $zip->extractTo($path);
+      $zip->close();
+      echo 'Extracted Model Successfully';
+    }
+    else{
+      echo 'Failed to Extract Model';
+    }
+
+    // TODO: Determine which model it is, based on known file extensions
+    
+    // get the folder name of the extracted model (assume first folder contains model)
+    $folder = Null;
+    $dirs = array_filter(glob($path . '/'), 'is_dir');
+    foreach(new DirectoryIterator($path) as $file){
+      if($file->isDot()) continue;
+
+      if($file->isDir()){
+        $folder = $file->getFilename();
+        break;
+      }
+    }
+
+    
+    //*************************
+    //* Set Form Field Values *
+    //*************************
+    
+    // parse swat data 
+    parse_swat_metadata($form, $form_state, $path . '/' . $folder);
+
+  
+    // set contribute date
+    $today = date('m/d/Y', time());
+    $form_state['input']['field_dev_contrib_date']['und'][0]['value'] = $today;
+
+    // set user fields
+    global $user;
+    $user_fields = user_load($user->uid);
+    $form_state['input']['field_dev_contributor']['und'][0]['value'] = $user_fields->name;
+    $form_state['input']['field_dev_creator']['und'][0]['value'] = $user_fields->name;
+
+    // set default values
+    $form_state['input']['field_id_version']['und'][0]['value'] = '1.0';
+
+    // rebuild the form
+    $form_state['rebuild'] = TRUE;
+  
+}
+
+/**
+ *
+ * Organizes fields within fieldsets and builds the webform.
+ */
+function hydrology_model_build_form(&$form){
+  
+  $form['#attributes'] = array('enctype' => 'multipart/form-data');
+  
+  //*****************************************
+  //* Create fieldsets to organize the form *
+  //*****************************************
+  
+  $form['input_fieldset'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Upload Model Files'),
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+    ) ;
+  $form['populate_fieldset'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Automatically Populate Fields'),
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+    ) ;
+  $form['id_fieldset'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Resource Identification'),
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+        '#group' => 'main_form',
+    ) ;
+  $form['temporal_fieldset'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Temporal Definition'),
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+        '#group' => 'main_form',
+    ) ;
+  $form['spatial_fieldset'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Spatial Definition'),
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+        '#group' => 'main_form',
+    ) ;
+  $form['dev_fieldset'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Development'),
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+        '#group' => 'main_form',
+    ) ;
+  $form['contact_fieldset'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Contact Information'),
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+        '#group' => 'main_form',
+    ) ;
+  $form['contributor_fieldset'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Contributor Information'),
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+        '#group' => 'main_form',
+    ) ;
+  $form['creator_fieldset'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Creator Information'),
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+        '#group' => 'main_form',
+    ) ;
+  
+    // create group to hold vertical tabs
+    $form['main_form'] = array(
+        '#type' => 'vertical_tabs',
+    );
+  
+    // create button to automatically populate form fields
+    $form['populate_fieldset']['hydrology_model_populate_button'] = array(
+        '#type' => 'submit',
+        '#value'=> t('Auto Populate Fields'),
+        '#submit'=>array('hydrology_model_populate_fields'),
+        );
+    
+    $form['populate_fieldset']['populate_button_text'] = array(
+    '#markup' => '<p>Populate model fields automatically using the model files uploaded above.</p>'
+        );
+    
+
+    //**************************************
+    //* move cck field into input fieldset *
+    //**************************************
+    
+    // move file upload fields
+    $form['input_fieldset']['field_file'] = $form['field_file'];
+    $form['field_file'] = array('language' => NULL);
+    
+    //$form['input_fieldset']['field_model_archive'] = $form['field_model_archive'];
+    $form['field_model_archive'] = array('language' => NULL);
+    
+    $form['input_fieldset']['field_spatial_coverage'] = $form['field_spatial_coverage'];
+    $form['field_spatial_coverage'] = array('language' => NULL);
+
+
+    // move identification fields into id_fieldset
+    $form['id_fieldset']['field_id_description'] = $form['field_id_description'];
+    $form['field_id_description'] = array('language' => NULL);
+
+    $form['id_fieldset']['field_id_version'] = $form['field_id_version'];
+    $form['field_id_version'] = array('language' => NULL);
+    
+    $form['id_fieldset']['field_id_type'] = $form['field_id_type'];
+    $form['field_id_type'] = array('language' => NULL);
+    
+    // move temporal coverage fields into temporal_fieldset
+    $form['temporal_fieldset']['field_temporal_begin'] = $form['field_temporal_begin'];
+    $form['field_temporal_begin'] = array('language' => NULL);
+
+    $form['temporal_fieldset']['field_temporal_end'] = $form['field_temporal_end'];
+    $form['field_temporal_end'] = array('language' => NULL);
+
+    $form['temporal_fieldset']['field_temporal_interval'] = $form['field_temporal_interval'];
+    $form['field_temporal_interval'] = array('language' => NULL);
+
+
+    // move spatial coverage fields into spatial_fieldset
+    $form['spatial_fieldset']['field_spatial_location'] = $form['field_spatial_location'];
+    $form['field_spatial_location'] = array('language' => NULL);
+
+    $form['spatial_fieldset']['field_spatial_resolution'] = $form['field_spatial_resolution'];
+    $form['field_spatial_resolution'] = array('language' => NULL);
+
+    $form['spatial_fieldset']['field_spatial_bbox'] = $form['field_spatial_bbox'];
+    $form['field_spatial_bbox'] = array('language' => NULL);
+
+    $form['spatial_fieldset']['field_spatial_reference'] = $form['field_spatial_reference'];
+    $form['field_spatial_reference'] = array('language' => NULL);
+
+    
+    // move development fields into dev_fieldset
+    //$form['dev_fieldset']['field_dev_contributor'] = $form['field_dev_contributor'];
+    $form['field_dev_contributor'] = array('language' => NULL);
+
+    //$form['dev_fieldset']['field_dev_creator'] = $form['field_dev_creator'];
+    $form['field_dev_creator'] = array('language' => NULL);
+
+    $form['dev_fieldset']['field_dev_create_date'] = $form['field_dev_create_date'];
+    $form['field_dev_create_date'] = array('language' => NULL);
+    
+    $form['dev_fieldset']['field_dev_contrib_date'] = $form['field_dev_contrib_date'];
+    $form['field_dev_contrib_date'] = array('language' => NULL);
+    
+    $form['dev_fieldset']['field_dev_level'] = $form['field_dev_level'];
+    $form['field_dev_level'] = array('language' => NULL);
+
+    $form['dev_fieldset']['field_rights'] = $form['field_rights'];
+    $form['field_rights'] = array('language' => NULL);
+    
+    
+    //move contact fields into contact_fieldset
+    $form['contact_fieldset']['field_contact_email'] = $form['field_contact_email'];
+    $form['field_contact_email'] = array('language' => NULL);
+
+    $form['contact_fieldset']['field_contact_phone'] = $form['field_contact_phone'];
+    $form['field_contact_phone'] = array('language' => NULL);
+
+    $form['contact_fieldset']['field_contact_address'] = $form['field_contact_address'];
+    $form['field_contact_address'] = array('language' => NULL);
+
+    $form['contact_fieldset']['field_contact_uri'] = $form['field_contact_uri'];
+    $form['field_contact_uri'] = array('language' => NULL);
+
+    // ---------------------------
+    // create core-metadata fields
+    // ---------------------------
+    
+    // move contributor fields into contributor_fieldset
+    $form['contributor_fieldset']['field_contributor_name'] = $form['field_contributor_name'];
+    $form['field_contributor_name'] = array('language' => NULL);
+
+    $form['contributor_fieldset']['field_contribution'] = $form['field_contribution'];
+    $form['field_contribution'] = array('language' => NULL);
+
+    $form['contributor_fieldset']['field_contributor_email'] = $form['field_contributor_email'];
+    $form['field_contributor_email'] = array('language' => NULL);
+
+    $form['contributor_fieldset']['field_contributor_organization'] = $form['field_contributor_organization'];
+    $form['field_contributor_organization'] = array('language' => NULL);
+    
+    $form['contributor_fieldset']['field_contributor_address'] = $form['field_contributor_address'];
+    $form['field_contributor_address'] = array('language' => NULL);
+    
+    $form['contributor_fieldset']['field_contributor_phone'] = $form['field_contributor_phone'];
+    $form['field_contributor_phone'] = array('language' => NULL);
+    
+    // move creator fields into creator_fieldset
+    $form['creator_fieldset']['field_name'] = $form['field_name'];
+    $form['field_name'] = array('language' => NULL);
+
+    $form['creator_fieldset']['field_email'] = $form['field_email'];
+    $form['field_email'] = array('language' => NULL);
+
+    $form['creator_fieldset']['field_organization'] = $form['field_organization'];
+    $form['field_organization'] = array('language' => NULL);
+
+    $form['creator_fieldset']['field_address'] = $form['field_address'];
+    $form['field_address'] = array('language' => NULL);
+    
+    $form['creator_fieldset']['field_phone_number'] = $form['field_phone_number'];
+    $form['field_phone_number'] = array('language' => NULL);
+
+    
+//    //GROUP: IDENTIFICATION
+//    
+//    $form['id_fieldset']['field_id_description'] = array(
+//       '#type' => 'textarea',
+//       '#default_value' => '',
+//       '#title' => 'Description',
+//        '#group' => 'main_form',
+//    );
+//    $form['id_fieldset']['field_id_version'] = array(
+//       '#type' => 'textfield',
+//       '#default_value' => t('1'),
+//       '#title' => 'Version',
+//        '#group' => 'main_form',
+//    );
+//    $form['id_fieldset']['field_id_type'] = array(
+//       '#type' => 'select',
+//       '#title' => 'Model Type',
+//       '#default_value' => variable_get('field_id_type','Instance'),
+//       '#options' => array(
+//           'Instance'=>t('Instance'),
+//           'Component'=>t('Component'),
+//           'Program'=>t('Program'),
+//           
+//       ),
+//        '#group' => 'main_form',
+//    );
+//    
+//    // GROUP: TEMPORAL DEFINITION
+//    
+//    $form['temporal_fieldset']['field_coverage_temporal_begin'] = array(
+//    //$form['field_coverage_temporal_begin'] = array(
+//       '#type' => 'textfield',
+//       'default_value' => '',
+//       '#title' => 'Begin Date',
+//       '#group' => 'main_form',
+//    );
+//    $form['temporal_fieldset']['field_coverage_temporal_end'] = array(
+//       '#type' => 'textfield',
+//       'default_value' => '',
+//       '#title' => 'End Date',
+//        '#group' => 'main_form',
+//    );
+//    $form['temporal_fieldset']['field_coverage_temporal_interval'] = array(
+//       '#type' => 'textfield',
+//       'default_value' => '',
+//       '#title' => 'Simulation Interval',
+//        '#group' => 'main_form',
+//    );
+//    
+//    
+//    
+//    // GROUP: SPATIAL DEFINITION
+//    
+//    $form['spatial_fieldset']['field_coverage_spatial_location'] = array(
+//       '#type' => 'textfield',
+//       '#default_value' => '',
+//       '#title' => 'Spatial Location',
+//        '#group' => 'main_form',
+//    );
+//    $form['spatial_fieldset']['field_coverage_spatial_resolution'] = array(
+//       '#type' => 'textfield',
+//       'default_value' => '',
+//       '#title' => 'Spatial Resolution',
+//        '#group' => 'main_form',
+//    );
+//    $form['spatial_fieldset']['field_coverage_spatial_bounding_box'] = array(
+//       '#type' => 'textfield',
+//       '#default_value' => '',
+//       '#title' => 'Bounding Box',
+//        '#group' => 'main_form',
+//    );
+//    $form['spatial_fieldset']['field_coverage_spatial_reference'] = array(
+//       '#type' => 'textfield',
+//       '#default_value' => '',
+//       '#title' => 'Spatial Reference',
+//        '#group' => 'main_form',
+//    );
+//    
+//    
+//    
+//    // GROUP: Development
+//    
+//        $form['dev_fieldset']['field_dev_contributor'] = array(
+//       '#type' => 'textfield',
+//       '#default_value' => '',
+//       '#title' => 'Contributor',
+//        '#group' => 'main_form',
+//    );
+//       $form['dev_fieldset']['field_dev_creator'] = array(
+//       '#type' => 'textfield',
+//       '#default_value' => '',
+//       '#title' => 'Creator',
+//        '#group' => 'main_form',
+//    );
+//        $form['dev_fieldset']['field_dev_create_date'] = array(
+//       '#type' => 'textfield',
+//       '#default_value' => '',
+//       '#title' => 'Creation Date',
+//        '#group' => 'main_form',
+//    );
+//        $form['dev_fieldset']['field_dev_contrib_date'] = array(
+//       '#type' => 'textfield',
+//       '#default_value' => '',
+//       '#title' => 'Contribute Date',
+//        '#group' => 'main_form',
+//    );
+//        $form['dev_fieldset']['field_dev_level'] = array(
+//       '#type' => 'select',
+//       '#title' => 'Development Level',
+//       '#default_value' => variable_get('field_dev_level','Level 1'),
+//       '#options' => array(
+//           'Level 1'=>t('Level 1'),
+//           'Level 2'=>t('Level 2'),
+//           'Level 3'=>t('Level 3'),
+//           'Level 4'=>t('Level 4'),      
+//       ),
+//        '#group' => 'main_form',
+//    );
+//        
+//    // GROUP: Contact
+//    
+//        $form['contact_fieldset']['field_contact_email'] = array(
+//       '#type' => 'textfield',
+//       '#default_value' => '',
+//       '#title' => 'Email',
+//        '#group' => 'main_form',
+//    );
+//       $form['contact_fieldset']['field_contact_phone'] = array(
+//       '#type' => 'textfield',
+//       '#default_value' => '',
+//       '#title' => 'Phone',
+//        '#group' => 'main_form',
+//    );
+//       $form['contact_fieldset']['field_contact_address'] = array(
+//       '#type' => 'textfield',
+//       '#default_value' => '',
+//       '#title' => 'Address',
+//        '#group' => 'main_form',
+//    );
+//       $form['contact_fieldset']['field_contact_uri'] = array(
+//       '#type' => 'textfield',
+//       '#default_value' => '',
+//       '#title' => 'URI',
+//        '#group' => 'main_form',
+//    );
+//       
+//  return $form;
+}
+
+/**
+ *
+ * Implements hook_node_submit()
+ */
+function hydrology_model_node_submit($node, $form, &$form_state){
+
+    // set the resource creation date
+    $node->created = !empty($node->date) ? strtotime($node->date) : REQUEST_TIME;
+  
+    // save changes
+    node_save($node);
+    
+}
+
+/**
+ *
+ * Parse the core metadata from SWAT model files
+ */
+function parse_swat_metadata($form, &$form_state, $swat_path){
+  
+  // intialize variables
+  $duration = null;
+  $str_start = null;
+  $str_end = null;
+  $time_unit = null;
+  $date_created = null;
+  $model_desc = null;
+  $creation_date = null;
+  
+  $i = 1;
+  
+  // open the main swat file
+  $handle = @fopen($swat_path . '/file.cio','r');
+  if ($handle){
+    while (($buffer = fgets($handle, 4096)) !== false){
+      
+      switch($i){
+     
+        case 2:
+          // get model description
+          $str = explode(":", $buffer);
+          $model_desc = trim($str[1]);
+          break;
+        case 4:
+          // get creation date
+          $str = explode(":", $buffer);
+          $creation_date = substr(trim($str[0]),0,-2);
+          break;
+        case 8:
+          // get simulation year span
+          $str = explode("|", $buffer);
+          $duration = intval(trim($str[0]));
+          break;
+        case 9:
+          // get simulation start year
+          $str = explode("|", $buffer);
+          $st_year = intval(trim($str[0]));
+          break;
+        case 10:
+          // get simulation start julien day
+          $str = explode("|", $buffer);
+          $start_julian_day = intval(trim($str[0])) - 1;
+          break;
+        case 11:
+          // get simulation end julien day
+          $str = explode("|", $buffer);
+          $end_julian_day = ($duration * intval(trim($str[0]))) - 1;
+          break;
+        case 59:
+          // get output print interval
+          $str = explode('|',$buffer);
+          $interval_code = intval(trim($str[0]));
+          if ($interval_code == 0){$time_unit = 'monthly';}
+          elseif ($interval_code == 1){$time_unit = 'daily';}
+          else {$time_unit = 'yearly';}
+          break;
+      }
+      // increment the line counter
+      $i++;
+      
+    }
+    
+    // build start datetime
+    $start = new DateTime('1/1/' . $st_year);
+    $start->add(new DateInterval('P'.$start_julian_day.'D'));
+    $str_start = $start->format('m/d/Y');
+        
+    // build end datetime
+    $end = $start;
+    $end->add(new DateInterval('P'.$end_julian_day.'D'));
+    $str_end = $end->format('m/d/Y');
+
+ 
+  }
+  
+  
+  // set form values --> $form_state['complete form']['post_fieldset']['post_id']['#value'] = $my_value;
+  $form_state['input']['field_temporal_begin']['und'][0]['value'] = $str_start;
+  $form_state['input']['field_temporal_end']['und'][0]['value'] = $str_end; 
+  $form_state['input']['field_id_description']['und'][0]['value'] = $model_desc;
+  $form_state['input']['field_temporal_interval']['und'][0]['value'] = $time_unit;
+  $form_state['input']['field_dev_create_date']['und'][0]['value'] = $creation_date;
+  
+}
+
+/**
+ * Implements hook_help.
+ *
+ * Displays help and module information.
+ */
+function hydrology_model_help($path, $arg) {
+  switch ($path) {
+    case "admin/help#hydrology_model":
+      return '<p>' . t("Creates resource instances for hydrology models.") . '</p>';
+      break;
+  }
+} 
+
+/**
+ *
+ * Log function for hydrology_model
+ */
+function log_to_file($text) {
+  // note: cwd = ~/Desktop/hydroshare/
+  // note: make sure folder permissions make file accessible
+  $f = fopen('./sites/default/files/hydrology_model.log', 'a');
+  fwrite($f, date('Ymd H:i:s - ') . $text . "\n");
+  fclose($f);
+}

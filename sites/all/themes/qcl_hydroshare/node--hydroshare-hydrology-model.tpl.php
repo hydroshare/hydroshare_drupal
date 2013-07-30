@@ -114,7 +114,8 @@
                         
                         
                         
-                        $model_path = null;
+                        // set the model path
+                        $model_path = join(array_slice(explode('/',$url),0,-1),'/').'/model';
                         
                         // HACK: This is already done in the upload stage.  This is repeative.
                         //       Find a way to do this only once
@@ -140,23 +141,50 @@
                               $zip->close();
 
                               // rename the model folder to something more standardized
-                              //$base_folder = scandir($unzip_dir);
                               rename($unzip_dir.'/'.$model_folder, $unzip_dir.'/model');
                               
-                              // set the model path
-                              $model_path = $unzip_dir.'/model';
                             }
                         }
-                        else{
-                          
-                              // build path to model unzip directory
-                              $unzip_dir = array_slice($path_array,0,-1);
-                              $unzip_dir = join($unzip_dir,'/');
+                        
+                        
+                        // TODO: change the output read using listbox
+                        // read streamflow output
+                        $start_dt = datetime::createfromformat('m/d/Y H:i:s',$begin.' 00:00:00');
+                        $date = array();
+                        $values = array();
+                        $i = 1;
+                        $handle = @fopen($model_path . '/output.rch','r');
+                        if ($handle){
+                          while (($buffer = fgets($handle, 4096)) !== false){
+                            if($i >= 10){
+
+                              $name = trim(substr($buffer,0,10));                              
+                              $mon = trim(substr($buffer,22,3));
+                              $outflow = floatval(trim(substr($buffer,51,10)));
                               
-                              // set the model path
-                              $model_path = $unzip_dir.'/model';
-                          
+                              // build date
+                              if ($interval == 'daily'){
+                                $dt = clone $start_dt;
+                                $dt->add(new DateInterval('P'.$mon.'D'));
+                              }
+                              
+                              // add values to array
+                              if (array_key_exists($name, $values)){
+                                array_push($values[$name]['vals'], $outflow);
+                                array_push($values[$name]['dates'],$dt);
+                              }
+                              else {
+                                $values[$name] = array();
+                                $values[$name]['vals'] = array($outflow);
+                                $values[$name]['dates'] = array($dt);
+                              }
+                              
+                              
+                            }
+                            $i++;
+                          }
                         }
+                        
 //                        // Open the zip file and get the model folder name
 //                        $model_folder = null;
 //                        $zip = zip_open($real_path);
@@ -194,7 +222,7 @@
                         
                         
                         //$path_array = explode('/',$real_path);
-                        print( "<script>hydrology_model_plot('".$model_path."');</script>");
+                        print( "<script>hydrology_model_plot('".$values."');</script>");
           
                         
                         $type    = node_type_get_name( $node ); 

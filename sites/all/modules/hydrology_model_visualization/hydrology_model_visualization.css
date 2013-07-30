@@ -1,22 +1,21 @@
-.body { bgcolor: blue; }
-
-svg {
-  font: 11px sans-serif;
-  background: #f8f8f8;
+path{
+  stroke: steelblue;
+  stroke-width: 1;
+  fill: none;
 }
-
-.clip_temp {
-  fill: red;
+.axis {
+  shape-rendering: crispEdges;
 }
-
-.axis path, .axis line {
+.x.axis line{
+  stroke: lightgrey;
+}
+.x.axis .minor{
+  stroke-opacity: .5;
+}
+.x.axis path {
+  display: none;
+}
+.y.axis line, .y.axis path{
   fill: none;
   stroke: #000;
-  shape-rendering: crispEdges;
-}
-
-.brush .extent {
-  stroke: #fff;
-  fill-opacity: .125;
-  shape-rendering: crispEdges;
 }

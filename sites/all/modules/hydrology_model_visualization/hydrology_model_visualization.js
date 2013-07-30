@@ -1,4 +1,4 @@
-function hydrology_model_plot( model_zip_path ){
+function hydrology_model_plot( model_path ){
 
   var plotHt = 280;
 
@@ -72,6 +72,20 @@ function hydrology_model_plot( model_zip_path ){
  
   
   // ----------------------------------------------------------
+  
+  // read streamflow data
+  var rawFile = new XMLHttpRequest();
+  rawFile.open("GET", model_path+'/output.rch', true);
+  rawFile.onreadystatechange = function(){
+    
+    if(rawFile.readyState === 4){
+      if(rawFile.status === 200 || rawFile.status == 0){
+        var text = rawFile.responseText;
+      }
+    }
+    
+  }
+  
   var line = d3.svg.line()
     .x(function(d) { return x_context(d.date); })
     .y(function(d) { return y_context(d.close); });
@@ -104,25 +118,25 @@ function hydrology_model_plot( model_zip_path ){
   
   
   // unzip the model 
-  zip.createReader(new zip.HttpReader(model_zip_path), function(reader) {
-
-    // get entries from zip
-    reader.getEntries(function(entries) {
-      if (entries.length){
-        entries[0].getData(new zip.TextWriter(), function (text) {
-          var t = text;
-          
-          // close the zip reader
-          reader.close(function(){
-          });
-      }, function (current, total){
-         });
-      }
-    });
-  },
-  function(error){
-    console.log(error);
-  });
+//  zip.createReader(new zip.HttpReader(model_zip_path), function(reader) {
+//
+//    // get entries from zip
+//    reader.getEntries(function(entries) {
+//      if (entries.length){
+//        entries[0].getData(new zip.TextWriter(), function (text) {
+//          var t = text;
+//          
+//          // close the zip reader
+//          reader.close(function(){
+//          });
+//      }, function (current, total){
+//         });
+//      }
+//    });
+//  },
+//  function(error){
+//    console.log(error);
+//  });
 
   
 //  csvfilename  =  model_zip_path.replace(/\/[^\/]*$/, '/test_data_series.csv')
@@ -166,8 +180,8 @@ function hydrology_model_plot( model_zip_path ){
     x_context.domain(x2.domain());
     y_context.domain(y2.domain());
 
-          Render( file_metadata_title, file_metadata_source );
-    });
+          //Render( file_metadata_title, file_metadata_source );
+    //});
 
   function Render( the_title, the_source )
   {

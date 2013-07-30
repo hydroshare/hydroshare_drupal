@@ -87,15 +87,114 @@
                         // plot model data
                         print( '<div id="hydrology_model_vizualization" style="height:340px"></div>' );
                         // create a file instance from uploaded model
+                        
+                        //$fid =  $node->field_file['und'][0]['fid'];
+                        //$f = file_load($fid);   
+                        //$url = file_create_url($f->uri);
+                        
+                        // get the absolute path of the upload file
+                        //$wrapper = file_stream_wrapper_get_instance_by_uri($f->uri);
+                        //$real_path = $wrapper->realpath();
+                        
+                        $file = null;
+                        $new_uri_path = null;
+                        data_model_get_file_from_node( $node, $file );
+                        
+                        $title = $node->title;
+                        $file_uri = $file->uri;
+                        data_model_make_data_path( $title, $file_uri, $new_uri_path );
+                        
                         $fid =  $node->field_file['und'][0]['fid'];
                         $f = file_load($fid);   
                         $url = file_create_url($f->uri);
-
-                        // get the absolute path of the upload file
-                        $wrapper = file_stream_wrapper_get_instance_by_uri($f->uri);
+                        $wrapper = file_stream_wrapper_get_instance_by_uri($file->uri);
                         $real_path = $wrapper->realpath();
+                        $path_array = explode('/',$real_path);
+                        
+                        
+                        
+                        
+                        $model_path = null;
+                        
+                        // HACK: This is already done in the upload stage.  This is repeative.
+                        //       Find a way to do this only once
+                        
+                        // TODO: Move this to hydrology_model_presave()
+                        if(!file_exists(join(array_slice($path_array,0,-1),'/').'/model')){
+                        
+                            $zip = new ZipArchive;
+                            $res = $zip->open($real_path);
+                            if ($res == TRUE){
+
+                              // get the model folder name by peeking into zip
+                              $z = zip_open($real_path);
+                              $zip_entry = zip_read($z);
+                              $model_folder = zip_entry_name($zip_entry);
+
+                              // create the unzip directory
+                              $unzip_dir = array_slice($path_array,0,-1);
+                              $unzip_dir = join($unzip_dir,'/');
+
+                              // extract the model contents
+                              $zip->extractTo($unzip_dir);
+                              $zip->close();
+
+                              // rename the model folder to something more standardized
+                              //$base_folder = scandir($unzip_dir);
+                              rename($unzip_dir.'/'.$model_folder, $unzip_dir.'/model');
+                              
+                              // set the model path
+                              $model_path = $unzip_dir.'/model';
+                            }
+                        }
+                        else{
+                          
+                              // build path to model unzip directory
+                              $unzip_dir = array_slice($path_array,0,-1);
+                              $unzip_dir = join($unzip_dir,'/');
+                              
+                              // set the model path
+                              $model_path = $unzip_dir.'/model';
+                          
+                        }
+//                        // Open the zip file and get the model folder name
+//                        $model_folder = null;
+//                        $zip = zip_open($real_path);
+//                        if ($zip == TRUE){
+//                          $zip_entry = zip_read($zip);
+//                          $model_folder = zip_entry_name($zip_entry);
+//                          zip_close($zip);
+//                        }
+//                        
+//                        // move the unzipped file into the resource storage dir
+//                        $unzip_dir = array_slice($path_array,0,-3);
+//                        $unzip_dir = join($unzip_dir,'/');
+//                        $d = $unzip_dir.'/'.$model_folder;
+//                        $files = scandir($d);
+//                        $source = $unzip_dir.'/';
+//                        $destination = $real_path.'/model';
+//                        if (!file_exists($destination)){
+//                          mkdir($destination);
+//                        }
+//                        foreach($files as $file){
+//                          if (in_array($file,array('.','..'))) continue;
+//                          
+//                          if (copy($source.$file, $destination.$file)) {
+//                            $delete[] = $source.$file;
+//                          }
+//                        }
+                        //foreach($delete as $file){
+                        //  unlink($file);
+                        //}
+                        
+                        
+                        //$new_uri_path = $new_uri_path . "/data/" . drupal_basename( $file_uri );
+                        //$wrapper = file_stream_wrapper_get_instance_by_uri($f->uri);
+                        //$real_path = $wrapper->realpath();
+                        
+                        
                         //$path_array = explode('/',$real_path);
-                        print( "<script>hydrology_model_plot('".$zip_file."');</script>");
+                        print( "<script>hydrology_model_plot('".$model_path."');</script>");
           
                         
                         $type    = node_type_get_name( $node ); 

@@ -141,15 +141,15 @@ function geoanalytics_node_presave( $node ) {
             'styles' => array($ga_style_ref),
             'data_resource' => $ga_dataresource_ref,
             'title' => $title . ' layer',
-            'content' => $body
-            'parent' => "/ga_resources/resources/v1/catalog/2962/
+            'content' => $body,
+            'parent' => "/ga_resources/resources/v1/catalog/2962/"
         ));
         $layer = slugify($title . ' layer');
         $wms = $GA_URL . '/ga_resources/wms/';
 
         $node->field_webservice['und'][0]['value'] = $wms;
-        $node->field_style_id['und'][0]['value'] = $style;
-        $node->field_layer_id['und'][0]['value'] = $layer;
+        $node->field_style_id['und'][0]['value'] = 'projects/hydroshare/styles/' . $style;
+        $node->field_layer_id['und'][0]['value'] = 'projects/hydroshare/layers/' . $layer;
     }
 }
 

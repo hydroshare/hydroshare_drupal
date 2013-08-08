@@ -1,0 +1,380 @@
+<?php
+
+/**
+ * @file
+ * This module allows you to manage who has the privilege to sign up to
+ * your site.
+ */
+
+/**
+ * Implements hook_help().
+ */
+function requestinvitation_help($path, $arg) {
+
+  switch ($path) {
+    case 'admin/help#requestinvitation':
+      $output = '<p>' . t('For semi-private sites or sites which are still in beta require users who are interested in the product to first request for an invitation for the site and administrators can send an invitation after moderating the user request list. This module is prepared focusing on this purpose.') . '</p>';
+      $output .= '<p>' . t('When user requests for an invitation, the user is added to the list at <a href="!admin-settings-requestinvitation">administer &gt;&gt; settings &gt;&gt; request invitation</a>. Admin can moderate the list and send an invitation or cancel the request.', array('!admin-settings-requestinvitation' => url('admin/settings/requestinvitation')) ) . '</p>';
+
+      return $output;
+  }
+}
+
+
+/**
+ * Implements hook_menu().
+ */
+function requestinvitation_menu() {
+
+  $items['admin/config/people/requestinvitation'] = array(
+    'title' => 'Request invitation',
+    'description' => 'Configure Request Invitation settings.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('requestinvitation_configure_form'),
+    'access arguments' => array('administer requests'),
+    );
+
+  $items['requestinvitation'] = array(
+    'title' => 'Request Invitation',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('requestinvitation_form', 'page'),
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+    );
+
+  return $items;
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function requestinvitation_block_info() {
+  $blocks = array();
+
+  $blocks['requestinvitation'] = array(
+    'info' => t('Request invitation'),
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function requestinvitation_block_view($delta) {
+  global $user;
+
+  $block = array();
+
+  switch ($delta) {
+    case 'requestinvitation':
+      if (!$user->uid) {
+        $block['subject'] = t('Request An Invitation');
+        $block['content'] = drupal_get_form('requestinvitation_form', 'block') ;
+
+        return $block;
+      }
+
+      break;
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function  requestinvitation_permission() {
+  return array(
+    'administer requests' => array(
+      'title' => t('Administer invitation requests'),
+      'description' => t('Administer invitation requests.'),
+    ),
+  );
+}
+
+/*
+ * Forms API callback; defines the administration form.
+ */
+function requestinvitation_configure_form() {
+
+  $results = db_select('requestinvitation', 'r')
+    ->fields('r')
+    ->execute();
+
+  $not_moderated = FALSE;
+  $approved = FALSE;
+  $refused = FALSE;
+
+  $form['not_moderated'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('New Requests'),
+    '#description' => t('New user requests are listed here.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+
+  $form['approved'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Approved Requests'),
+    '#description' => t('Approved user requests are listed here.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $form['not_approved'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Refused Requests'),
+    '#description' => t('Refused user requests are listed here.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  foreach ($results as $request) {
+    if ($request->status == 0) {
+      $form['not_moderated'][$request->rid] = array(
+        '#type' => 'checkbox',
+        '#title' => check_plain($request->email),
+        '#name' => t('not_moderated' . $request->rid),
+      );
+      $not_moderated = TRUE ;
+    }
+
+    if ($request->status == 1) {
+      $form['approved'][$request->rid] = array(
+        '#type' => 'checkbox',
+        '#title' => check_plain($request->email),
+        '#name' => t('approved' . $request->rid),
+      );
+      $approved = TRUE;
+    }
+
+    if ($request->status == 2) {
+      $form['not_approved'][$request->rid] = array(
+        '#type' => 'checkbox',
+        '#title' => check_plain($request->email),
+        '#name' => t('not_approved' . $request->rid),
+      );
+      $refused = TRUE;
+    }
+  }
+
+  if ($not_moderated) {
+    $form['not_moderated'][] = array(
+      '#type' => 'submit',
+      '#value' => t('Approve requests')
+    );
+    $form['not_moderated'][] = array(
+      '#type' => 'submit',
+      '#value' => t('Refuse requests')
+    );
+  }
+  else {
+    $form['not_moderated'][] = array(
+      '#type' => 'fieldset',
+      '#description' => t('There are no new requests.')
+    );
+  }
+
+  if ($approved) {
+    $form['approved'][] = array(
+      '#type' => 'submit',
+      '#value' => t('Resend invitation')
+    );
+  }
+  else {
+    $form['approved'][] = array(
+      '#type' => 'fieldset',
+      '#description' => t('There are no approved requests.')
+    );
+  }
+
+  if ($refused) {
+    $form['not_approved'][] = array(
+      '#type' => 'submit',
+      '#value' => t('Approve refused requests')
+    );
+    $rows = FALSE ;
+  }
+  else {
+    $form['not_approved'][] = array(
+      '#type' => 'fieldset',
+      '#description' => t('There are no refused requests.')
+    );
+  }
+
+  return $form;
+}
+
+/**
+ * Forms API callback; processes the administration form.
+ *
+ * Request statuses:
+ * status 0 = not moderated
+ * status 1 = approved
+ * status 2 = refused
+ */
+function requestinvitation_configure_form_submit($form, &$form_state) {
+
+  $num_rows = 0;
+  if (is_array($_POST)) {
+      foreach ($_POST as $name => $value) {
+
+        if ($form_state['values']['op'] == t('Approve requests')) {
+          if (strstr($name, 'not_moderated')) {
+            $id = substr_replace($name, '', 0, drupal_strlen('not_moderated'));
+            db_query('UPDATE {requestinvitation} SET status = :status, approved = :time WHERE rid = :rid', array(':status' => 1, ':time' => REQUEST_TIME, ':rid' => $id));
+            requestinvitation_send_invitation($id);
+            $num_rows++;
+          }
+        }
+        elseif ($form_state['values']['op'] == t('Refuse requests')) {
+          if (strstr($name, 'not_moderated')) {
+            $id = substr_replace($name, '', 0, drupal_strlen('not_moderated'));
+            db_query('UPDATE {requestinvitation} SET status = :status, approved = :time WHERE rid = :rid', array(':status' => 2, ':time' => 0, ':rid' => $id));
+            $num_rows++;
+          }
+        }
+        elseif ($form_state['values']['op'] == t('Resend invitation')) {
+          if (strstr($name, 'approved')) {
+            $id = substr_replace($name, '', 0, drupal_strlen('approved'));
+            requestinvitation_send_invitation($id);
+            $num_rows++;
+          }
+        }
+        elseif ($form_state['values']['op'] == t('Approve refused requests')) {
+          if (strstr($name, 'not_approved')) {
+            $id = substr_replace($name, '', 0, drupal_strlen('not_approved'));
+            db_query('UPDATE {requestinvitation} SET status = :status, approved = :time WHERE rid = :rid', array(':status' => 1, ':time' => REQUEST_TIME, ':rid' => $id));
+            requestinvitation_send_invitation($id);
+            $num_rows++;
+          }
+        }
+      }
+
+      switch ($form_state['values']['op']) {
+          /*
+          case 'Approve requests':
+            drupal_set_message(format_plural($num_rows,'Invitation was sent.','@count invitations were sent'));
+            break;
+          */
+          case 'Refuse requests':
+            drupal_set_message(format_plural($num_rows, 'Request was refused.', '@count requests were refused.'));
+            break;
+          /*
+          case 'Resend invitation':
+            drupal_set_message(format_plural($num_rows,'Invitation was resent.','@count invitations were resent.'));
+            break;
+
+          case 'Approve refused requests':
+            drupal_set_message(format_plural($num_rows,'Invitation was resent.','@count invitations were resent.'));
+            break;
+          */
+      }
+  }
+}
+
+/**
+ * Creates and sends an invitation when the request is approved.
+ *
+ * @param $id
+ *   The id of the request.
+ */
+function requestinvitation_send_invitation($id) {
+  $request = db_select('requestinvitation', 'r')
+    ->fields('r', array('email', 'reg_code'))
+    ->condition('rid', $id)
+    ->execute()
+    ->fetchObject();
+
+  if (!$request) {
+    return;
+  }
+
+  if ($request->reg_code) {
+    $invite = invite_load($request->reg_code);
+
+    $invite->expiry = REQUEST_TIME + (variable_get('invite_expiry', 30) * 60 * 60 * 24);
+  }
+  else {
+    $invite = invite_create();
+
+    db_update('requestinvitation')
+      ->fields(array('reg_code' => $invite->reg_code))
+      ->condition('rid', $id)
+      ->execute();
+
+    $invite->email = $request->email;
+    $invite->data = array('subject' => invite_get_subject(), 'message' => token_replace(_invite_get_mail_template(), invite_token_data($invite)));
+  }
+
+  if (!invite_send($invite)) {
+    drupal_set_message(t('Invitation could not be sent.'), 'error');
+  }
+}
+
+/*
+ * Forms API callback; defines the request form.
+ */
+function requestinvitation_form($form, &$form_state, $op = 'block') {
+  $form = array();
+
+  switch ($op) {
+    case 'page':
+    case 'block':
+      $form['email'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Your e-mail address:'),
+          '#size' => 20,
+          '#maxlength' => 64,
+          );
+      $form['submit'] = array(
+          '#type' => 'submit',
+          '#value' => t('Request')
+          );
+    break;
+  }
+
+  return $form ;
+}
+
+/**
+ * Forms API callback; validates the request form.
+ *
+ * Filters out invalid emails and emails that have already been posted for a request.
+ */
+function requestinvitation_form_validate($form, &$form_state) {
+
+  if (trim($form_state['values']['email']) == '') {
+    form_set_error('email', t('Enter your email.'));
+    drupal_goto('requestinvitation');
+    return;
+  }
+  elseif (!valid_email_address($form_state['values']['email'])) {
+    form_set_error('email', t('Your email is invalid.'));
+    drupal_goto('requestinvitation');
+    return;
+  }
+  elseif (db_query("SELECT * FROM {requestinvitation} WHERE email = :email", array(':email' => $form_state['values']['email']))->fetchObject()) {
+    form_set_error('email', t('You have already requested an invitation.'));
+    drupal_goto('requestinvitation');
+    return;
+  }
+}
+
+/**
+ * Forms API callback; processes the request form.
+ */
+function requestinvitation_form_submit($form, &$form_state) {
+    requestinvitation_form_save($form_state['values']['email']) ;
+}
+
+/**
+ * Saves a request.
+ *
+ * @param $email
+ *   The email that has been posted with the request.
+ */
+function requestinvitation_form_save($email) {
+    if (db_query("INSERT INTO {requestinvitation} (email, timestamp, status, approved) VALUES (:email, :time, :status, :approved)", array(':email' => $email, ':time' => REQUEST_TIME, ':status' => 0, ':approved' => 0)) ) {
+      drupal_set_message(t('Your request has been sent.'), 'status');
+    }
+}

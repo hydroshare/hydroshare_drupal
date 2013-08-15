@@ -1,6 +1,11 @@
 <?php
 
 
+
+ //$ret = module_load_include('php', 'hydrology_model','SWAT_parser');
+ //include 'SWAT_parser.php';
+ //include 'HEC-RAS_parser.php'
+ 
 /**
  *
  * Implements hook_form_alter()
@@ -12,6 +17,15 @@ function hydrology_model_form_alter(&$form, &$form_state, $form_id){
     // organize form fields within fieldsets
     hydrology_model_build_form($form);
   
+    
+    // Include parsing scripts 
+    $model_class_names = array();
+    $dir = dirname(__FILE__);
+    $filenames = glob($dir."/*_parser.php");
+    foreach ($filenames as $fn){
+      $ret = module_load_include('php', 'hydrology_model',basename($fn,".php"));
+      $model_class_names[] = reset(explode("_", basename($fn, ".php")));
+    }
   }
 }
 
@@ -93,8 +107,9 @@ function hydrology_model_populate_fields($form, &$form_state){
     //*************************
     
     // parse swat data 
-    parse_swat_metadata($form, $form_state, $path . '/' . $folder);
-
+    //parse_swat_metadata($form, $form_state, $path . '/' . $folder);
+    $swat = new SWAT();
+    $swat->parse_metadata($form, $form_state, $path . '/' . $folder);
   
     // set contribute date
     $today = date('m/d/Y', time());

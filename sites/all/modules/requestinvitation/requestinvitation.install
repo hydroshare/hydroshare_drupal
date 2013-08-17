@@ -25,6 +25,13 @@ function requestinvitation_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
+      'username' => array(
+        'description' => t('Requested username'),
+        'type' => 'varchar',
+        'length' => '64',
+        'not null' => TRUE,
+        'default' => '',
+      ),      
       'timestamp' => array(
         'description' => t('The time created'),
         'type' => 'int',

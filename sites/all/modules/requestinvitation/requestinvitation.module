@@ -320,6 +320,12 @@ function requestinvitation_form($form, &$form_state, $op = 'block') {
   switch ($op) {
     case 'page':
     case 'block':
+      $form['username'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Your requested user name:'),
+          '#size' => 20,
+          '#maxlength' => 64,
+          );	
       $form['email'] = array(
           '#type' => 'textfield',
           '#title' => t('Your e-mail address:'),
@@ -348,16 +354,26 @@ function requestinvitation_form_validate($form, &$form_state) {
     drupal_goto('requestinvitation');
     return;
   }
+  elseif (trim($form_state['values']['username']) == '') {
+    form_set_error('username', t('Your username is invalid.'));
+    drupal_goto('requestinvitation');
+    return;
+  }  
   elseif (!valid_email_address($form_state['values']['email'])) {
     form_set_error('email', t('Your email is invalid.'));
     drupal_goto('requestinvitation');
     return;
-  }
+  }  
   elseif (db_query("SELECT * FROM {requestinvitation} WHERE email = :email", array(':email' => $form_state['values']['email']))->fetchObject()) {
     form_set_error('email', t('You have already requested an invitation.'));
     drupal_goto('requestinvitation');
     return;
   }
+  elseif (db_query("SELECT * FROM {requestinvitation} WHERE username = :username", array(':username' => $form_state['values']['username']))->fetchObject()) {
+    form_set_error('email', t('Your requested username is already in use.'));
+    drupal_goto('requestinvitation');
+    return;
+  }  
 }
 
 /**
@@ -374,7 +390,7 @@ function requestinvitation_form_submit($form, &$form_state) {
  *   The email that has been posted with the request.
  */
 function requestinvitation_form_save($email) {
-    if (db_query("INSERT INTO {requestinvitation} (email, timestamp, status, approved) VALUES (:email, :time, :status, :approved)", array(':email' => $email, ':time' => REQUEST_TIME, ':status' => 0, ':approved' => 0)) ) {
-      drupal_set_message(t('Your request has been sent.'), 'status');
+    if (db_query("INSERT INTO {requestinvitation} (email, username, timestamp, status, approved) VALUES (:email, :username, :time, :status, :approved)", array(':email' => $email, ':username' => $username, ':time' => REQUEST_TIME, ':status' => 0, ':approved' => 0)) ) {
+      drupal_goto('requestinvitation_ack');
     }
 }

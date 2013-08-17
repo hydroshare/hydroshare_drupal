@@ -370,7 +370,7 @@ function requestinvitation_form_validate($form, &$form_state) {
     return;
   }
   elseif (db_query("SELECT * FROM {requestinvitation} WHERE username = :username", array(':username' => $form_state['values']['username']))->fetchObject()) {
-    form_set_error('email', t('Your requested username is already in use.'));
+    form_set_error('username', t('Your requested username is already in use.'));
     drupal_goto('requestinvitation');
     return;
   }  
@@ -380,7 +380,7 @@ function requestinvitation_form_validate($form, &$form_state) {
  * Forms API callback; processes the request form.
  */
 function requestinvitation_form_submit($form, &$form_state) {
-    requestinvitation_form_save($form_state['values']['email']) ;
+    requestinvitation_form_save($form_state['values']['email'],$form_state['values']['username']) ;
 }
 
 /**
@@ -389,7 +389,7 @@ function requestinvitation_form_submit($form, &$form_state) {
  * @param $email
  *   The email that has been posted with the request.
  */
-function requestinvitation_form_save($email) {
+function requestinvitation_form_save($email,$username) {
     if (db_query("INSERT INTO {requestinvitation} (email, username, timestamp, status, approved) VALUES (:email, :username, :time, :status, :approved)", array(':email' => $email, ':username' => $username, ':time' => REQUEST_TIME, ':status' => 0, ':approved' => 0)) ) {
       drupal_goto('requestinvitation_ack');
     }

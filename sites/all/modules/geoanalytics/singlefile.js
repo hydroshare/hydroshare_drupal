@@ -28,7 +28,7 @@ function hydroshare_viz_script_makemap(wms, layer, style) {
     var svc = new OpenLayers.Layer.WMS(wms, wms, {isBaseLayer:false, transparent:true, layers:[layer], styles:[style]});            
     map.addLayers([svc]);
     
-    var url = 'http://ga.renci.org/ga_resources/extent/' + layer.slice(0, layer.length-6).replace('layers','data')  + "/?srid=3857&callback=?";
+    var url = geoanalytics_url + '/ga_resources/extent/' + layer.slice(0, layer.length-6).replace('layers','data')  + "/?srid=3857&callback=?";
     var extent = null;
     $.ajax({
         url:url,

@@ -220,7 +220,6 @@
                         //$wrapper = file_stream_wrapper_get_instance_by_uri($f->uri);
                         //$real_path = $wrapper->realpath();
                         
-                        
                         //$path_array = explode('/',$real_path);
                         print( "<script>hydrology_model_plot('".$values."');</script>");
           

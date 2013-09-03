@@ -5,27 +5,42 @@
  //$ret = module_load_include('php', 'hydrology_model','SWAT_parser');
  //include 'SWAT_parser.php';
  //include 'HEC-RAS_parser.php'
- 
+
 /**
  *
- * Implements hook_form_alter()
+ * Imports parser scripts
  */
-function hydrology_model_form_alter(&$form, &$form_state, $form_id){
-
-  if ($form_id == 'hydroshare_hydrology_model_node_form'){
-      
-    // organize form fields within fieldsets
-    hydrology_model_build_form($form);
-  
-    
-    // Include parsing scripts 
+import_parsers();
+function import_parsers(){
+  // Include parsing scripts 
     $model_class_names = array();
     $dir = dirname(__FILE__);
     $filenames = glob($dir."/*_parser.php");
     foreach ($filenames as $fn){
       $ret = module_load_include('php', 'hydrology_model',basename($fn,".php"));
-      $model_class_names[] = reset(explode("_", basename($fn, ".php")));
+      if ($ret){
+        $model_class_names[] = reset(explode("_", basename($fn, ".php")));
+      }
     }
+    
+    // store known model types globally
+    $GLOBALS["model_class_names"] = $model_class_names;
+}
+
+/**
+ *
+ * Implements hook_form_alter()
+ */
+
+function hydrology_model_form_alter(&$form, &$form_state, $form_id){
+
+  if ($form_id == 'hydroshare_hydrology_model_node_form'){
+  
+#    import_parsers();
+    
+    // organize form fields within fieldsets
+    hydrology_model_build_form($form);
+  
   }
 }
 
@@ -106,10 +121,12 @@ function hydrology_model_populate_fields($form, &$form_state){
     //* Set Form Field Values *
     //*************************
     
-    // parse swat data 
-    //parse_swat_metadata($form, $form_state, $path . '/' . $folder);
-    $swat = new SWAT();
-    $swat->parse_metadata($form, $form_state, $path . '/' . $folder);
+    $parser_class =  $form_state['values']['field_model_name']['und'][0]['value'];
+    
+    
+    // parse model data using the designated parsing script
+    $parser = new $parser_class;
+    $parser->parse_metadata($form, $form_state, $path . '/' . $folder);
   
     // set contribute date
     $today = date('m/d/Y', time());
@@ -216,7 +233,7 @@ function hydrology_model_build_form(&$form){
         );
     
     $form['populate_fieldset']['populate_button_text'] = array(
-    '#markup' => '<p>Populate model fields automatically using the model files uploaded above.</p>'
+    '#markup' => '<p>Populate model fields automatically using the model files uploaded above, and the designated parser.</p>'
         );
     
 
@@ -234,7 +251,14 @@ function hydrology_model_build_form(&$form){
     $form['input_fieldset']['field_spatial_coverage'] = $form['field_spatial_coverage'];
     $form['field_spatial_coverage'] = array('language' => NULL);
 
-
+    $options = array();
+    foreach($GLOBALS["model_class_names"] as $model_name){
+      $options[$model_name] = $model_name;
+    }
+    $form['input_fieldset']['field_model_name'] = $form['field_model_name'];
+    $form['field_model_name'] = array('language' => NULL);
+    $form['input_fieldset']['field_model_name']['und']['#options'] = $options;
+    
     // move identification fields into id_fieldset
     $form['id_fieldset']['field_id_description'] = $form['field_id_description'];
     $form['field_id_description'] = array('language' => NULL);

@@ -21,7 +21,9 @@
         
             // =-=-=-=-=-=-=-
             // display the viz thumbnail
-            $img_url = file_create_url( $data_model_dir.'/thumbnail.png' );
+            $img_dir = drupal_dirname( $data_model_file->uri );
+            $img_dir = drupal_dirname( $img_dir );
+            $img_url = file_create_url( $img_dir.'/thumbnail.png' );
             $img_tag = '<a href="'.$node_url.'"><img src='.$img_url.' width=160 height=120 class=floatLeft ></a>';
             print( $img_tag );
         

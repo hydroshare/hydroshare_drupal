@@ -106,7 +106,7 @@ function geoanalytics_node_presave( $node ) {
 
     if($node->type == "hydroshare_geoanalytics") {
         // get the file object from the node
-        $file = array_shift(field_get_items('node', $node, 'field_file'));
+        $file = array_shift(field_get_items('node', $node, 'field_file_geoanalytics'));
         $file_path = file_load($file['fid']);
         $web_path = file_create_url($file_path->uri);
 

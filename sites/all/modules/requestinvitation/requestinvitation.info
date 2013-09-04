@@ -1,0 +1,12 @@
+name = Request Invitation
+description = Allows users to request an invitation by using only their email.
+dependencies[] = invite
+package = Invite
+core = 7.x
+
+; Information added by drupal.org packaging script on 2011-12-05
+version = "7.x-1.0-beta1"
+core = "7.x"
+project = "requestinvitation"
+datestamp = "1323058243"
+

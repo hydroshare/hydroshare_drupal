@@ -1,0 +1,70 @@
+<?php
+
+/**
+ * @file
+ * Request Invitation module .install file.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function requestinvitation_schema() {
+  $schema['requestinvitation'] = array(
+    'description' => t('Stores invitation details to the (restricted) site.'),
+    'fields' => array(
+      'rid' => array(
+        'description' => t('Primary Key: The {requestinvitation}.rid'),
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'email' => array(
+        'description' => t('Unique key - Email of the requested user'),
+        'type' => 'varchar',
+        'length' => '64',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'username' => array(
+        'description' => t('Requested username'),
+        'type' => 'varchar',
+        'length' => '64',
+        'not null' => TRUE,
+        'default' => '',
+      ),      
+      'timestamp' => array(
+        'description' => t('The time created'),
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'status' => array(
+        'description' => t('Status of the invitation; 0 = not moderated, 1 = approved, 2 = refused'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'approved' => array(
+        'description' => t('Approved time'),
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'reg_code' => array(
+        'description' => 'The reg code of the invite that has been assigned to this request.',
+        'type' => 'varchar',
+        'length' => 8,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('rid'),
+    'unique keys' => array(
+      'email' => array('email')
+    ),
+  );
+
+  return $schema;
+}

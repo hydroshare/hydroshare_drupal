@@ -1,6 +1,5 @@
 <?php
 
-
 function slugify($text)
 { 
   // replace non letter or digits by -
@@ -27,10 +26,19 @@ function slugify($text)
 }
 
 function ga_api_post($endpoint, $payload) { //Initiate cURL request and send back the result
-    // these must be set in order for the module to work
-    $GA_URL = 'http://ga.renci.org';
-    $GA_USERNAME = 'hydroshare';
-    $GA_API_KEY = 'ee0047730e15969bad30c523f953fac0991dcabc';
+    $GA_URL = variable_get('geoanalytics_server');
+    $GA_USERNAME = variable_get('geoanalytics_user');
+    $GA_API_KEY = variable_get('geoanalytics_api_key');
+    $GA_LAYERS = variable_get('geoanalytics_layers');
+    $GA_DATA = variable_get('geoanalytics_data');
+    $GA_STYLES = variable_get('geoanalytics_styles');
+
+    print $GA_URL;
+    print $GA_USERNAME;
+    print $GA_API_KEY;
+    print $GA_LAYERS;
+    print $GA_DATA;
+    print $GA_STYLES;
 
     $endpoint .= "?format=json&username=" . $GA_USERNAME . "&api_key=" . $GA_API_KEY;
     error_log(json_encode($payload));
@@ -100,9 +108,12 @@ function ga_http_response_code($str)
  * This and _update will cause files that were uploaded into HydroShare to propagate into Geoanalytics
  */
 function geoanalytics_node_presave( $node ) {
-    $GA_URL = 'http://ga.renci.org';
-    $GA_USERNAME = 'hydroshare';
-    $GA_API_KEY = 'ee0047730e15969bad30c523f953fac0991dcabc';
+    $GA_URL = variable_get('geoanalytics_server');
+    $GA_USERNAME = variable_get('geoanalytics_user');
+    $GA_API_KEY = variable_get('geoanalytics_api_key');
+    $GA_LAYERS = variable_get('geoanalytics_layers');
+    $GA_DATA = variable_get('geoanalytics_data');
+    $GA_STYLES = variable_get('geoanalytics_styles');
 
     if($node->type == "hydroshare_geoanalytics") {
         // get the file object from the node
@@ -117,20 +128,23 @@ function geoanalytics_node_presave( $node ) {
         $style = $node->field_style['und'][0]['value'];
 
         // POST a new DataResource record to the geoanalytics API 
+        error_log($web_path);
         $ga_dataresource_ref = ga_api_post('/ga_resources/resources/v1/data/', array(
             'resource_url' => $web_path,
             'content' => $body,
             'title' => $title,
-            'driver' => $driver
+            'driver' => $driver,
+            'parent' => $GA_DATA 
         ));
 
         // POST a style record to the geoanalytics API as "default-style"
         $ga_style_ref = ga_api_post('/ga_resources/styles/v1/style/', array(
             'stylesheet' => $style,
-            'title' => $title . ' default style',
-            'content' => $body
+            'title' => $title . ' style',
+            'content' => $body,
+            'parent' => $GA_STYLES
         ));
-        $style = slugify($title . ' default style');
+        $style = slugify($title . ' style');
 
         // POST a new RenderedLayer record to the geoanalytics API as "wms"
         $ga_renderedlayer_ref = ga_api_post('/ga_resources/layers/v1/rendered_layer/', array(
@@ -138,14 +152,15 @@ function geoanalytics_node_presave( $node ) {
             'styles' => array($ga_style_ref),
             'data_resource' => $ga_dataresource_ref,
             'title' => $title . ' layer',
-            'content' => $body
+            'content' => $body,
+            'parent' => $GA_LAYERS
         ));
         $layer = slugify($title . ' layer');
         $wms = $GA_URL . '/ga_resources/wms/';
 
         $node->field_webservice['und'][0]['value'] = $wms;
-        $node->field_style_id['und'][0]['value'] = $style;
-        $node->field_layer_id['und'][0]['value'] = $layer;
+        $node->field_style_id['und'][0]['value'] = 'styles/' . $style;
+        $node->field_layer_id['und'][0]['value'] = 'layers/' . $layer;
     }
 }
 
@@ -169,6 +184,9 @@ function geoanalytics_preprocess_node( &$variables ) {
     drupal_add_css('http://openlayers.org/dev/theme/default/style.css');
     drupal_add_css('http://openlayers.org/dev/theme/default/google.css');
     drupal_add_css('http://openlayers.org/dev/examples/style.css');
+
+    drupal_add_js('var geoanalytics_url="' . variable_get('geoanalytics_server') . '";', 'inline');
+
     drupal_add_js(drupal_get_path('module','geoanalytics').'/singlefile.js', 'file');
 }
 
@@ -202,3 +220,80 @@ function geoanalytics_node_view( $node, $view_mode = 'full') {
     return $node;
 
 } // geoanalytics_node_view
+
+function geoanalytics_admin() {
+    $form = array();
+
+    $form['geoanalytics_server'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Geoanalytics server url'),
+        '#default_value' => variable_get('geoanalytics_server', 'http://ga.renci.org'),
+        '#size' => 24,
+        '#maxlength' => 1024,
+        '#description' => t("The base url of the Geoanalytics web server to store GIS data in."),
+        '#required' => TRUE,
+    );
+    $form['geoanalytics_user'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Geoanalytics username'),
+        '#default_value' => variable_get('geoanalytics_user', 'hydroadmin'),
+        '#size' => 24,
+        '#maxlength' => 1024,
+        '#description' => t("The username for the geoanalytics user"),
+        '#required' => TRUE,
+    );
+    $form['geoanalytics_api_key'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Geoanalytics api key'),
+        '#default_value' => variable_get('geoanalytics_api_key', ''),
+        '#size' => 24,
+        '#maxlength' => 1024,
+        '#description' => t("The automatically generated API key for the geoanalytics user"),
+        '#required' => TRUE,
+    );
+    $form['geoanalytics_layers'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Layer page URI'),
+        '#default_value' => variable_get('geoanalytics_layers', '/ga_resources/resources/v1/catalog/layers/'),
+        '#size' => 24,
+        '#maxlength' => 1024,
+        '#description' => t("The URI of the catalog page that will contain layers"),
+        '#required' => TRUE,
+    );
+    $form['geoanalytics_data'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Data page URI'),
+        '#default_value' => variable_get('geoanalytics_data', '/ga_resources/resources/v1/catalog/data/'),
+        '#size' => 24,
+        '#maxlength' => 1024,
+        '#description' => t("The URI of the catalog page that will contain data"),
+        '#required' => TRUE,
+    );
+    $form['geoanalytics_styles'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Styles page URI'),
+        '#default_value' => variable_get('geoanalytics_styles', '/ga_resources/resources/v1/catalog/styles/'),
+        '#size' => 24,
+        '#maxlength' => 1024,
+        '#description' => t("The URI of the catalog page that will contain styles"),
+        '#required' => TRUE,
+    );
+
+    return system_settings_form($form);
+}
+function geoanalytics_menu() {
+
+      $items = array();
+
+      $items['admin/settings/geoanalytics'] = array(
+            'title' => 'On this date module settings',
+            'description' => 'Description of your On this date settings page',
+            'page callback' => 'drupal_get_form',
+            'page arguments' => array('geoanalytics_admin'),
+            'access arguments' => array('administer geoanalytics settings'),
+            'type' => MENU_NORMAL_ITEM,
+     );
+
+     return $items;
+}
+?>

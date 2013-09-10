@@ -1,0 +1,138 @@
+<?php
+//
+//function hydrology_model_visualization_preprocess_node( &$variables ) {
+//    drupal_add_js('http://d3js.org/d3.v3.js', 'external');
+//    drupal_add_css(drupal_get_path('module','hydrology_model_visualization').'/hydrology_model_visualization.css', 'file');
+//    drupal_add_js(drupal_get_path('module','hydrology_model_visualization').'/hydrology_model_visualization.js', 'file');
+//    drupal_add_js(drupal_get_path('module','time_series_visualization').'/singlefile.js', 'file');
+//}
+//
+//function hydrology_model_visualization_node_view( $node, $view_mode = 'full') {
+//
+//    // only if in full mode and time_series
+//    if( $view_mode == "full" && $node->type == "hydroshare_hydrology_model" ) {
+//
+//        // inject target div
+//        $node->content['render_target'] = array(
+//            '#markup' => '<div id="hydrology_model_vizualization"></div>',
+//            '#weight' => 0,
+//        );
+//
+//        // get the file object from the node
+//        $file      = NULL;
+//        $real_path = NULL;
+//        if( true == data_model_get_file_from_node( $node, $file ) ) {
+//            $web_path = file_create_url( $file->uri );
+//        } else {
+//            error_log( "time_series_visualization_node_view :: failed to get file for node" );
+//            return NULL;
+//        }
+//
+//        // get file metadata
+//        $source = NULL;
+//        data_model_get_node_metadata_field_value( $node, "source", $source );
+//
+//        
+//        
+//        // get plot data from parser (using model name)
+//        $parser_class = $node->field_model_name['und'][0]['value']; 
+//        $parser = new $parser_class;
+//        if(method_exists($parser,'get_single_output')){
+//          //data_model_get_file_from_node( $node, $file );
+//          
+//          // get model directory from webpath
+//          $model_path = dirname($web_path);
+//
+//          
+//          //$hostname  = $_SERVER['SERVER_NAME'];
+//          //$file_uri  = str_replace( 'public://', 'http://'.$hostname.'/sites/default/files/', $file->uri );
+//    
+//          $parser->get_single_output($model_path);             
+//        }        
+//        
+//        // call render
+//        $node->content['render_single'] = array(
+//            '#markup' => "<script>hydroshare_viz_script_render_single_time_series('$web_path','$node->title','$source')</script>",
+//            '#weight' => 50,
+//        );
+//        
+////        // call render
+////        $node->content['render_single'] = array(
+////            '#markup' => "<script>hydrology_model_plot(".$model_path.")</script>",
+////            '#weight' => 50,
+////        );
+//
+//    }
+//
+//    return $node;
+//
+//} // time_series_visualization_node_view
+
+
+function hydrology_model_visualization_preprocess_node( &$variables ) {
+    drupal_add_js('http://d3js.org/d3.v3.js', 'external');
+    drupal_add_css(drupal_get_path('module','hydrology_model_visualization').'/hydrology_model_visualization.css', 'file');
+    drupal_add_js(drupal_get_path('module','hydrology_model_visualization').'/hydrology_model_visualization.js', 'file');
+    //drupal_add_js(drupal_get_path('module','hydrology_model_visualization').'/test.js', 'file');
+    
+    //drupal_add_css(drupal_get_path('module','time_series_visualization').'/time_series_visualization.css', 'file');
+    //drupal_add_js(drupal_get_path('module','time_series_visualization').'/singlefile.js', 'file');
+
+}
+
+function hydrology_model_visualization_node_view( $node, $view_mode = 'full') {
+
+    // only if in full mode and time_series
+    if( $view_mode == "full" && $node->type == "hydroshare_hydrology_model" ) {
+
+        // inject target div
+        $node->content['render_target'] = array(
+            '#markup' => '<div id="hydroshare_vizualization"></div>',
+            '#weight' => 0,
+        );
+
+        // get the file object from the node
+        $file      = NULL;
+        $real_path = NULL;
+        if( true == data_model_get_file_from_node( $node, $file ) ) {
+            $web_path = file_create_url( $file->uri );
+        } else {
+            error_log( "time_series_visualization_node_view :: failed to get file for node" );
+            return NULL;
+        }
+
+        // get file metadata
+        $source = NULL;
+        data_model_get_node_metadata_field_value( $node, "source", $source );
+
+        // call render
+        $arrData = array(    
+                array("1/1/2013 00:00", 100),
+                array("2/1/2013 00:00", 500),
+                array("3/1/2013 00:00", 300),
+                array("4/1/2013 00:00", 100),
+                array("5/1/2013 00:00", 400),
+                array("6/1/2013 00:00", 300)
+                );
+        $json = json_encode($arrData);
+
+        //print ("<script>test(".$json.")</script>");
+                        
+        $node->content['render_single'] = array(
+            //'#markup' => "<script>test(3,4,5)</script>",
+            '#markup' => "<script>hydrology_model_plot_single(".$json.")</script>",
+            '#weight' => 50,
+        );
+        
+        //print ("<script>test(".$json.")</script>");
+        
+//        $node->content['render_single'] = array(
+//            '#markup' => "<script>hydroshare_viz_script_render_single_time_series('$web_path','$node->title','$source')</script>",
+//            '#weight' => 50,
+//        );
+
+    }
+
+    return $node;
+
+} // time_series_visualization_node_view

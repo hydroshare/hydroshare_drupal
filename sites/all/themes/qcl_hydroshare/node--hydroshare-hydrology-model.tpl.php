@@ -1,13 +1,16 @@
 <div id="node-<?php print $node->nid; ?>" class="<?php print $classes; ?>"<?php print $attributes; ?>>
 
     <?php
+    drupal_add_js("http://dev.hydroshare.local/misc/jquery.cookie.js", 'file');
     if( !empty( $content ) ) {
         
       // add javascript and css  
       drupal_add_js('http://d3js.org/d3.v3.js', 'external');
-      drupal_add_css(drupal_get_path('module','hydrology_model_visualization').'/hydrology_model_visualization.css', 'file');
-      drupal_add_js(drupal_get_path('module','hydrology_model_visualization').'/hydrology_model_visualization.js', 'file');
-      drupal_add_js(drupal_get_path('module','hydrology_model_visualization')."/zip.js", 'file');
+      //drupal_add_css(drupal_get_path('module','hydrology_model_visualization').'/hydrology_model_visualization.css', 'file');
+      //drupal_add_js(drupal_get_path('module','hydrology_model_visualization').'/hydrology_model_visualization.js', 'file');
+      //drupal_add_js(drupal_get_path('module','hydrology_model_visualization')."/zip.js", 'file');
+      //drupal_add_js("http://dev.hydroshare.local/misc/jquery.cookie.js", 'file');
+     
       
         // get the file directory
         $real_path = ( $node->field_file['und'][0]['uri'] ); 
@@ -59,6 +62,8 @@
                         $level   = $node->field_dev_level['und'][0]['value']; 
                         
 
+                        
+      
                         // **************************
                         // * get the file directory *
                         // **************************
@@ -84,9 +89,19 @@
                         print( '</div> <!-- contentListWrapper --> ');
 
 
-                        // plot model data
-                        print( '<div id="hydrology_model_vizualization" style="height:340px"></div>' );
-                        // create a file instance from uploaded model
+                        // plot model data                  
+                        $render = render( $content );
+                        if( strpos( $render, "hydrology_model_plot_single" ) != false ) {
+                            $matches = NULL;
+                            print( '<div id="hydroshare_vizualization" style="height:340px"></div>' );
+                            $ret = preg_match( '/<script>hydrology_model_plot_single.*<\/script>/i', $render, $matches );
+                            if( $ret ) {
+                                print( $matches[0] );
+                            } 
+                        }
+                        
+                        
+                        
                         
                         //$fid =  $node->field_file['und'][0]['fid'];
                         //$f = file_load($fid);   
@@ -221,7 +236,7 @@
                         //$real_path = $wrapper->realpath();
                         
                         //$path_array = explode('/',$real_path);
-                        print( "<script>hydrology_model_plot('".$values."');</script>");
+                        //print( "<script>hydrology_model_plot('".$values."');</script>");
           
                         
                         $type    = node_type_get_name( $node ); 

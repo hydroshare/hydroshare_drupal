@@ -1,6 +1,8 @@
 <div id="node-<?php print $node->nid; ?>" class="<?php print $classes; ?>"<?php print $attributes; ?>>
 
     <?php
+    drupal_add_js("http://dev.hydroshare.local/misc/jquery.cookie.js", 'file');
+    
     //print( "<B><H3>THIS IS THE PLAIN OLD NODE FILE</H3></B>");
     if( !empty( $content ) and 
         ( strpos( $node->type, "hydroshare_" ) !== false ) ) {

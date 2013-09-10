@@ -1,21 +1,20 @@
-path{
-  stroke: steelblue;
-  stroke-width: 1;
-  fill: none;
+svg {
+  font: 10px sans-serif;
 }
-.axis {
-  shape-rendering: crispEdges;
+
+path {
+  fill: lightsteelblue;
 }
-.x.axis line{
-  stroke: lightgrey;
-}
-.x.axis .minor{
-  stroke-opacity: .5;
-}
-.x.axis path {
-  display: none;
-}
-.y.axis line, .y.axis path{
+
+.axis path,
+.axis line {
   fill: none;
   stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.brush .extent {
+  stroke: #fff;
+  fill-opacity: .125;
+  shape-rendering: crispEdges;
 }

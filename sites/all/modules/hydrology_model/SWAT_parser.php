@@ -94,4 +94,9 @@ class SWAT
     $form_state['input']['field_dev_create_date']['und'][0]['value'] = $creation_date;
     
   }
+
+  
+  public function get_single_output($model_path){
+    $test = 1;
+  }
 }

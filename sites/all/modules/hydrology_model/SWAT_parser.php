@@ -96,7 +96,63 @@ class SWAT
   }
 
   
-  public function get_single_output($model_path){
-    $test = 1;
+  public function get_single_output($node, $model_path){
+    
+    
+    // get simulation start time
+    $begin = $node->field_temporal_begin['und'][0]['safe_value'];
+    $start_dt = datetime::createfromformat('m/d/Y H:i:s',$begin.' 00:00:00');
+    
+    // get output values
+    $volume_flow = array();
+    $date = array();
+    $values = array();
+    $i = 1;
+    $handle = @fopen($model_path . '/output.rch','r');
+    if ($handle){
+      while (($buffer = fgets($handle, 4096)) !== false){
+        if($i >= 10){
+
+          $name = trim(substr($buffer,0,10));                              
+          $mon = trim(substr($buffer,22,3));
+          $outflow = floatval(trim(substr($buffer,51,10)));
+
+          // add reach to volume flow array
+          if (!array_key_exists($name,$volume_flow)){
+            
+          }
+          
+          
+          // build date
+          if ($node->field_temporal_interval['und'][0]['safe_value'] == 'daily'){
+            $dt = clone $start_dt;
+            $dt->add(new DateInterval('P'.$mon.'D'));
+            $dt = date_format($dt, 'm/d/Y H:i');
+          }
+
+          // add values to array
+          if (array_key_exists($name, $values)){
+            array_push($values[$name],array($dt, $outflow));
+            //array_push($values[$name]['vals'], $outflow);
+            //array_push($values[$name]['dates'],$dt);
+            $volume_flow[$name] += $outflow;
+          }
+          else {
+            $values[$name] = array(array($dt, $outflow));
+            //$values[$name]['vals'] = array($outflow);
+            //$values[$name]['dates'] = array($dt);
+            $volume_flow[$name] = 0.0;
+          }
+
+
+        }
+        $i++;
+      }
+    }
+    
+    // return only the flow at the outlet (assumed to have the largest volume of outflow)
+    $outlet = array_keys($volume_flow, max($volume_flow));
+    
+    return $values[$outlet[0]];
   }
 }

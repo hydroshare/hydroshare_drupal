@@ -146,6 +146,7 @@
                               $z = zip_open($real_path);
                               $zip_entry = zip_read($z);
                               $model_folder = zip_entry_name($zip_entry);
+                              $model_folder = array_slice(explode('/',$model_folder),0,1);
 
                               // create the unzip directory
                               $unzip_dir = array_slice($path_array,0,-1);
@@ -156,7 +157,7 @@
                               $zip->close();
 
                               // rename the model folder to something more standardized
-                              rename($unzip_dir.'/'.$model_folder, $unzip_dir.'/model');
+                              rename($unzip_dir.'/'.$model_folder[0], $unzip_dir.'/model');
                               
                             }
                         }

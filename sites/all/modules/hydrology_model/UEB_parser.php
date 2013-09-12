@@ -122,4 +122,86 @@ class UEB
     
     return $return_array;
   }
+  
+  
+  public function get_single_output($node, $model_path){
+    
+    
+    // get simulation start time
+    $begin = $node->field_temporal_begin['und'][0]['safe_value'];
+    $start_dt = datetime::createfromformat('m/d/Y H:i:s',$begin.' 00:00:00');
+    
+    // get output values
+    $volume_flow = array();
+    $date = array();
+    $values = array();
+    
+    # TODO: loop through NetCDF files instead
+    # loop through the output files 
+
+    foreach(glob($model_path.'/Outputs/*.txt') as $filename ){
+    
+      # open the file
+      $handle = @fopen($filename,'r');
+        
+      $data_series_name = basename($filename,'.txt');
+      
+      # read output calculations
+      if ($handle){
+        
+        // read the first line
+        $buffer = fgets($handle, 4096);
+        while ($buffer !== false){
+          
+          $i = 0;
+          $line = array();
+          while ($i < 70){
+
+            # split the file by non-uniform delimiter            
+            $elems = explode(' ',$buffer);
+            foreach($elems as $elem){
+              $val = trim($elem);
+              if (strlen($val) > 0){
+                $line[] = $val;
+                $i++;
+              }
+            }
+
+            // read the next line
+            $buffer = fgets($handle, 4096);
+
+            // exit if we've reached the end of the file
+            if ($buffer == false){break;}
+          }
+          
+          # create date object in m/d/Y H:i format
+          $hour = sprintf("%02d",intval($line[3]));
+          $dt = $line[1].'/'.$line[2].'/'.$line[0].' '.$hour.':00';
+       
+          # TODO: get other variable data too.
+          # get total outflow
+          $outflow = $line[25];
+          
+          // add values to array
+          if (array_key_exists($data_series_name, $values)){
+            array_push($values[$data_series_name],array($dt, $outflow));
+            $volume_flow[$data_series_name] += $outflow;
+          }
+          else {
+            $values[$data_series_name] = array(array($dt, $outflow));
+            $volume_flow[$data_series_name] = 0.0;
+          }
+//        }
+//          
+      }
+//
+    }
+//    
+
+  }
+      // return only the flow at the outlet (assumed to have the largest volume of outflow)
+    $outlet = array_keys($volume_flow, max($volume_flow));
+    
+    return $values[$outlet[0]];
+  }
 }

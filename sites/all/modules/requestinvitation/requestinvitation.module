@@ -134,6 +134,7 @@ function requestinvitation_configure_form() {
         '#type' => 'checkbox',
         '#title' => check_plain($request->email),
         '#name' => t('not_moderated' . $request->rid),
+		'#username' => t($request->username),        
       );
       $not_moderated = TRUE ;
     }
@@ -143,6 +144,7 @@ function requestinvitation_configure_form() {
         '#type' => 'checkbox',
         '#title' => check_plain($request->email),
         '#name' => t('approved' . $request->rid),
+		'#username' => t($request->username),         
       );
       $approved = TRUE;
     }
@@ -152,6 +154,7 @@ function requestinvitation_configure_form() {
         '#type' => 'checkbox',
         '#title' => check_plain($request->email),
         '#name' => t('not_approved' . $request->rid),
+		'#username' => t($request->username),         
       );
       $refused = TRUE;
     }

@@ -132,9 +132,9 @@ function requestinvitation_configure_form() {
     if ($request->status == 0) {
       $form['not_moderated'][$request->rid] = array(
         '#type' => 'checkbox',
-        '#title' => check_plain($request->email),
+        '#title' => t('username: '.$request->username.', email: ').check_plain($request->email),
         '#name' => t('not_moderated' . $request->rid),
-		'#username' => t($request->username),        
+      
       );
       $not_moderated = TRUE ;
     }
@@ -142,9 +142,8 @@ function requestinvitation_configure_form() {
     if ($request->status == 1) {
       $form['approved'][$request->rid] = array(
         '#type' => 'checkbox',
-        '#title' => check_plain($request->email),
+        '#title' => t('username: '.$request->username.', email: ').check_plain($request->email),
         '#name' => t('approved' . $request->rid),
-		'#username' => t($request->username),         
       );
       $approved = TRUE;
     }
@@ -152,9 +151,8 @@ function requestinvitation_configure_form() {
     if ($request->status == 2) {
       $form['not_approved'][$request->rid] = array(
         '#type' => 'checkbox',
-        '#title' => check_plain($request->email),
+        '#title' => t('username: '.$request->username.', email: ').check_plain($request->email),
         '#name' => t('not_approved' . $request->rid),
-		'#username' => t($request->username),         
       );
       $refused = TRUE;
     }

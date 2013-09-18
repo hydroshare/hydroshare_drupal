@@ -4,12 +4,8 @@
     drupal_add_js("http://dev.hydroshare.local/misc/jquery.cookie.js", 'file');
     if( !empty( $content ) ) {
         
-      // add javascript and css  
+      // add d3 javascript reference 
       drupal_add_js('http://d3js.org/d3.v3.js', 'external');
-      //drupal_add_css(drupal_get_path('module','hydrology_model_visualization').'/hydrology_model_visualization.css', 'file');
-      //drupal_add_js(drupal_get_path('module','hydrology_model_visualization').'/hydrology_model_visualization.js', 'file');
-      //drupal_add_js(drupal_get_path('module','hydrology_model_visualization')."/zip.js", 'file');
-      //drupal_add_js("http://dev.hydroshare.local/misc/jquery.cookie.js", 'file');
      
       
         // get the file directory
@@ -89,16 +85,7 @@
                         print( '</div> <!-- contentListWrapper --> ');
 
 
-                        // plot model data                  
-                        $render = render( $content );
-                        if( strpos( $render, "hydrology_model_plot_single" ) != false ) {
-                            $matches = NULL;
-                            print( '<div id="hydroshare_vizualization" style="height:340px"></div>' );
-                            $ret = preg_match( '/<script>hydrology_model_plot_single.*<\/script>/i', $render, $matches );
-                            if( $ret ) {
-                                print( $matches[0] );
-                            } 
-                        }
+                        
                         
                         
                         
@@ -129,77 +116,86 @@
                         
                         
                         
-                        // set the model path
-                        $model_path = join(array_slice(explode('/',$url),0,-1),'/').'/model';
+//                        //-- Move the model into files folder
+//
+//                        // set the model path
+//                        $model_path = join(array_slice(explode('/',$url),0,-1),'/').'/model';
+//                        // TODO: Move this to hydrology_model_presave()
+//                        if(!file_exists(join(array_slice($path_array,0,-1),'/').'/model')){
+//                        
+//                            $zip = new ZipArchive;
+//                            $res = $zip->open($real_path);
+//                            if ($res == TRUE){
+//
+//                              // get the model folder name by peeking into zip
+//                              $z = zip_open($real_path);
+//                              $zip_entry = zip_read($z);
+//                              $model_folder = zip_entry_name($zip_entry);
+//                              $model_folder = array_slice(explode('/',$model_folder),0,1);
+//
+//                              // create the unzip directory
+//                              $unzip_dir = array_slice($path_array,0,-1);
+//                              $unzip_dir = join($unzip_dir,'/');
+//
+//                              // extract the model contents
+//                              $zip->extractTo($unzip_dir);
+//                              $zip->close();
+//
+//                              // rename the model folder to something more standardized
+//                              rename($unzip_dir.'/'.$model_folder[0], $unzip_dir.'/model');
+//                              
+//                            }
+//                        }
                         
-                        // HACK: This is already done in the upload stage.  This is repeative.
-                        //       Find a way to do this only once
-                        
-                        // TODO: Move this to hydrology_model_presave()
-                        if(!file_exists(join(array_slice($path_array,0,-1),'/').'/model')){
-                        
-                            $zip = new ZipArchive;
-                            $res = $zip->open($real_path);
-                            if ($res == TRUE){
-
-                              // get the model folder name by peeking into zip
-                              $z = zip_open($real_path);
-                              $zip_entry = zip_read($z);
-                              $model_folder = zip_entry_name($zip_entry);
-                              $model_folder = array_slice(explode('/',$model_folder),0,1);
-
-                              // create the unzip directory
-                              $unzip_dir = array_slice($path_array,0,-1);
-                              $unzip_dir = join($unzip_dir,'/');
-
-                              // extract the model contents
-                              $zip->extractTo($unzip_dir);
-                              $zip->close();
-
-                              // rename the model folder to something more standardized
-                              rename($unzip_dir.'/'.$model_folder[0], $unzip_dir.'/model');
-                              
-                            }
+                        // plot model data                  
+                        $render = render( $content );
+                        if( strpos( $render, "hydrology_model_plot_single" ) != false ) {
+                            $matches = NULL;
+                            print( '<div id="hydroshare_vizualization" style="height:340px"></div>' );
+                            $ret = preg_match( '/<script>hydrology_model_plot_single.*<\/script>/i', $render, $matches );
+                            if( $ret ) {
+                                print( $matches[0] );
+                            } 
                         }
                         
                         
-                        // TODO: change the output read using listbox
-                        // read streamflow output
-                        $start_dt = datetime::createfromformat('m/d/Y H:i:s',$begin.' 00:00:00');
-                        $date = array();
-                        $values = array();
-                        $i = 1;
-                        $handle = @fopen($model_path . '/output.rch','r');
-                        if ($handle){
-                          while (($buffer = fgets($handle, 4096)) !== false){
-                            if($i >= 10){
-
-                              $name = trim(substr($buffer,0,10));                              
-                              $mon = trim(substr($buffer,22,3));
-                              $outflow = floatval(trim(substr($buffer,51,10)));
-                              
-                              // build date
-                              if ($interval == 'daily'){
-                                $dt = clone $start_dt;
-                                $dt->add(new DateInterval('P'.$mon.'D'));
-                              }
-                              
-                              // add values to array
-                              if (array_key_exists($name, $values)){
-                                array_push($values[$name]['vals'], $outflow);
-                                array_push($values[$name]['dates'],$dt);
-                              }
-                              else {
-                                $values[$name] = array();
-                                $values[$name]['vals'] = array($outflow);
-                                $values[$name]['dates'] = array($dt);
-                              }
-                              
-                              
-                            }
-                            $i++;
-                          }
-                        }
+//                        // TODO: change the output read using listbox
+//                        // read streamflow output
+//                        $start_dt = datetime::createfromformat('m/d/Y H:i:s',$begin.' 00:00:00');
+//                        $date = array();
+//                        $values = array();
+//                        $i = 1;
+//                        $handle = @fopen($model_path . '/output.rch','r');
+//                        if ($handle){
+//                          while (($buffer = fgets($handle, 4096)) !== false){
+//                            if($i >= 10){
+//
+//                              $name = trim(substr($buffer,0,10));                              
+//                              $mon = trim(substr($buffer,22,3));
+//                              $outflow = floatval(trim(substr($buffer,51,10)));
+//                              
+//                              // build date
+//                              if ($interval == 'daily'){
+//                                $dt = clone $start_dt;
+//                                $dt->add(new DateInterval('P'.$mon.'D'));
+//                              }
+//                              
+//                              // add values to array
+//                              if (array_key_exists($name, $values)){
+//                                array_push($values[$name]['vals'], $outflow);
+//                                array_push($values[$name]['dates'],$dt);
+//                              }
+//                              else {
+//                                $values[$name] = array();
+//                                $values[$name]['vals'] = array($outflow);
+//                                $values[$name]['dates'] = array($dt);
+//                              }
+//                              
+//                              
+//                            }
+//                            $i++;
+//                          }
+//                        }
                         
 //                        // Open the zip file and get the model folder name
 //                        $model_folder = null;

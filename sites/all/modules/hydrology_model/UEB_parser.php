@@ -5,7 +5,7 @@ class UEB
   
   /**
    *
-   * Parse the core metadata from SWAT model files
+   * Parse the core metadata from UEB model files
    */
   public function parse_metadata($form, &$form_state, $model_path){
     
@@ -95,35 +95,12 @@ class UEB
     
   }
   
-  private function get_files_in_dir($path){
-    
-    // create array to hold paths
-    $return_array = array();
-    // open model folder
-    $dir = opendir($path);
-    
-    // search all paths in folder
-    while(($file = readdir($dir)) !== false){
-      
-      if($file[0] == '.') continue;
-      
-      // get the full path of the file
-      $fullpath = $path . '/' . $file;
-      
-      // if path is dir, search dir for files
-      if(is_dir($fullpath)){
-        $return_array = array_merge($return_array, $this->get_files_in_dir($fullpath));
-      }
-      // if path is file, add it to return array
-      else{
-        $return_array[] = $fullpath;
-      }
-    }
-    
-    return $return_array;
-  }
+
   
-  
+  /**
+   *
+   * Return a single output data series for plotting
+   */
   public function get_single_output($node, $model_path){
     
     
@@ -203,5 +180,39 @@ class UEB
     $outlet = array_keys($volume_flow, max($volume_flow));
     
     return $values[$outlet[0]];
+  }
+  
+  
+  
+  /**
+   *
+   * Returns the paths of all UEB model files
+   */
+   private function get_files_in_dir($path){
+    
+    // create array to hold paths
+    $return_array = array();
+    // open model folder
+    $dir = opendir($path);
+    
+    // search all paths in folder
+    while(($file = readdir($dir)) !== false){
+      
+      if($file[0] == '.') continue;
+      
+      // get the full path of the file
+      $fullpath = $path . '/' . $file;
+      
+      // if path is dir, search dir for files
+      if(is_dir($fullpath)){
+        $return_array = array_merge($return_array, $this->get_files_in_dir($fullpath));
+      }
+      // if path is file, add it to return array
+      else{
+        $return_array[] = $fullpath;
+      }
+    }
+    
+    return $return_array;
   }
 }

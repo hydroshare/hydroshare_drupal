@@ -96,6 +96,11 @@ class SWAT
   }
 
   
+  
+  /**
+   *
+   * Return a single output data series for plotting
+   */
   public function get_single_output($node, $model_path){
     
     

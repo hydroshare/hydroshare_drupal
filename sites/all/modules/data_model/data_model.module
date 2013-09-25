@@ -510,7 +510,7 @@ function data_model_node_presave( $node ) {
     // need to get path 2 levels up
     $bagit_dir_path = dirname(dirname($new_file_path));
     // create bagit zipfile name in the resources dir
-    if( !data_model_zip_file_name( $bagit_dir_path, &$bagit_zip_file )) {
+    if( !data_model_zip_file_name( $bagit_dir_path, $bagit_zip_file )) {
         drupal_set_message( "data_model_node_view :: failed to archive bagit data for: $bagit_dir_path" );
         error_log( "data_model_node_presave :: failed to create zipfile name for data model bagit archive, path = $bagit_dir_path" );
 	return NULL;

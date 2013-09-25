@@ -1,0 +1,94 @@
+<?php
+// This line is updated by the "create-aegir-platform" script to reflect the
+// name of the tag or branch that has been checked out.  This constant should be
+// used anywhere that we want to display the branch/tag.
+define('HYDROSHARE_VERSION', 'TAG');
+
+/**
+ * Implements hook_init()
+ */
+function hydroshare_tweaks_init(){
+  setlocale(LC_ALL, 'C.UTF-8');
+  if($_GET['q'] == 'admin/config' && !user_access('hydroshare_admin hydroshare_user')){
+    // Set the REQUIREMENT_ERROR variable so that no errors are displayed when
+    // viewing the admin/config page as a non-admin user.
+    define('REQUIREMENT_ERROR', 'Hide requirement error');
+  }
+  // Check to see if we're trying to view the admin/appearance/settings/scratchpads
+  // page, and if so we redirect to the general settings page.
+  if($_GET['q'] == 'admin/appearance/settings/scratchpads' || $_GET['q'] == 'admin/appearance/settings/scratchpads_em'){
+    if(!user_access('scratchpad team')){
+      drupal_goto('admin/appearance/settings');
+    }
+  }
+  // Set the expire/domain/params on the has_js cookie to the same as the session
+  // cookie to prevent any issues, especially with the "Issues..." block.
+  if(!empty($_COOKIE['has_js'])){
+    $params = session_get_cookie_params();
+    $expire = $params['lifetime'] ? REQUEST_TIME + $params['lifetime'] : 0;
+    setcookie('has_js', 1, $expire, $params['path'], $params['domain'], FALSE, $params['httponly']);
+  }
+  // Tweak the URL if we're viewing the media browser.  Note, this is here to
+  // fix what appears to be a bug!]
+  if(arg(0) == 'media' && arg(1) == 'browser'){
+    unset($_GET['schemes']);
+  }
+  // Alter the exception handler so that we can ignore certain exceptions.
+  //set_exception_handler('scratchpads_tweaks_exception_handler');
+}
+
+/**
+ * Alternative exception handler so that we can ignore "duplicate" errors.
+ */
+function hydroshare_tweaks_exception_handler($exception){
+  if(is_object($exception) && get_class($exception) == 'PDOException' && substr($exception->getCode(), 0, 2) == '23'){return;}
+  _drupal_exception_handler($exception);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

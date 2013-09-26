@@ -1,5 +1,8 @@
 Vagrant to build a local virtual box
 
+See docs/Developing using VirtualBox and Vagrant.docx
+for a more detailed description.
+
 This vagrant file is configured to use a SHARED directory.
 Basically, if you change something in here it changes on the virtual machine.
 use this directory as it's hydroshare
@@ -26,6 +29,7 @@ cp sites/default/settings.php.hydroshare sites/default/settings.php
 === JetBrains PhpStorm (beta 138.91 or greater )
 Tools>Vagant
 === command line
+
 $ vagrant up
 after a set of changes you will see:
 ----
@@ -82,4 +86,4 @@ Do this *before* proceeding with bootstrapping.
 
 
 
-
+T

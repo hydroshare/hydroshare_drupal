@@ -14,7 +14,9 @@ function renci_custom_form_alter(&$form, &$form_state, $form_id){
 		    '#value' => t('RECOVER LOST PASSWORD'),
   			);
   }
-  if ($form_id == 'user_register_form') { 
+  if ($form_id == 'user_register_form') {
+  	    $form['account']['name']['#title'] = t("Requested Username ");
+		$form['account']['mail']['#title'] = t("Requested E-mail address ");	  
  		$form['actions']['submit']['#value'] = t("Request New Account");
   } 
   if ($form_id == 'user_pass') { 

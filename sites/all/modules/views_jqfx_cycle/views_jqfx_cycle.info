@@ -1,0 +1,10 @@
+; $Id$
+name = Views jQFX: Cycle
+description = Adds a Rotating Cycle mode to Views jQfx.
+dependencies[] = views_jqfx
+package = Views
+core = 7.x
+files[] = views_jqfx_cycle.module
+files[] = views_jqfx_cycle.views_jqfx.inc
+files[] = theme/views_jqfx_cycle.theme.inc
+

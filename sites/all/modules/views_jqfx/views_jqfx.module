@@ -1,0 +1,55 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Provides jQfx style options for Views.
+ */
+
+/**
+ * Implements hook_theme().
+ */
+function views_jqfx_theme($existing, $type, $theme, $path) {
+  return array(
+    'views_jqfx_main_section' => array(
+      'variables' => array('id' => NULL, 'hidden_elements' => NULL, 'plugin' => NULL),
+      'file' => 'views_jqfx.theme.inc',
+    ),
+  );
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function views_jqfx_views_api() {
+  return array(
+    'api' => '3.0-alpha1',
+  );
+}
+
+/**
+ * Implements hook_help().
+ */
+function views_jqfx_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#views_jqfx':
+      if (module_exists('advanced_help')) {
+        $output = '<p>' . l(t('Click here to view the documentation for Views jQfx'), 'admin/advanced_help/views_jqfx') . '</p>';
+      }
+      else {
+        $output = '<p>' . t('Views jQfx help can be found by installing and enabling the !help.',  array('!advanced_help' => l(t('Advanced Help module'), 'http://drupal.org/project/advanced_help'))) . '</p>';
+      }
+      return $output;
+  }
+}
+
+/**
+ * Views Jqfx: preprocess function for the jqfx.
+ */
+function template_preprocess_views_jqfx(&$vars) {
+  $options = $vars['options'];
+  if (in_array($options['jqfx_type'], array('singleframe', 'cycle', 'imageflow', 'thumbnailhover', 'menu', 'ddblock', 'slider'))) {
+    $options['mode'] = 'views_jqfx_' . $options['jqfx_type'];
+  }
+  $vars['jqfx'] = theme($options['jqfx_type'], array('view' => $vars['view'], 'options' => $options, 'rows' => $vars['rows'], 'title' => $vars['title']));
+}

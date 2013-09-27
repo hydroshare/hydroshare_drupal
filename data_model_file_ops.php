@@ -26,6 +26,7 @@ function data_model_zip_file_name( $dir, &$file_name ) {
 function data_model_recur_zip_dir( $source, $destination, $include_dir = false ) {
 
     if (!extension_loaded('zip') || !file_exists($source)) {
+        error_log( "data_model_recur_zip_dir :: either php zip module is not loaded or the zip dir does not exist\n" );
         return false;
     }
 
@@ -35,6 +36,7 @@ function data_model_recur_zip_dir( $source, $destination, $include_dir = false )
 
     $zip = new ZipArchive();
     if (!$zip->open($destination, ZIPARCHIVE::CREATE)) {
+        error_log( "data_model_recur_zip_dir :: cannot create zip file '$destination'\n" );
         return false;
     }
     $source = str_replace('\\', '/', realpath($source));

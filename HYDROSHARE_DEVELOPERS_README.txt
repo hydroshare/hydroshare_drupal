@@ -35,7 +35,7 @@ Create /etc/apache2/sites-available/hydroshare.local with:
 </VirtualHost>
 
 # turn on new virtualhost
-sudo ap2ensite hydroshare.local
+sudo a2ensite hydroshare.local
 sudo service apache2 restart
 
 # load hydroshare database

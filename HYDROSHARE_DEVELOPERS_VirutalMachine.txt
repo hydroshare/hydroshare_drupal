@@ -1,0 +1,89 @@
+Vagrant to build a local virtual box
+
+See docs/Developing using VirtualBox and Vagrant.docx
+for a more detailed description.
+
+This vagrant file is configured to use a SHARED directory.
+Basically, if you change something in here it changes on the virtual machine.
+use this directory as it's hydroshare
+
+===== INSTALL ==
+If you have not installed virtual box yet, go to https://www.virtualbox.org/wiki/Downloads
+  Install BOTH the VirtualBox platform packages, and the Oracle VM VirtualBox Extension Pack. 
+  The virtual box is configured to allow for RDP access
+
+If you have not installed Vagrant yet, go to http://downloads.vagrantup.com/
+
+Optional developement environment: install Jetbrains PhPStorm
+
+=== LOCAL CONFIGURATION: ===
+On the workstation/desktop/latop that you have installed virtual box:
+add to hosts file. 
+127.0.0.1	hydroshare.local phpmyadmin
+
+== settings file ==
+cp sites/default/settings.php.hydroshare sites/default/settings.php
+
+
+=== RUNNING HYDROSHARE via vagrant== 
+=== JetBrains PhpStorm (beta 138.91 or greater )
+Tools>Vagant
+=== command line
+
+$ vagrant up
+after a set of changes you will see:
+----
+ Stderr from the command:
+  stdin: is not a tty
+  Process finished with exit code 1
+----
+Then the machine is ready.
+  
+Afterwards you may access your box with
+
+$ vagrant ssh
+
+=== SEEING THE WEBSITES ===
+Configured proxy to run on 7777
+http://hydroshare.local:7777/install.php
+http://phpmyadmin:7777/
+
+=== TROUBLESHOOTING ==
+---
+Vagrant up says:
+  Stderr from the command:
+  stdin: is not a tty
+  Process finished with exit code 1
+
+ignore
+---
+
+I am asked to install drupal:
+   You have not copied over settings file, and drupal is installing a complete new instance (this is being worked on).
+   cp sites/default/settings.php.hydroshare sites/default/settings.php
+
+=====================================
+Notes for Windows Development
+-----------------------------
+
+If you are working with a Windows host, you want the shared directory to use Unix line endings.
+Do that by configuring this git repository as follows::
+
+    $ git config core.eol lf
+    $ git config core.autocrlf input
+
+You will probably also need to `git reset --hard` to re-extract all files with approproate line endings.
+Do this *before* proceeding with bootstrapping.
+
+
+
+
+=== TO DOS ===
+* This starts with the pre-configured site. Need a clean Hydroshare profile.
+** the profiles/hydroshare is the start of this
+*** the sites/all/modules/hydroshare/hydroshare_tweaks is a modules that will have all the important dependencies.
+** profile needs to have start data. Can be done using drush, or a set of curl scrips.
+
+
+
+T

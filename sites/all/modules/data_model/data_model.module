@@ -1,6 +1,10 @@
 <?php
 
 require 'data_model_file_ops.php';
+// cannot get this working yet - libraries_get_path is undefined.
+//$lib_path = libraries_get_path("prods");
+include_once 'sites/all/libraries/prods/Prods.inc.php';
+
 
 // =-=-=-=-=-=-=-
 // helper function to work out the new RDM Directory given a new file
@@ -506,6 +510,24 @@ function data_model_node_presave( $node ) {
         return NULL;
     }
 
+    // need to get path 2 levels up
+    $bagit_dir_path = dirname(dirname($new_file_path));
+    // create bagit zipfile name in the resources dir
+    if( !data_model_zip_file_name( $bagit_dir_path, $bagit_zip_file )) {
+        drupal_set_message( "data_model_node_view :: failed to archive bagit data for: $bagit_dir_path" );
+        error_log( "data_model_node_presave :: failed to create zipfile name for data model bagit archive, path = $bagit_dir_path" );
+	return NULL;
+    }
+    
+    // now zip the bagit dir
+    if( !data_model_zip_dir($bagit_zip_file )) {
+        drupal_set_message( "data_model_node_view :: failed to archive bagit data for: $bagit_dir_path" );
+        error_log( "data_model_node_presave :: failed to create zipfile for data model bagit archive, path = $bagit_dir_path" );
+	return NULL;
+    }
+
+    // copy bagit zipfile to irods grid
+
 } // data_model_node_presave
 
 function data_model_views_api() {
@@ -523,56 +545,3 @@ function data_model_views_pre_view(&$view) {
     //error_log( "XXXX - data_model_views_pre_view" );
     //print_r( $view );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

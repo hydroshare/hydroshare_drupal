@@ -187,8 +187,8 @@ function geoanalytics_node_update( $node ) {
 function geoanalytics_preprocess_node( &$variables ) {
     drupal_add_js('http://maps.google.com/maps/api/js?v=3&sensor=false');
     drupal_add_js('http://openlayers.org/dev/OpenLayers.js');
-    drupal_add_js('//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js');
-    drupal_add_js('http://dev.hydroshare.org/misc/jquery.once.js?v=1.2');
+    drupal_add_js('http://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js');
+    drupal_add_js('/misc/jquery.once.js?v=1.2');
     drupal_add_css('http://openlayers.org/dev/theme/default/style.css');
     drupal_add_css('http://openlayers.org/dev/theme/default/google.css');
     drupal_add_css('http://openlayers.org/dev/examples/style.css');

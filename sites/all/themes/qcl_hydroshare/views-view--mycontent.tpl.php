@@ -13,7 +13,7 @@
         <div class="contentListWrapper">
            <?php 
 		   $hostname = $_SERVER['SERVER_NAME'];
-                   $add_url  = 'http://' . $hostname . '/?q=node/add';
+                   $add_url  = '/?q=node/add';
 		   print( '<a href="' . $add_url .'" class="greyButton">UPLOAD</a>' );
            ?>
 

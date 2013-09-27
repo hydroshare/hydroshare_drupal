@@ -1,7 +1,7 @@
 <div id="node-<?php print $node->nid; ?>" class="<?php print $classes; ?>"<?php print $attributes; ?>>
 
     <?php
-    drupal_add_js("http://dev.hydroshare.local/misc/jquery.cookie.js", 'file');
+    drupal_add_js("/misc/jquery.cookie.js", 'file');
     if( !empty( $content ) ) {
         
       // add d3 javascript reference 

@@ -1,0 +1,52 @@
+<?php
+/**
+ * @file
+ * iRODS installation
+*/
+
+/**
+ * Implements hook_install().
+*/
+
+function irods_install() {
+
+	// Set default variables.
+	variable_set('irods_host_port', '1247');
+	variable_set('irods_auth_type', 'Standard');
+
+	// no default values for these
+	variable_set('irods_host_name', ' ');
+	variable_set('irods_host_zone', ' ');
+	variable_set('irods_user_name', ' ');
+	variable_set('irods_user_password', ' ');
+	variable_set('irods_resource', ' ');
+
+	// Get localization function for installation as t() may be unavailable.
+	$t = get_t();
+
+	// Give user feedback.
+	drupal_set_message($t('iRODS variables created'));
+}
+
+
+/**
+ * Implements hook_uninstall().
+*/
+function irods_uninstall() {
+
+	// Delete variables.
+	variable_del('irods_host_name');
+	variable_del('irods_host_port');
+	variable_del('irods_host_zone');
+	variable_del('irods_auth_type');
+	variable_del('irods_user_name');
+	variable_del('irods_user_password');
+	variable_del('irods_resource');
+
+	// Get localization function for installation as t() may be unavailable.
+	$t = get_t();
+
+	// Notify the user.
+	drupal_set_message($t('iRODS variables deleted'));
+}
+

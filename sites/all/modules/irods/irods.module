@@ -1,0 +1,209 @@
+<?php
+/**
+ * @file
+ * Custom functionality to provide administration of login credentials for the backend iRODS grid
+*/
+
+include_once("sites/all/modules/irods/irods.inc.php");
+
+/**
+ * Implements hook_help().
+*/
+
+function irods_help($path, $arg) {
+	switch($path) {
+		case 'admin/help#irods': {
+			$ret = '<h3>' . t('About') . '</h3>';
+			$ret .= '<p>' . t('The iRODS modules allows the Hydroshare Administrator to configure the login credentials for the backend iRODS grid') . '</p>';
+			return $ret;
+			break;
+		}
+	}
+}
+
+
+/**
+ * Implements hook_permission().
+*/
+function irods_permission() {
+	return array(
+		'administer irods' => array(
+			'title' => t('iRODS Administration'),
+			'description' => t('Perform administrative tasks for iRODS functionality.'),
+		),
+	);
+}
+
+
+/**
+ * Implements hook_menu().
+*/
+function irods_menu() {
+	$menu_items = array();
+
+	// Admin configuration group.
+	$menu_items['admin/config/irods'] = array(
+		'title' => 'IRODS',
+		'description' => 'Administer iRODS',
+		'access arguments' => array('administer irods'),
+	);
+
+	// Admin configuration - Settings.
+	$menu_items['admin/config/irods/manage'] = array(
+		'title' => 'iRODS login settings',
+		'description' => 'Manage iRODS login settings.',
+		'access arguments' => array('administer irods'),
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('irods_admin_settings_form'),
+	);
+
+	return $menu_items;
+}
+
+
+/**
+ * Implements hook form.
+*/
+function irods_admin_settings_form($node, &$form_state) {
+	$form = array();
+	
+	$form['overview'] = array(
+		'#markup' => t('This interface allows administrators to manage iRODS settings.'),
+		'#prefix' => '<p>',
+		'#suffix' => '</p>',
+	);
+
+	$form['irods_host_name'] = array(
+		'#title' => t('iRODS Host Name'),
+		'#description' => t('Specify the hostname of the iRODS grid.'),
+		'#type' => 'textfield',
+		'#required' => TRUE,
+		'#default_value' => variable_get('irods_host_name'),
+	);
+
+	$form['irods_host_port'] = array(
+		'#title' => t('iRODS Port'),
+		'#description' => t('Specify the port number of the iRODS grid.'),
+		'#type' => 'textfield',
+		'#default_value' => variable_get('irods_host_port'),
+		'#required' => TRUE,
+	);
+
+	$form['irods_host_zone'] = array(
+		'#title' => t('iRODS Zone Name'),
+		'#description' => t('Specify the zone name of the iRODS grid.'),
+		'#type' => 'textfield',
+		'#required' => TRUE,
+		'#default_value' => variable_get('irods_host_zone'),
+	);
+
+	$options =  array(
+		1 => t('Standard'),
+		2 => t('PAM'),
+	);
+
+	$form['irods_auth_type'] = array(
+		'#title' => t('Authentication Type'),
+		'#description' => t('Authentication scheme used to login to iRODS.'),
+		'#type' => 'select',
+		'#options' => $options,
+		'#default_value' => variable_get('irods_auth_type'),
+		'#required' => TRUE,
+	);
+
+	$form['irods_user_name'] = array(
+		'#title' => t('iRODS User Name'),
+		'#description' => t('Enter the user name to use to login to the iRODS grid.'),
+		'#type' => 'textfield',
+		'#required' => TRUE,
+		'#default_value' => variable_get('irods_user_name'),
+	);
+
+
+	// decrypt any stored password.
+	/* TODO: have to figure out what to do here
+	$decrypted_passwd = '';
+	$stored_passwd = variable_get('irods_user_password');
+	if (isset($stored_passwd)) {
+		$decrypted_passwd = mcrypt_ecb(MCRYPT_3DES, $irods_cipher, $stored_passwd, MCRYPT_DECRYPT);	
+	}
+	$form['irods_user_password'] = array(
+		'#title' => t('iRODS User Password'),
+		'#description' => t('Enter the user password to use to login to the iRODS grid.'),
+		'#type' => 'password',
+		'#required' => TRUE,
+		'#default_value' => $decrypted_passwd,
+	);
+	*/
+	$form['irods_user_password'] = array(
+		'#title' => t('iRODS User Password'),
+		'#description' => t('Enter the user password to use to login to the iRODS grid.'),
+		'#type' => 'password',
+		'#required' => TRUE,
+		'#default_value' => variable_get('irods_user_password'),
+	);
+
+	$form['irods_resource'] = array(
+		'#title' => t('iRODS Resource'),
+		'#description' => t('Enter the iRODS data resource. (Optional)'),
+		'#type' => 'textfield',
+		'#default_value' => variable_get('irods_resource'),
+	);
+
+	$form['submit'] = array(
+		'#type' => 'submit',
+		'#value' => t('Save configuration'),
+	);
+
+	return $form;
+}
+
+
+/**
+ * Validates iRODS admin settings form
+*/
+function irods_admin_settings_form_validate($form, &$form_state) {
+	// TODO: perhaps add validation here with regex?
+}
+
+
+/**
+ * Process the submitted iRODS admin settings form
+*/
+function irods_admin_settings_form_submit($form, &$form_state) {
+	
+	// Rebuild form.
+	$form_state['rebuild'] = TRUE;
+
+	// Save iRODS settings
+	variable_set('irods_host_name', $form_state['values']['irods_host_name']);
+
+	variable_set('irods_host_port', $form_state['values']['irods_host_port']);
+
+	variable_set('irods_host_zone', $form_state['values']['irods_host_zone']);
+
+	variable_set('irods_auth_type', $form_state['values']['irods_auth_type']);
+
+	variable_set('irods_user_name', $form_state['values']['irods_user_name']);
+
+	// Encrypt this password.
+	/* TODO: have to figure out what to do here
+	$encrypted_passwd ='';
+	if (isset($form_state['values']['irods_user_password'])) {
+		$encrypted_passwd = mcrypt_ecb(
+				MCRYPT_3DES,
+				$irods_cipher,
+				$form_state['values']['irods_user_password']);
+	}
+	else {
+		$encrypted_passwd = variable_get('irods_user_password');
+	}
+	*/
+
+	variable_set('irods_user_password', $form_state['values']['irods_user_password']);
+
+	variable_set('irods_resource', $form_state['values']['irods_resource']);
+
+	// Notify user.
+	drupal_set_message(t('The configuration options have been saved.'));
+}

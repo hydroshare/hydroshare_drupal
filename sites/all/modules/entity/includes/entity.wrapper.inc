@@ -494,7 +494,7 @@ class EntityStructureWrapper extends EntityMetadataWrapper implements IteratorAg
       }
     }
     else {
-      throw new EntityMetadataWrapperException('Entity property ' . check_plain($name) . " doesn't support writing.");
+      //throw new EntityMetadataWrapperException('Entity property ' . check_plain($name) . " doesn't support writing.");
     }
   }
 

@@ -4,7 +4,7 @@
  * Custom functionality to provide administration of login credentials for the backend iRODS grid
 */
 
-include_once("sites/all/modules/irods/irods.inc.php");
+//include_once("sites/all/modules/irods/irods.inc.php");
 
 /**
  * Implements hook_help().
@@ -98,8 +98,8 @@ function irods_admin_settings_form($node, &$form_state) {
 	);
 
 	$options =  array(
-		1 => t('Standard'),
-		2 => t('PAM'),
+		'Standard' => t('Standard'),
+		'PAM' => t('PAM'),
 	);
 
 	$form['irods_auth_type'] = array(
@@ -147,6 +147,7 @@ function irods_admin_settings_form($node, &$form_state) {
 		'#title' => t('iRODS Resource'),
 		'#description' => t('Enter the iRODS data resource. (Optional)'),
 		'#type' => 'textfield',
+		'#required' => TRUE,
 		'#default_value' => variable_get('irods_resource'),
 	);
 

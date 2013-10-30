@@ -69,7 +69,7 @@ function data_model_get_file_from_node( $node, &$file ) {
     $field_name  = "";
     $found = false;
     foreach( $fields as $key => $value ) {
-        if( false !== strpos( $key, "field_file" ) ) {
+        if( false !== strpos( $key, "field_file_" ) ) {
             $items     = field_get_items( 'node', $node, $key );
             $file_item = array_shift($items);
             $file      = file_load( $file_item['fid'] );
@@ -402,9 +402,6 @@ function data_model_node_presave( $node ) {
     // =-=-=-=-=-=-=-
     // filter out non hydroshare content types
     $pos = strpos( $node->type, 'hydroshare_' );
-    //if ( $pos ==0 ){
-    //  $pos = strpos($node->type, 'hydrology_');
-    //}
     if( false === $pos ) { 
        return NULL; 
     }
@@ -514,19 +511,28 @@ function data_model_node_presave( $node ) {
     $bagit_dir_path = dirname(dirname($new_file_path));
     // create bagit zipfile name in the resources dir
     if( !data_model_zip_file_name( $bagit_dir_path, $bagit_zip_file )) {
-        drupal_set_message( "data_model_node_view :: failed to archive bagit data for: $bagit_dir_path" );
-        error_log( "data_model_node_presave :: failed to create zipfile name for data model bagit archive, path = $bagit_dir_path" );
+        drupal_set_message(t("data_model_node_view :: failed to archive bagit data for: $bagit_dir_path"));
+        error_log("data_model_node_presave :: failed to create zipfile name for data model bagit archive, path = $bagit_dir_path");
 	return NULL;
     }
     
     // now zip the bagit dir
     if( !data_model_zip_dir($bagit_zip_file )) {
-        drupal_set_message( "data_model_node_view :: failed to archive bagit data for: $bagit_dir_path" );
+        drupal_set_message(t("data_model_node_view :: failed to archive bagit data for: $bagit_dir_path"));
         error_log( "data_model_node_presave :: failed to create zipfile for data model bagit archive, path = $bagit_dir_path" );
 	return NULL;
     }
 
     // copy bagit zipfile to irods grid
+    if( ! upload_bagit_zip_to_irods($bagit_zip_file) ) {
+        drupal_set_message(t("data_model_node_view :: failed to archive bagit data for: $bagit_dir_path. Verify iRODS module hase been configured."));
+        error_log("data_model_node_presave :: failed to upload to iRODS data model bagit archive, path = $bagit_dir_path");
+        return NULL;
+    }
+
+    // clean up local dir and zip file
+    cleanup_resource_files($bagit_dir_path);
+
 
 } // data_model_node_presave
 
@@ -545,3 +551,100 @@ function data_model_views_pre_view(&$view) {
     //error_log( "XXXX - data_model_views_pre_view" );
     //print_r( $view );
 }
+
+function upload_bagit_zip_to_irods($bagit_zip_file) {
+
+    // ========== perhaps all upload all current resources as soon
+    // ========== settings are populated in irods module?? =======
+
+    $host = trim(variable_get('irods_host_name'));
+    
+    // now spot check to see if settings have been populated
+    if (strlen($host) < 2) {
+        error_log( "upload_bagit_zip_to_irods :: invalid iRODS settings, path = $bagit_zip_file, irods host=$host");
+        return false;
+    }
+
+    $port = intval(variable_get('irods_host_port'));
+    $user = trim(variable_get('irods_user_name'));
+    $passwd = trim(variable_get('irods_user_password'));
+    $zone = trim(variable_get('irods_host_zone'));
+    $resource = trim(variable_get('irods_resource'));
+    $auth_type = trim(variable_get('irods_auth_type'));
+
+    // figure out where to put files in grid
+    $upload_path = "/" . $zone . "/home/" . $user . "/" . basename($bagit_zip_file);
+
+    // create irods account
+    $account = new RODSAccount($host,
+				 $port,
+				 $user,
+				 $passwd,
+				 $zone,
+				 $resource,
+				 $auth_type);
+
+    // create ProdsDir - handle to irods collection
+    try {
+        $upload_file = new ProdsFile($account, $upload_path);
+    }
+    catch(Exception $ex) {
+        error_log("upload_bagit_zip_to_irods :: caught exception while trying to create new irods file, ex=$ex->getMessage()");
+        return false;
+    }
+
+    // open local file
+    $local_file = fopen($bagit_zip_file, "r");
+    if ($local_file === false) {
+        error_log("upload_bagit_zip_to_irods :: cannot find local file to upload to irods: $bagit_zip_file");
+        return false;
+    }
+
+    // open remote file - in irods to upload to
+    $upload_file->open("w+", $resource);
+
+    // read & write
+    while($str = fread($local_file, 1048576)) {
+        $upload_file->write($str);
+    }
+
+    // close both files
+    $upload_file->close();
+    fclose($local_file);
+
+    return true;
+}
+
+
+/**
+ * Clean up local dir and zip file, if they exist.
+ * Expects resource real dir path as argument.
+ * Keep this generic for now, in case want to use it
+ * to clean up after any aproriate failed operation.
+*/
+function cleanup_resource_files($dir_path) {
+
+error_log("cleanup_resource_files :: trying to clean up path=$dir_path");
+    // first remove resource directory
+    if (file_exists($dir_path)) {
+        deleteDir($dir_path);
+    }
+
+    // now construct zip file name and remove it
+    $zip_file = rtrim($dir_path, "/");
+    $zip_file .= ".zip";
+error_log("cleanup_resource_files :: trying to clean up path=$zip_file");
+    if (file_exists($zip_file)) {
+        unlink($zip_file);
+    }
+}
+
+// remove non-empty dir
+function deleteDir($path) {
+    return !empty($path) && is_file($path) ?
+        @unlink($path) :
+        (array_reduce(glob($path.'/*'),
+                 function ($r, $i) { return $r && deleteDir($i); }, TRUE))
+        && @rmdir($path);
+}
+

@@ -205,17 +205,26 @@ function geoanalytics_node_view( $node, $view_mode = 'full') {
 
     // only if in full mode and time_series
     if( $view_mode == "full" && $node->type == "hydroshare_geoanalytics" ) {
- 
-        // inject target div
-        $node->content['render_target'] = array(
-            '#markup' => '<div id="hydroshare_vizualization" style="height:340px;"></div>',
-            '#weight' => 0,
-        );
 
         // get the WMS service address from the node
         $wms   = $node->field_webservice['und'][0]['value'];
+        $wfs   = preg_replace('wms',  'wfs', $wms);
         $style = $node->field_style_id['und'][0]['value'];
         $layer = $node->field_layer_id['und'][0]['value'];
+        $features = preg_replace('-layer','',$layer);
+ 
+        // inject target div
+        $node->content['render_target'] = array(
+            '#markup' => '<div id="hydroshare_vizualization" style="height:340px;"></div>' . 
+                         '<ul id="hydroshare_services">' .
+                         '  <lh>Web services. Right click to copy link address.</lh>' .
+                         "  <li><a href='$wms&service=WMS&request=GetMap&layers=$layer&style=$style'>Web Map Service (WMS).</li>" . 
+                         "  <li><a href='$wfs&service=WFS&request=GetFeatures&layers=$layer&format=GeoJSON&count=0'>Web Feature Service (WFS) as GeoJSON.</li>" .
+                         "  <li><a href='$wfs&service=WFS&request=GetFeatures&layers=$layer&format=Shapefile&count=0'>Web Feature Service (WFS) as Shapefile.</li>" .
+                         "  <li><a href='$wfs&service=WFS&request=GetFeatures&layers=$layer&format=SQLite&count=0'>Web Feature Service (WFS) as SQLite.</li>" .
+                         '</ul>',
+            '#weight' => 0,
+        );
 
         // call render
         $node->content['render_single'] = array(

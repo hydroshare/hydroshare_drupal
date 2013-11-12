@@ -120,6 +120,7 @@ function geoanalytics_node_presave( $node ) {
         $file = array_shift(field_get_items('node', $node, 'field_file_geoanalytics'));
         $file_path = file_load($file['fid']);
         $web_path = file_create_url($file_path->uri);
+        $web_path = $base_url . '/export.php?file=' . $web_path;
         
         //$scheme = file_uri_scheme($file_path->uri);
         //$wrapper = file_stream_wrapper_valid_scheme($scheme);

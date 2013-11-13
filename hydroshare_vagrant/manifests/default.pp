@@ -23,7 +23,8 @@ package { [
     'build-essential',
     'vim',
     'curl',
-    'git-core'
+    'git-core',
+    'drush'
   ]:
   ensure  => 'installed',
 }
@@ -71,9 +72,11 @@ class { 'php::pear':
 
 php::pear::module { 'File_IMC':
   use_package => false,
+  preferred_state => 'beta',
 }
 php::pear::module { 'SOAP':
   use_package => false,
+  preferred_state => 'beta',
 }
 
 

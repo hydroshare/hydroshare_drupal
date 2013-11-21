@@ -6,3 +6,9 @@ sites/*/files
 sites/*/private
 */.DS_Store
 .DS_Store
+
+# PhpStorm
+.idea
+
+# vagrantup
+.vagrant

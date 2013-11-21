@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the hydroshare_base feature.
+ */
+
+include_once 'hydroshare_base.features.inc';

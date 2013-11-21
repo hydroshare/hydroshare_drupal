@@ -1,0 +1,440 @@
+<?php
+
+/**
+ * @file
+ * Installs the Agrovoc taxonomy module.
+ */
+
+
+/**
+ * Implements hook_install().
+ */
+function agrovoc_taxonomy_install() {
+  db_add_field('taxonomy_vocabulary', 'agrovoc', array(
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 0,
+    'size' => 'tiny',
+    'description' => 'Whether or not this vocabulary should allow terms from the Agrovoc to be added'
+  ));
+  db_add_field('taxonomy_vocabulary', 'agrovoc_only', array(
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 0,
+    'size' => 'tiny',
+    'description' => 'Whether this vocabulary should ONLY allow terms coming from the Agrovoc'
+  ));
+  db_add_field('taxonomy_vocabulary', 'agrovoc_translations', array(
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 0,
+    'size' => 'tiny',
+    'description' => 'Whether or not translations of the terms should be added when an Agrovoc term is added to a vocabulary'
+  ));
+  db_add_field('taxonomy_vocabulary', 'agrovoc_containing', array(
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 0,
+    'size' => 'tiny',
+    'description' => 'Whether the search criteria should be starting or containing'
+  ));
+  db_add_field('taxonomy_term_data', 'agrovoc_id', array(
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => FALSE,
+    'size' => 'big',
+    'description' => 'The agrovoc id of the term'
+  ));
+  db_query("DELETE FROM {cache}");
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function agrovoc_taxonomy_uninstall() {
+  db_drop_field('taxonomy_vocabulary', 'agrovoc');
+  db_drop_field('taxonomy_vocabulary', 'agrovoc_only');
+  db_drop_field('taxonomy_vocabulary', 'agrovoc_translations');
+  db_drop_field('taxonomy_vocabulary', 'agrovoc_containing');
+  db_drop_field('taxonomy_term_data', 'agrovoc_id');
+}
+
+/**
+ * Implements hook_schema_alter().
+ */
+function agrovoc_taxonomy_schema_alter(&$schema) {
+  // Add agrovoc fields to the vocabulary schema
+  $schema['taxonomy_vocabulary']['fields']['agrovoc'] = array(
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 0,
+    'size' => 'tiny',
+    'description' => 'Whether or not terms of this vocabulary should be based on the Agrovoc thesaurus'
+  );
+  $schema['taxonomy_vocabulary']['fields']['agrovoc_only'] = array(
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 0,
+    'size' => 'tiny',
+    'description' => 'Whether this vocabulary should ONLY allow terms coming from the Agrovoc'
+  );
+  $schema['taxonomy_vocabulary']['fields']['agrovoc_translations'] = array(
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 0,
+    'size' => 'tiny',
+    'description' => 'Whether or not translations of the terms should be added when an Agrovoc term is added to a vocabulary'
+  );
+  $schema['taxonomy_vocabulary']['fields']['agrovoc_containing'] = array(
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 0,
+    'size' => 'tiny',
+    'description' => 'Whether the search criteria should be starting or containing'
+  );
+  $schema['taxonomy_term_data']['fields']['agrovoc_id'] = array(
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => FALSE,
+    'size' => 'big',
+    'description' => 'The agrovoc id of the term'
+  );
+}
+
+/**
+ * Change size of agrovoc_id in the database
+ */
+function agrovoc_taxonomy_update_7106(&$sandbox) {
+  db_change_field('taxonomy_term_data', 'agrovoc_id', 'agrovoc_id', array(
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => FALSE,
+    'size' => 'big',
+    'description' => 'The agrovoc id of the term'
+  ));
+}
+
+/**
+ * Create new translation sets
+ */
+function agrovoc_taxonomy_update_7105(&$sandbox) {
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['current_tid'] = 0;
+    $sandbox['max'] = db_query('SELECT COUNT(DISTINCT tid) FROM {taxonomy_term_data} WHERE agrovoc_id IS NOT NULL')->fetchField();
+  }
+  // Add translation sets
+  $results = db_select('taxonomy_term_data', 't')
+    ->fields('t')
+    ->condition('tid', $sandbox['current_tid'], '>')
+    ->isNotNull('agrovoc_id')
+    ->range(0, 3)
+    ->orderBy('tid', 'ASC')
+    ->execute();
+  while ($record = $results->fetchAssoc()) {
+    file_put_contents('/tmp/translations', $record['tid']."\n", FILE_APPEND);
+    $term = taxonomy_term_load($record['tid']);
+    // Make sure term has all of its translations
+    agrovoc_taxonomy_taxonomy_term_insert($term);
+    $sandbox['progress']++;
+    $sandbox['current_tid'] = $record['tid'];
+  }
+  
+  $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
+}
+
+/**
+ * Delete invalid translation sets in i18n_translation_set
+ */
+function agrovoc_taxonomy_update_7104(&$sandbox) {
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['current_tsid'] = 0;
+    $sandbox['max'] = db_query('SELECT COUNT(DISTINCT tsid) FROM {i18n_translation_set} WHERE bundle REGEXP (\'[0-9]\')')->fetchField();
+    drupal_load('module', 'i18n_taxonomy');
+  }
+  // Delete translation sets
+  $results = db_select('i18n_translation_set', 'i')
+    ->fields('i')
+    ->condition('tsid', $sandbox['current_tsid'], '>')
+    ->where('bundle REGEXP (\'[0-9]\')')
+    ->range(0, 3)
+    ->orderBy('tsid', 'ASC')
+    ->execute();
+  module_load_include('inc', 'i18n_taxonomy', 'i18n_taxonomy.admin');
+  while ($record = $results->fetchAssoc()) {
+    $conditions['tsid'] = $record['tsid'];
+    $entity = entity_load('i18n_translation', FALSE, $conditions, TRUE);
+    $set = reset($entity);
+    if ($set) {
+      $set->delete(TRUE);
+    }
+    $sandbox['progress']++;
+    $sandbox['current_tsid'] = $record['tsid'];
+  }
+  
+  $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
+}
+
+/**
+ * Delete translation sets in taxonomy_term_data
+ */
+function agrovoc_taxonomy_update_7103(&$sandbox) {
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['current_tid'] = 0;
+    $sandbox['max'] = db_query('SELECT COUNT(DISTINCT tid) FROM {taxonomy_term_data} WHERE agrovoc_id IS NOT NULL')->fetchField();
+    drupal_load('module', 'i18n_taxonomy');
+  }
+  // Delete translation sets
+  $results = db_select('taxonomy_term_data', 't')
+    ->fields('t')
+    ->condition('tid', $sandbox['current_tid'], '>')
+    ->isNotNull('agrovoc_id')
+    ->range(0, 3)
+    ->orderBy('tid', 'ASC')
+    ->execute();
+  module_load_include('inc', 'i18n_taxonomy', 'i18n_taxonomy.admin');
+  while ($record = $results->fetchAssoc()) {
+    $term = taxonomy_term_load($record['tid']);
+    if (isset($term->i18n_tsid) && $term->i18n_tsid != 0) {
+      $conditions['tsid'] = $term->i18n_tsid;
+      $entity = entity_load('i18n_translation', FALSE, $conditions, TRUE);
+      $set = reset($entity);
+      if ($set) {
+        $set->delete(TRUE);
+      }
+    }
+    $sandbox['progress']++;
+    $sandbox['current_tid'] = $record['tid'];
+  }
+  
+  $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
+}
+
+/**
+ * Update agrovoc term names
+ */
+function agrovoc_taxonomy_update_7102(&$sandbox) {
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['current_tid'] = 0;
+    $sandbox['max'] = db_query('SELECT COUNT(DISTINCT tid) FROM {taxonomy_term_data} WHERE agrovoc_id IS NOT NULL')->fetchField();
+  }
+  // Update terms
+  $results = db_select('taxonomy_term_data', 't')
+    ->fields('t')
+    ->condition('tid', $sandbox['current_tid'], '>')
+    ->isNotNull('agrovoc_id')
+    ->range(0, 3)
+    ->orderBy('tid', 'ASC')
+    ->execute();
+  while ($record = $results->fetchAssoc()) {
+    agrovoc_taxonomy_term_update($record['tid']);
+    $sandbox['progress']++;
+    $sandbox['current_tid'] = $record['tid'];
+  }
+  
+  $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
+}
+
+/**
+ * Remove duplicates.
+ * Note that, depending on the size of your database, this update might take a VERY long time. Make sure you backup your
+ * database before running it.
+ */
+function agrovoc_taxonomy_update_7101(&$sandbox) {
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $dups = db_query('SELECT COUNT(DISTINCT agrovoc_id) FROM {taxonomy_term_data}')->fetchField();
+    $sandbox['max'] = $dups;
+    $results = db_select('taxonomy_term_data', 't')
+      ->distinct()
+      ->fields('t', array('agrovoc_id'))
+      ->condition('agrovoc_id', '0', '!=')
+      ->execute();
+    $agrovoc_ids = array();
+    while ($record = $results->fetchAssoc()) {
+      $agrovoc_ids[] = $record['agrovoc_id'];
+    }
+    
+    $sandbox['agrovoc_ids'] = $agrovoc_ids;
+  }
+  
+  // Remove duplicate terms
+  $i = $sandbox['progress'];
+  $aid = $sandbox['agrovoc_ids'][$i];
+  $terms = _agrovoc_taxonomy_get_terms_from_agrovoc_id($aid);
+  $finals = array();
+  foreach ($terms as $term) {
+    $lang = $term->language;
+    if (!isset($finals[$lang])) {
+      $finals[$lang] = $term;
+    }
+  }
+  
+  $langs = array();
+  $doubles = array();
+  foreach ($terms as $term) {
+    $lang = $term->language;
+    if (!in_array($lang, $langs)) {
+      $langs[] = $lang;
+    }
+    $final = $finals[$lang];
+    if ($final->tid != $term->tid) {
+      // Duplicate term: must be merged with the final term
+      $doubles[$lang][] = $term->tid;
+    }
+  }
+  
+  foreach ($langs as $lang) {
+    if (!empty($doubles[$lang])) {
+      _agrovoc_taxonomy_term_merge($doubles[$lang], $finals[$lang]);
+    }
+  }
+  $sandbox['progress']++;
+  $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
+    
+}
+
+/**
+ * Remove NULL terms
+ */
+function agrovoc_taxonomy_update_7100(&$sandbox) {
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['current_tid'] = 0;
+    $sandbox['max'] = db_query('SELECT COUNT(*) FROM {taxonomy_term_data} WHERE name = :name', array(':name' => "NULL"))->fetchField();
+  }
+  // Delete NULL terms
+  $results = db_select('taxonomy_term_data', 't')
+    ->fields('t')
+    ->condition('tid', $sandbox['current_tid'], '>')
+    ->condition('name', 'NULL')
+    ->range(0, 3)
+    ->orderBy('tid', 'ASC')
+    ->execute();
+  while ($record = $results->fetchAssoc()) {
+    taxonomy_term_delete($record['tid']);
+    $sandbox['progress']++;
+    $sandbox['current_tid'] = $record['tid'];
+  }
+  
+  $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
+}
+
+/**
+ * Helper function to merge terms. Inspired from the term_merge module.
+ */
+function _agrovoc_taxonomy_term_merge($source, $dest) {
+  // Create an array of source if it isn't already one.
+  if (!is_array($source)) {
+    $source = array($source);
+  }
+  $source = array_values($source);
+
+  // For every field existing on the site.
+  foreach (field_info_fields() as $key => $field) {
+
+    if ($field['type'] == 'taxonomy_term_reference') {
+      $table_name = 'field_data_' . $key;
+      $tid_field = $key . '_tid';
+
+      $update_data = array();
+      foreach ($source as $source_tid) {
+
+        // Get data from fields previously containing a reference to the merged term.
+        $fields_result = db_select($table_name, 'df')
+          ->fields('df', array('entity_type', 'entity_id', 'delta'))
+          ->condition($tid_field, $source_tid)
+          ->execute();
+
+        // Collect update data form the batch process and group them by their entity.
+        foreach ($fields_result as $field_row) {
+          $batch_key = $field_row->entity_type . '_' . $field_row->entity_id;
+          $update_data[$batch_key][] = array(
+            'field_name' => $key,
+            'source_tid' => $source_tid,
+            'dest_tid' => $dest,
+          );
+        }
+      }
+
+      if (empty($update_data)) {
+        // Remove duplicates
+        foreach ($source as $tid) {
+          taxonomy_term_delete($tid);
+        }
+      }
+      else {
+        // Create a batch processing step for every entity that needs an update.
+        foreach ($update_data as $key => $batch_data) {
+          $delimiter_pos = strripos($key, '_');
+          $type = drupal_substr($key, 0, $delimiter_pos);
+          $id = drupal_substr($key, $delimiter_pos + 1);
+          
+          _agrovoc_taxonomy_term_merge_insert_field_values($type, $id, $batch_data, $source);
+        }
+      }
+    }
+  }
+}
+
+function _agrovoc_taxonomy_term_merge_insert_field_values($entity_type, $entity_id, $data, $source) {
+  $merged_terms_delete = $source;
+
+  // Load the entity.
+  $entity = entity_load($entity_type, array($entity_id));
+  $entity = $entity[$entity_id];
+
+  $target_merged = FALSE;
+  foreach ($data as $i => &$update_data_arr) {
+    $update_data_arr = array_reverse($update_data_arr);
+		
+    $field_lang = field_language('node', $entity, $update_data_arr['field_name']);
+    $field_values = &$entity->{$update_data_arr['field_name']}[$field_lang];
+    foreach ($field_values as $i => $value) {
+      if ($value['tid'] == $update_data_arr['source_tid']) {
+
+        if (!$target_merged) {
+          $field_values[$i]['tid'] = $update_data_arr['dest_tid']->tid;
+          $target_merged = TRUE;
+        }
+        // Any more occurrences of the source tid will simply be removed.
+        // We don't want duplicates.
+        else {
+          array_splice($field_values, $i, 1);
+        }
+
+        // If target tid is one of the source tids, remove it from the array
+        // of terms that will be removed at the end of the process.
+        if($update_data_arr['source_tid']== $update_data_arr['dest_tid']->tid) {
+          foreach ($context['results']['merged_terms_delete'] as $i => $merged_term) {
+            if ($merged_term == $update_data_arr['source_tid']) {
+              array_splice($merged_terms_delete, $i, 1);
+            }
+          }
+        }
+
+        break;
+      }
+    }
+  }
+
+  // Save the new field values if something has changed.
+  if ($target_merged) {
+    field_attach_update($entity_type, $entity);
+  }
+  
+  foreach ($merged_terms_delete as $merged_term) {
+    taxonomy_term_delete($merged_term);
+  }
+}

@@ -1,0 +1,551 @@
+<?php
+
+/**
+ * @file
+ * Agrovoc Taxonomy Drupal module
+ * 
+ * Adds Agrovoc functionalities to Drupal's taxonomy. 
+ * 
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function agrovoc_taxonomy_menu() {
+  $items = array();
+  $items['admin/structure/taxonomy/%taxonomy_vocabulary_machine_name/add/agrovoc'] = array(
+    'title' => 'Add terms using Agrovoc',
+    'page callback' => 'agrovoc_taxonomy_add_terms_page',
+    'page arguments' => array(3),
+    'access callback' => 'agrovoc_taxonomy_add_terms_access',
+    'access arguments' => array(3),
+    'type' => MENU_LOCAL_TASK,
+    'parent' => 'admin/structure/taxonomy/%taxonomy_vocabulary_machine_name'
+  );
+  $items['taxonomy/agrovoc_autocomplete'] = array(
+    'title' => 'Autocomplete agrovoc taxonomy',
+    'page callback' => 'agrovoc_taxonomy_autocomplete',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+    'file' => 'agrovoc_taxonomy.pages.inc'
+  );
+  return $items;
+}
+
+/**
+ * Access callback to add agrovoc terms to a taxonomy.
+ */
+function agrovoc_taxonomy_add_terms_access($vocabulary) {
+  return ($vocabulary->agrovoc && user_access('administer taxonomy'));
+}
+
+/**
+ * Page callback to add agrovoc terms to a taxonomy.
+ */
+function agrovoc_taxonomy_add_terms_page($vocabulary) {
+  $html = drupal_get_form('agrovoc_taxonomy_form_search', array(), $vocabulary);
+  return $html;
+}
+
+/**
+ * Search form to search agrovoc terms.
+ */
+function agrovoc_taxonomy_form_search($form, &$form_state, $edit = array(), $vocabulary = NULL) {
+  $form = array();
+  
+  if (isset($form_state['storage']['response'])) {
+    $form['results'] = _agrovoc_taxonomy_set_results($form_state, $vocabulary->vid);
+    $form['vocabulary_id'] = array(
+      '#type' => 'hidden',
+      '#value' => $vocabulary->vid
+    );
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Add selected terms in taxonomy')
+    );
+  }
+  else {
+    $form['term'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Term searched'),
+      '#required' => true
+    );
+    
+    $form['mode'] = array(
+      '#type' => 'select',
+      '#title' => t('Search mode'),
+      '#options' => array(
+        'starting' => 'Starting',
+        'containing' => 'Containing',
+        'exact' => 'Exact',
+        'end with' => 'End with',
+        'exact word' => 'Exact word'
+      )
+    );
+    
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Search')
+    );
+  }
+  
+  return $form;
+}
+
+/**
+ * Results of the search form.
+ */
+function _agrovoc_taxonomy_set_results($form_state, $taxonomy_id) {
+  $response = $form_state['storage']['response'];
+  $headers = array('id' => t('Id'), 'term' => t('Term'), 'lang' => t('Language'));
+  $rows = array();
+  foreach ($response as $term) {
+    if (_agrovoc_taxonomy_is_in_vocabulary($term['id'], $term['lang'], $taxonomy_id)) {
+      $rows[$term['id']] = array('id' => $term['id'], 'term' => $term['term'], 'lang' => $term['lang']);
+    }
+    else {
+      $rows[$term['id']] = array('id' => $term['id'], 'term' => $term['term'], 'lang' => $term['lang']);
+    }
+  }
+  return array(
+    '#type' => 'tableselect',
+    '#header' => $headers,
+    '#options' => $rows,
+    '#multiple' => TRUE
+  );
+}
+
+/**
+ * Submit callback of the search form.
+ */
+function agrovoc_taxonomy_form_search_submit($form, &$form_state) {
+  if (isset($form_state['storage']['response'])) {
+    $vid = $form['vocabulary_id']['#value'];
+    $ids = array_keys($form['results']['#value']);
+    $options = $form['results']['#options'];
+    foreach ($ids as $id) {
+      $term_array = $options[$id];
+      $term = new stdClass();
+      $term->vid = $vid;
+      $term->name = $term_array['term'];
+      $term->language = strtolower($term_array['lang']);
+      $term->agrovoc_id = $id;
+      taxonomy_term_save($term);
+    }
+  }
+  else {
+    $response = agrovoc_api_simple_search_by_mode2($form['term']['#value'], $form['mode']['#value']);
+    $form_state['rebuild'] = TRUE;
+    $form_state['storage']['response'] = $response;
+  }
+}
+
+/**
+ * Checks if an Agrovoc term is already part of a vocabulary.
+ * 
+ * @param $term_id
+ *  Agrovoc term id
+ * @param $lang
+ *  Term language
+ * @param $vocabulary_id
+ *  Id of the vocabulary in which the check needs to be made
+ * 
+ * @return
+ *  TRUE if the term is already in the vocabulary, FALSE if it isn't
+ */
+function _agrovoc_taxonomy_is_in_vocabulary($term_id, $lang, $vocabulary_id) {
+  $sql = "SELECT t.vid FROM {taxonomy_term_data} t WHERE t.agrovoc_id = :aid AND t.language = :alang";
+  $result = db_query($sql, array(':aid' => $term_id, ':alang' => strtolower($lang)));
+  $is_in_vocabulary = FALSE;
+  while ($vocabulary = $result->fetchObject()) {
+    if ($vocabulary->vid == $vocabulary_id) {
+      $is_in_vocabulary = TRUE;
+      break;
+    }
+  }
+  return $is_in_vocabulary;
+}
+
+/**
+ * Returns the terms found with the Agrovoc id given as a parameter.
+ * 
+ * @param $agrovoc_id
+ *  Agrovoc id of the term
+ * @param $vocabulary_id
+ *  Vocabulary id in which the term needs to be searched
+ * 
+ * @return
+ *  Array with the Drupal terms found; empty array if no terms were found
+ */
+function _agrovoc_taxonomy_get_terms_from_agrovoc_id($aid, $vid = 0) {
+  $query = new EntityFieldQuery();
+  
+  $query
+    ->entityCondition('entity_type', 'taxonomy_term')
+    ->propertyCondition('agrovoc_id', $aid);
+  if ($vid != 0) {
+    $query->propertyCondition('vid', $vid);
+  }
+  
+  $results = $query->execute();
+  
+  $tids = array();
+  foreach($results['taxonomy_term'] as $record) {
+    $tids[] = $record->tid;
+  }
+  return entity_load('taxonomy_term', $tids);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function agrovoc_taxonomy_form_taxonomy_form_term_alter(&$form, &$form_state) {
+  $term = $form_state['term'];
+  $vocabulary = $form['#vocabulary'];
+  if ($vocabulary->agrovoc && isset($term->tid)) {
+    $form['agrovoc_id'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Agrovoc id'),
+      '#default_value' => $term->agrovoc_id,
+      '#disabled' => TRUE,
+      '#value' => $term->agrovoc_id
+    );
+    // Agrovoc info
+    $form['agrovoc_info'] = array(
+      '#markup' => t('This term belongs to the Agrovoc thesaurus. As a result, some fields are disabled'),
+      '#weight' => -15
+    );
+    // Term name
+    $form['name']['#disabled'] = TRUE;
+    $form['name']['#value'] = $form['name']['#default_value'];
+    // Disable language field if present
+    $form['#after_build'][] = 'agrovoc_taxonomy_disable_language';
+    
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function agrovoc_taxonomy_form_taxonomy_overview_vocabularies_alter(&$form, &$form_state) {
+  $nb_elements = count(taxonomy_get_vocabularies());
+  for ($i = 1; $i <= $nb_elements; $i++) {
+    $vocabulary = $form[$i]['#vocabulary'];
+    if ($vocabulary->agrovoc) {
+      $form[$i]['add_agrovoc'] = array(
+        '#type' => 'link',
+        '#title' => t('add terms using Agrovoc'),
+        '#href' => "admin/structure/taxonomy/$vocabulary->machine_name/add/agrovoc"
+      );
+    }
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function agrovoc_taxonomy_form_taxonomy_form_vocabulary_alter(&$form, &$form_state) {
+  if ($form['#id'] != 'taxonomy_vocabulary_confirm_delete') {
+    if (isset($form['vid'])) {
+      $vid = $form['vid']['#value'];
+      $vocabulary = taxonomy_vocabulary_load($vid);
+      $agrovoc = $vocabulary->agrovoc;
+      $agrovoc_containing = $vocabulary->agrovoc_containing;
+      $agrovoc_only = $vocabulary->agrovoc_only;
+      $agrovoc_translations = $vocabulary->agrovoc_translations;
+    }
+    else {
+      $agrovoc = 0;
+      $agrovoc_containing = 0;
+      $agrovoc_only = 0;
+      $agrovoc_translations = 0;
+    }
+    $form['agrovoc_settings'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Agrovoc settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE
+    );
+    $form['agrovoc_settings']['agrovoc'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Agrovoc vocabulary'),
+      '#default_value' => $agrovoc,
+      '#description' => t('Whether this vocabulary should allow terms from the Agrovoc thesaurus to be added.')
+    );
+    $form['agrovoc_settings']['agrovoc_containing'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Use Containing'),
+      '#default_value' => $agrovoc_containing,
+      '#description' => t('Check this if you would like the autocomplete field to use the containing search mode instead of the default starting search mode.')
+    );
+    $form['agrovoc_settings']['agrovoc_only'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Agrovoc only'),
+      '#default_value' => $agrovoc_only,
+      '#description' => t('Whether this vocabulary should ONLY contain terms from the Agrovoc thesaurus.')
+    );
+    $form['agrovoc_settings']['agrovoc_translations'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Agrovoc translations'),
+      '#default_value' => $agrovoc_translations,
+      '#description' => t('Whether, when adding an Agrovoc term to this vocabulary, translations of the term should also be fetched.')
+    );
+  }
+}
+
+/**
+ * Implements hook_field_widget_info_alter()
+ */
+function agrovoc_taxonomy_field_widget_info_alter(&$info) {
+  $info['taxonomy_autocomplete']['settings']['autocomplete_path'] = 'taxonomy/agrovoc_autocomplete';
+}
+
+/**
+ * Implements hook_field_extra_fields()
+ */
+function agrovoc_taxonomy_field_extra_fields() {
+  $return = array();
+  $info = entity_get_info('taxonomy_term');
+  foreach (array_keys($info['bundles']) as $bundle) {
+    $vocabulary = taxonomy_vocabulary_machine_name_load($bundle);
+    if ($vocabulary->agrovoc) {
+      $return['taxonomy_term'][$bundle] = array(
+        'form' => array(
+          'agrovoc_id' => array(
+            'label' => t('Agrovoc id'),
+            'description' => t('Agrovoc id of the term'),
+            'weight' => 0
+          ),
+        ),
+        'display' => array(
+          'agrovoc_id' => array(
+            'label' => t('Agrovoc id'),
+            'description' => t('Agrovoc id of the term'),
+            'weight' => 0
+          ),
+        ),
+      );
+    }
+  }
+  return $return;
+}
+    
+
+/**
+ * Disable language field on terms that are part of the Agrovoc thesaurus.
+ */
+function agrovoc_taxonomy_disable_language($form, $form_values) {
+  if ($form['language']) {
+    $form['language']['#value'] = $form['language']['#default_value'];
+    $form['language']['#disabled'] = TRUE;
+    $form['language']['#attributes'] = array('disabled' => 'disabled');
+  }
+  return $form;
+}
+
+/**
+ * Implements hook_node_validate()
+ */
+function agrovoc_taxonomy_node_validate($node, $form, &$form_state) {
+  $vocabularies = taxonomy_vocabulary_get_names();
+  foreach ($form as $key => $field) {
+    if (is_array($field) && isset($field['#attributes']['class'])) {
+      if (in_array('field-widget-taxonomy-autocomplete', $field['#attributes']['class'])) {
+        $field_info = field_info_field($key);
+        foreach ($field_info['settings']['allowed_values'] as $tree) {
+          $vids[] = $vocabularies[$tree['vocabulary']]->vid;
+        }
+        $vocabulary = taxonomy_vocabulary_load($vids[0]);
+        if ($vocabulary->agrovoc && $vocabulary->agrovoc_only) {
+          $language = $field['#language'];
+          $field_att = $field[$language];
+          $value = $field_att['#value'];
+          if (!empty($value)) {
+            $ag_terms = explode(',', $value);
+            foreach ($ag_terms as $ag_term) {
+              $matching_terms = taxonomy_get_term_by_name($ag_term);
+              // If the term is already in the taxonomy, that's fine
+              // But if the term is not already in the taxonomy, we need to check that it is part of the Agrovoc
+              if (count($matching_terms) == 0) {
+                // Check that the term is part of the Agrovoc
+                if (agrovoc_api_is_agrovoc_term(trim($ag_term)) == FALSE) {
+                  form_set_error($key, t('The term %term is not part of the Agrovoc thesaurus and can not be added', array('%term' => $ag_term)));
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_taxonomy_term_presave()
+ */
+function agrovoc_taxonomy_taxonomy_term_presave($term) {
+  $vocabulary = taxonomy_vocabulary_load($term->vid);
+  if ($vocabulary->agrovoc) {
+    // Get agrovoc id
+    if (!isset($term->tid)) { // New term being added
+      // Check that it's part of the Agrovoc
+      $response = agrovoc_api_simple_search_by_mode2($term->name, 'exact');
+      if (isset($response[0])) {
+        // Term is part of the agrovoc: set its agrovoc id
+        $term->agrovoc_id = $response[0]['id'];
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_taxonomy_term_insert().
+ */
+function agrovoc_taxonomy_taxonomy_term_insert($term) {
+  global $language;
+  static $translations = array();
+  // Get new term id
+  $vocabulary = taxonomy_vocabulary_load($term->vid);
+  if ($vocabulary->agrovoc) {
+    $term_language = $term->language ? $term->language : $language->language;
+    // Set a language for the term that was just added
+    if (!$term->language) {
+      $term->language = $term_language;
+      taxonomy_term_save($term);
+    }
+    if (isset($term->agrovoc_id)) { // Term is part of the agrovoc
+      // Handle translations: maybe the term we just added is a translation of another term already present in the taxonomy
+      $i18n_tsid = 0;
+      if (!isset($translations[$term->agrovoc_id])) {
+        // This is the first time the function is called. Add eventual already translated terms to the translations array
+        $translations[$term->agrovoc_id] = array($term_language => $term);
+        $base_terms = _agrovoc_taxonomy_get_terms_from_agrovoc_id($term->agrovoc_id, $term->vid);
+        foreach ($base_terms as $tterm) {
+          $translations[$term->agrovoc_id][$tterm->language] = $tterm;
+        }
+      }
+      else {
+        $translations[$term->agrovoc_id][$term_language] = $term;
+      }
+      // Check if we already have an i18n tsid
+      foreach ($translations[$term->agrovoc_id] as $tterm) {
+        if ($tterm->i18n_tsid) {
+          $i18n_tsid = $tterm->i18n_tsid;
+        }
+      }
+      if (count($translations[$term->agrovoc_id]) > 1) {
+        module_load_include('inc', 'i18n_taxonomy', 'i18n_taxonomy.admin');
+        if ($i18n_tsid == 0) {
+          // Create a translation set
+          $voc = taxonomy_vocabulary_load($term->vid);
+          $translation_set = i18n_translation_set_create('taxonomy_term', $voc->machine_name);
+          $translation_set->save(TRUE);
+        }
+        else {
+          // Update an already existing translation set
+          $translation_set = i18n_translation_set_load($i18n_tsid);
+          $translation_set->reset_translations($translations[$term->agrovoc_id]);
+          $translation_set->save(TRUE);
+        }
+        // Add the translation set id to the terms
+        $l_to_update = array();
+        foreach ($translations[$term->agrovoc_id] as $l => $term) {
+          if ($term->i18n_tsid != $translation_set->tsid) {
+            $l_to_update[] = $l;
+          }
+        }
+        foreach ($l_to_update as $l) {
+          $tterm = $translations[$term->agrovoc_id][$l];
+          $tterm->i18n_tsid = $translation_set->tsid;
+        }
+      }
+      if ($vocabulary->agrovoc_translations) {
+        // Add translations of the term
+        // Get all translations of the term
+        $agrovoc_translations = agrovoc_api_get_all_labels_by_termcode2($term->agrovoc_id);
+        // Get supported languages of the platform
+        $supported_languages = locale_language_list('language');
+        // Get term languages that are already present in the database
+        $terms_languages = array_keys($translations[$term->agrovoc_id]);
+        foreach ($agrovoc_translations as $l => $t) {
+          // If the language is part of the supported languages and is not already present in the database
+          if (in_array(strtolower($l), $supported_languages) && !in_array(strtolower($l), $terms_languages)) {
+            // Add the term in the taxonomy
+            // Create term
+            $new_term = new stdClass();
+            $new_term->vid = $term->vid;
+            $new_term->name = $t;
+            $new_term->language = strtolower($l);
+            $new_term->agrovoc_id = $term->agrovoc_id;
+            taxonomy_term_save($new_term);
+            // Get out of the loop after we have added the first term. The other terms will be added recursively by the call to taxonomy_save_term
+            break;
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Update term names of an agrovoc term
+ */
+function agrovoc_taxonomy_term_update($tid) {
+  $term = taxonomy_term_load($tid);
+  // Make sure the term is part of the agrovoc
+  if (!empty($term->agrovoc_id)) {
+    $response = agrovoc_api_get_all_labels_by_termcode2($term->agrovoc_id);
+    $lang = strtoupper($term->language);
+    if (isset($response[$lang]) && strcmp($response[$lang], $term->name) !== 0) {
+      // We need to update the term name
+      $term->name = $response[$lang];
+      taxonomy_term_save($term);
+    }
+  }
+}
+
+
+/**
+ * Theme the vocabulary overview as a sortable list of vocabularies. Taken from the taxonomy module
+ *
+ * @ingroup themeable
+ * @see taxonomy_overview_vocabularies()
+ */
+function theme_agrovoc_taxonomy_overview_vocabularies($variables) {
+  $form = $variables['form'];
+
+  $rows = array();
+
+  foreach (element_children($form) as $key) {
+    if (isset($form[$key]['name'])) {
+      $vocabulary = &$form[$key];
+
+      $row = array();
+      $row[] = drupal_render($vocabulary['name']);
+      if (isset($vocabulary['weight'])) {
+        $vocabulary['weight']['#attributes']['class'] = array('vocabulary-weight');
+        $row[] = drupal_render($vocabulary['weight']);
+      }
+      $row[] = drupal_render($vocabulary['edit']);
+      $row[] = drupal_render($vocabulary['list']);
+      $row[] = drupal_render($vocabulary['add']);
+      $row[] = drupal_render($vocabulary['add_agrovoc']);
+      $rows[] = array('data' => $row, 'class' => array('draggable'));
+    }
+  }
+
+  $header = array(t('Vocabulary name'));
+  if (isset($form['actions'])) {
+    $header[] = t('Weight');
+    drupal_add_tabledrag('taxonomy', 'order', 'sibling', 'vocabulary-weight');
+  }
+  $header[] = array('data' => t('Operations'), 'colspan' => '4');
+  return theme('table', array('header' => $header, 'rows' => $rows, 'empty' => t('No vocabularies available. <a href="@link">Add vocabulary</a>.', array('@link' => url('admin/structure/taxonomy/add'))), 'attributes' => array('id' => 'taxonomy'))) . drupal_render_children($form);
+}
+
+/**
+ * Implements hook_theme_registry_alter().
+ */
+function agrovoc_taxonomy_theme_registry_alter(&$theme_registry) {
+  $theme_registry['taxonomy_overview_vocabularies']['function'] = 'theme_agrovoc_taxonomy_overview_vocabularies';
+}

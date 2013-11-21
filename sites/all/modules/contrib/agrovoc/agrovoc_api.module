@@ -1,0 +1,249 @@
+<?php
+
+
+/**
+ * @file
+ * Provides an API to use the Agrovoc web services.
+ */
+
+/**
+ * Agrovoc web services URL
+ */
+define('AGROVOC_WS_URL', 'http://www.fao.org/webservices/AgrovocWS');
+
+/**
+ * Agrovoc web services URI
+ */
+define('AGROVOC_WS_URI', 'AgrovocWS');
+
+/**
+ * SOAP client (singleton).
+ */
+$_agrovoc_api_client = NULL;
+
+/**
+ * Returns the SOAP client.
+ */
+function _agrovoc_api_get_client() {
+  global $_agrovoc_api_client;
+  if ($_agrovoc_api_client == NULL) {
+    $_agrovoc_api_client = new SoapClient(NULL, array('location' => AGROVOC_WS_URL, 'uri' => AGROVOC_WS_URI, 'exceptions' => 0));
+  }
+  return $_agrovoc_api_client;
+}
+
+/**
+ * Implements the call to the simpleSearchByMode2 method of the Agrovoc web services.
+ * 
+ * @param string $term
+ *  Term searched
+ * @param string $mode
+ *  Search mode (starting, containing, exact, end with, exact word)
+ * @param string $separator
+ *  Separator (set to , by default)
+ * @param bool $as_array
+ *  Whether to return the results under the form of an array of the form
+ *  array(1 => array(id => 'id', lang => 'lang', term => 'term')). Set to TRUE by default
+ * @param int $limit
+ *  Limits the number of results to be returned. Only used if $as_array is set to TRUE
+ * @param string $filter_language
+ *  If set, will return only terms of a specific language. Only used if as_array is set to true
+ * 
+ * @return
+ *  Response of the Agrovoc API
+ */
+function agrovoc_api_simple_search_by_mode2($term, $mode, $separator = ',', $as_array = TRUE, $limit = 0, $filter_language = '') {
+  $params = array('searchString' => $term, 'searchmode' => $mode, 'separator' => $separator);
+  // Create the unique ID of this method call
+  $id_string = 'simpleSearchByMode2' . implode(',', $params);
+  $md5_string = md5($id_string);
+  // See if the response of the request is in the cache
+  $cache_response = cache_get('agrovoc_api_' . $md5_string);
+  $cache_hit = TRUE;
+  if (!$cache_response) {
+    // Do the SOAP call
+    $cache_hit = FALSE;
+    $client = _agrovoc_api_get_client();
+    $response = $client->__soapCall('simpleSearchByMode2', $params);
+  }
+  else {
+    $response = $cache_response->data;
+  }
+  if (is_soap_fault($response)) {
+    drupal_set_message(t('An error occured while calling the Agrovoc API'), 'error');
+    if ($as_array == TRUE) {
+      return array();
+    }
+    else {
+      return NULL;
+    }
+  }
+  else {
+    // If it was not found in the cache, store the response in the cache
+    if (!$cache_hit) {
+      cache_set('agrovoc_api_' . $md5_string, $response);
+    }
+    if ($as_array == TRUE) {
+      return _agrovoc_api_simple_search_by_mode2_response_to_array($response, $separator, $limit, $filter_language);
+    }
+    else {
+      return $response;
+    }
+  }
+}
+
+/**
+ * Formats the elements returned in an array.
+ * 
+ * @param string $response
+ *  Response of Agrovoc web service
+ * @param string $separator
+ *  Separator
+ * @param int $limit
+ *  Limit the number of results to return
+ * @param string $filter_language
+ *  Filter results by language
+ * 
+ * @return array
+ *  Array of results
+ */
+function _agrovoc_api_simple_search_by_mode2_response_to_array($response, $separator, $limit, $filter_language) {
+  $response = trim($response, '[]');
+  $response_array = explode($separator, $response);
+  // Pop out last two elements
+  array_pop($response_array);
+  array_pop($response_array);
+  $final_array = array();
+  $i = 0;
+  $j = -1;
+  $term = array();
+  foreach ($response_array as $element) {
+    if ($i % 3 == 0) {
+      $term['id'] = $element;
+    }
+    elseif ($i % 3 == 1) {
+      $term['term'] = $element;
+    }
+    elseif ($i % 3 == 2) {
+      $term['lang'] = $element;
+      // If the language is the right one, add the term
+      if ($filter_language != '' && strtolower($term['lang']) == $filter_language) {
+        $j++;
+        if ($limit > 0 && $j == $limit - 1) { // Limit has been reached
+          break;
+        }
+        $final_array[$j] = $term;
+      }
+      elseif ($filter_language == '') {
+        $j++;
+        if ($limit > 0 && $j == $limit - 1) { // Limit has been reached
+          break;
+        }
+        $final_array[$j] = $term;
+      }
+    }
+    $i++;
+  }
+  return $final_array;
+}
+
+/**
+ * Implements the call to the getAllLabelsByTermcode2 method of the Agrovoc web services.
+ * 
+ * @param int $termcode
+ *  Termcode to look for
+ * @param string $separator
+ *  Separator (set to , by default)
+ * @param bool $as_array
+ *  Whether to return the results under the form of an array indexed by language code. Set to TRUE by default
+ * 
+ * @return
+ *  Response of the Agrovoc web services
+ */
+function agrovoc_api_get_all_labels_by_termcode2($termcode, $separator = ',', $as_array = TRUE) {
+  $params = array('termcode' => (int) $termcode, 'separator' => $separator);
+  // Create the unique ID of this method call
+  $id_string = 'getAllLabelsByTermcode2' . implode(',', $params);
+  $md5_string = md5($id_string);
+  // See if the response of the request is in the cache
+  $cache_response = cache_get('agrovoc_api_' . $md5_string);
+  $cache_hit = TRUE;
+  if (!$cache_response) {
+    $cache_hit = FALSE;
+    $client = _agrovoc_api_get_client();
+    $response = $client->__soapCall('getAllLabelsByTermcode2', $params);
+  }
+  else {
+    $response = $cache_response->data;
+  }
+  if (is_soap_fault($response)) {
+    drupal_set_message(t('An error occured while calling the Agrovoc API'), 'error');
+    watchdog('agrovoc_api', t('The Agrovoc API returned the following response: %response', array('%response' => $response)), NULL, WATCHDOG_ERROR);
+    if ($as_array == TRUE) {
+      return array();
+    }
+    else {
+      return NULL;
+    }
+  }
+  else {
+    if (!$cache_hit) {
+      // Store in cache
+      cache_set('agrovoc_api_' . $md5_string, $response);
+    }
+    if ($as_array == TRUE) {
+      return _agrovoc_api_get_all_labels_by_termcode2_response_to_array($response, $separator);
+    }
+    else {
+      return $response;
+    }
+  }
+}
+
+/**
+ * Formats the element returned by getAllLabelsByTermcode2 as an array.
+ * 
+ * @param string $response
+ *  Response of the Agrovoc web services
+ * @param string $separator
+ *  Separator
+ * 
+ * @return array
+ *  Array indexed by language
+ */
+function _agrovoc_api_get_all_labels_by_termcode2_response_to_array($response, $separator) {
+  $response = trim($response, '[]');
+  $response_array = explode($separator, $response);
+  $final_array = array();
+  $i = 0;
+  foreach ($response_array as $element) {
+    if ($i % 2 == 0) {
+      $term = $element;
+    }
+    elseif ($i % 2 == 1) {
+      $final_array[$element] = $term;
+    }
+    $i++;
+  }
+  return $final_array;
+}
+
+/**
+ * Checks if a term is part of the Agrovoc.
+ * 
+ * This function is not part of the Agrovoc web services, however it is provided here for convenience.
+ * 
+ * @param string $term
+ *  Term to be checked
+ * @return
+ *  TRUE if the term is part of the Agrovoc, FALSE if it isn't
+ */
+function agrovoc_api_is_agrovoc_term($term) {
+  $response = agrovoc_api_simple_search_by_mode2($term, 'starting', ',', FALSE);
+  if (stripos($response, $term) !== FALSE) {
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
+}

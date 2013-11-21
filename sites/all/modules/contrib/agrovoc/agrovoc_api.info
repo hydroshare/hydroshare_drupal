@@ -1,0 +1,11 @@
+name = Agrovoc API
+description = Provides an API that can be used to make calls to the Agrovoc Web Service.
+core = 7.x
+package = "Agrovoc"
+
+; Information added by drupal.org packaging script on 2013-09-30
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "agrovoc"
+datestamp = "1380553381"
+

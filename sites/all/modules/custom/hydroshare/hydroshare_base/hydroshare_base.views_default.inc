@@ -151,6 +151,41 @@ function hydroshare_base_views_default_views() {
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
   $handler->display->display_options['path'] = 'explore-resources';
+  $translatables['explore_resources'] = array(
+    t('Master'),
+    t('Explore Resources'),
+    t('more'),
+    t('Do Search'),
+    t('Reset'),
+    t('Sort by'),
+    t('Asc'),
+    t('Desc'),
+    t('Items per page'),
+    t('- All -'),
+    t('Offset'),
+    t('« first'),
+    t('‹ previous'),
+    t('next ›'),
+    t('last »'),
+    t('<h1>EXPLORE | Discover and access resources published by others</h1>
+<br/>
+
+'),
+    t('author'),
+    t('Title'),
+    t('Summary'),
+    t('Created by [name]'),
+    t('<table cellpadding="10">
+<tr>
+<td width="200" valign="top">[title]</td>
+<td width="400">[body]</td>
+<td width="100" valign="bottom">[name]</td>
+</tr>
+</table>'),
+    t('Keywords'),
+    t('Type'),
+    t('Page'),
+  );
   $export['explore_resources'] = $view;
 
   $view = new view();
@@ -234,6 +269,30 @@ function hydroshare_base_views_default_views() {
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
   $handler->display->display_options['path'] = 'mycontent';
+  $translatables['mycontent'] = array(
+    t('Master'),
+    t('My Content'),
+    t('more'),
+    t('Apply'),
+    t('Reset'),
+    t('Sort by'),
+    t('Asc'),
+    t('Desc'),
+    t('Items per page'),
+    t('- All -'),
+    t('Offset'),
+    t('« first'),
+    t('‹ previous'),
+    t('next ›'),
+    t('last »'),
+    t('author'),
+    t('Type'),
+    t('Title'),
+    t('Body'),
+    t('Date'),
+    t('All'),
+    t('Page'),
+  );
   $export['mycontent'] = $view;
 
   return $export;

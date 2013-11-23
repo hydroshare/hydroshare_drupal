@@ -1,6 +1,6 @@
 name = hydroshare_geoanalytics
 core = 7.x
-package = Features
+package = HydroShare
 dependencies[] = features
 dependencies[] = file
 dependencies[] = fivestar

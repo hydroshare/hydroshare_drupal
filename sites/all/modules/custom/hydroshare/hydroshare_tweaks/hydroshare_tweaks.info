@@ -1,7 +1,8 @@
 name = Hydroshare Tweaks
+; do not need a project. Nothing should be dependent on the module
 description = Tweaks a Drupal site into a Hydroshare Site
 core = 7.x
-package = Hydroshare
+package = HydroShare
 ; Drupal core
 dependencies[] = block
 dependencies[] = color
@@ -67,7 +68,8 @@ dependencies[] = biblio
 ;dependencies[] = sparql
 ;dependencies[] = sparql_views
 dependencies[] = features
-;dependencies[] = Text
+dependencies[] = uuid
+dependencies[] = node_export
 ;dependencies[] = Rules
 ;dependencies[] = Advanced_help
 ;title_field_ui causing errors in install
@@ -84,4 +86,5 @@ dependencies[] = renci_create_content
 dependencies[] = hydroshare_timeseries
 dependencies[] = hydroshare_geoanalytics
 dependencies[] = hydroshare_base
+dependencies[] = hydroshare_other
 

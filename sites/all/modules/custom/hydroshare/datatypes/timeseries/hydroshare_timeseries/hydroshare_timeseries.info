@@ -1,7 +1,7 @@
 name = hydroshare_timeseries
 description = timeseries content type
 core = 7.x
-package = Features
+package = HydroShare
 version = 7.x-0.1beta
 project = hydroshare_timeseries
 dependencies[] = features

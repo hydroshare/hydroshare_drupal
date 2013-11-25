@@ -13,7 +13,8 @@ drupal_bootstrap(DRUPAL_BOOTSTRAP_VARIABLES);
 
 // since the path is an url - need to contruct real path
 $url_parts=parse_url($path);
-$root = dirname(DRUPAL_ROOT);
+//$root = dirname(DRUPAL_ROOT);
+$root = DRUPAL_ROOT;
 $real_path = $root . $url_parts['path'];
 
 if (!download_bagit_zip_from_irods($real_path)) {

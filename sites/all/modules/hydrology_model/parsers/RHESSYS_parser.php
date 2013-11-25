@@ -21,6 +21,8 @@ class RHESSYS
     $start_dt = null;
     $end_dt = null;
 
+    
+    
     // get all RHESSYS model file paths
     $files = $this->get_files_in_dir($model_path);
     
@@ -28,15 +30,43 @@ class RHESSYS
     // get the metadata.txt path
     $metadata_path = $files[key(preg_grep('/metadata.txt$/',$files))];
     
+    $ini = parse_ini_file($metadata_path, true, INI_SCANNER_RAW);
+    
     // get ini metadata entries
-    $ini = $this->read_metadata_ini($metadata_path);
+    //$ini = $this->read_metadata_ini($metadata_path);
 
-    // set spatial attributes
+    // set spatial fields
     $form_state['input']['field_spatial_bbox']['und'][0]['value'] = $ini['study_area']['bbox_wgs84'];
     $form_state['input']['field_spatial_resolution']['und'][0]['value'] = $ini['study_area']['dem_res_x'];
     $form_state['input']['field_spatial_reference']['und'][0]['value'] = $ini['study_area']['dem_srs'];
     $pt = 'east='.$ini['study_area']['gage_lon_wgs84'].'; north='.$ini['study_area']['gage_lat_wgs84'].'; name='.$ini['study_area']['gage_id'];
     $form_state['input']['field_spatial_location']['und'][0]['value'] = $pt;
+
+    // get model runs
+    $runs = explode(',',$ini['model_run']['runs']);
+    $default_run = array_shift($runs);
+
+    // get simulation start and end time
+    $cmd = $ini['model_run'][$default_run.'_command'];
+    $args = explode('-',$cmd);
+    $kvp = array();
+    for($i = 0; $i < count($args); $i++){
+      $arg = explode(' ', $args[$i], 2);
+      $kvp[] = $arg[0].'='.$arg[1];
+    } 
+    parse_str(implode('&', $kvp),$arg_kvp);
+
+    // set resource identification fields
+    $form_state['input']['field_id_description']['und'][0]['value'] = $ini['model_run'][$default_run.'_description'];
+    
+    //set temportal fields
+    $st = explode(' ',$arg_kvp['st']);
+    $et = explode(' ',$arg_kvp['ed']);
+    $form_state['input']['field_temporal_begin']['und'][0]['value'] = $st[1].'/'.$st[2].'/'.$st[0].' '.$st[3].':00';
+    $form_state['input']['field_temporal_end']['und'][0]['value'] = $et[1].'/'.$et[2].'/'.$et[0].' '.$et[3].':00'; 
+    
+    // set development fields
+    $form_state['input']['field_dev_create_date']['und'][0]['value'] = $ini['model_run'][$default_run.'_date_utc'];
     
 
 //            // get simulation start
@@ -53,9 +83,8 @@ class RHESSYS
 //    // set form values --> $form_state['complete form']['post_fieldset']['post_id']['#value'] = $my_value;
 //    $form_state['input']['field_temporal_begin']['und'][0]['value'] = $str_start;
 //    $form_state['input']['field_temporal_end']['und'][0]['value'] = $str_end; 
-//    $form_state['input']['field_id_description']['und'][0]['value'] = $model_desc;
 //    $form_state['input']['field_temporal_interval']['und'][0]['value'] = $time_unit;
-//    $form_state['input']['field_dev_create_date']['und'][0]['value'] = $creation_date;
+//    
     
   }
   
@@ -67,6 +96,8 @@ class RHESSYS
    */
   public function get_single_output($node, $model_path){
     
+    
+    // TODO: Implement plotting of Rhesyss models
     
 //    // get simulation start time
 //    $begin = $node->field_temporal_begin['und'][0]['safe_value'];

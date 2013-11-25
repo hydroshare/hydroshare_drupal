@@ -1,11 +1,6 @@
 <?php
 
 
-
- //$ret = module_load_include('php', 'hydrology_model','SWAT_parser');
- //include 'SWAT_parser.php';
- //include 'HEC-RAS_parser.php'
-
 /**
  *
  * Imports parser scripts
@@ -15,14 +10,13 @@ function import_parsers(){
   // Include parsing scripts 
     $model_class_names = array();
     $dir = dirname(__FILE__);
-    $filenames = glob($dir."/*_parser.php");
+    $filenames = glob($dir."/parsers/*_parser.php");
     foreach ($filenames as $fn){
-      $ret = module_load_include('php', 'hydrology_model',basename($fn,".php"));
+      $ret = module_load_include('php', 'hydrology_model','parsers/'.basename($fn,".php"));
       if ($ret){
         $model_class_names[] = reset(explode("_", basename($fn, ".php")));
       }
     }
-    
     // store known model types globally
     $GLOBALS["model_class_names"] = $model_class_names;
 }
@@ -31,13 +25,10 @@ function import_parsers(){
  *
  * Implements hook_form_alter()
  */
-
 function hydrology_model_form_alter(&$form, &$form_state, $form_id){
 
   if ($form_id == 'hydroshare_hydrology_model_node_form'){
   
-#    import_parsers();
-    
     // organize form fields within fieldsets
     hydrology_model_build_form($form);
   
@@ -51,7 +42,6 @@ function hydrology_model_form_alter(&$form, &$form_state, $form_id){
  */
 function hydrology_model_populate_fields($form, &$form_state){
   
-
   //***************************
   //* Parse the Spatial Input *  //TODO
   //***************************
@@ -74,7 +64,6 @@ function hydrology_model_populate_fields($form, &$form_state){
     //*************************
     
     // create a file instance from uploaded model
-    //$fid =  $form_state['values']['field_model_archive']['und'][0]['fid'];
     $fid =  $form_state['values']['field_file']['und'][0]['fid'];
     $f = file_load($fid);   
     $url = file_create_url($f->uri);
@@ -122,7 +111,6 @@ function hydrology_model_populate_fields($form, &$form_state){
     //*************************
     
     $parser_class =  $form_state['values']['field_model_name']['und'][0]['value'];
-    
     
     // parse model data using the designated parsing script
     $parser = new $parser_class;
@@ -365,155 +353,6 @@ function hydrology_model_build_form(&$form){
     
     $form['creator_fieldset']['field_phone_number'] = $form['field_phone_number'];
     $form['field_phone_number'] = array('language' => NULL);
-
-    
-//    //GROUP: IDENTIFICATION
-//    
-//    $form['id_fieldset']['field_id_description'] = array(
-//       '#type' => 'textarea',
-//       '#default_value' => '',
-//       '#title' => 'Description',
-//        '#group' => 'main_form',
-//    );
-//    $form['id_fieldset']['field_id_version'] = array(
-//       '#type' => 'textfield',
-//       '#default_value' => t('1'),
-//       '#title' => 'Version',
-//        '#group' => 'main_form',
-//    );
-//    $form['id_fieldset']['field_id_type'] = array(
-//       '#type' => 'select',
-//       '#title' => 'Model Type',
-//       '#default_value' => variable_get('field_id_type','Instance'),
-//       '#options' => array(
-//           'Instance'=>t('Instance'),
-//           'Component'=>t('Component'),
-//           'Program'=>t('Program'),
-//           
-//       ),
-//        '#group' => 'main_form',
-//    );
-//    
-//    // GROUP: TEMPORAL DEFINITION
-//    
-//    $form['temporal_fieldset']['field_coverage_temporal_begin'] = array(
-//    //$form['field_coverage_temporal_begin'] = array(
-//       '#type' => 'textfield',
-//       'default_value' => '',
-//       '#title' => 'Begin Date',
-//       '#group' => 'main_form',
-//    );
-//    $form['temporal_fieldset']['field_coverage_temporal_end'] = array(
-//       '#type' => 'textfield',
-//       'default_value' => '',
-//       '#title' => 'End Date',
-//        '#group' => 'main_form',
-//    );
-//    $form['temporal_fieldset']['field_coverage_temporal_interval'] = array(
-//       '#type' => 'textfield',
-//       'default_value' => '',
-//       '#title' => 'Simulation Interval',
-//        '#group' => 'main_form',
-//    );
-//    
-//    
-//    
-//    // GROUP: SPATIAL DEFINITION
-//    
-//    $form['spatial_fieldset']['field_coverage_spatial_location'] = array(
-//       '#type' => 'textfield',
-//       '#default_value' => '',
-//       '#title' => 'Spatial Location',
-//        '#group' => 'main_form',
-//    );
-//    $form['spatial_fieldset']['field_coverage_spatial_resolution'] = array(
-//       '#type' => 'textfield',
-//       'default_value' => '',
-//       '#title' => 'Spatial Resolution',
-//        '#group' => 'main_form',
-//    );
-//    $form['spatial_fieldset']['field_coverage_spatial_bounding_box'] = array(
-//       '#type' => 'textfield',
-//       '#default_value' => '',
-//       '#title' => 'Bounding Box',
-//        '#group' => 'main_form',
-//    );
-//    $form['spatial_fieldset']['field_coverage_spatial_reference'] = array(
-//       '#type' => 'textfield',
-//       '#default_value' => '',
-//       '#title' => 'Spatial Reference',
-//        '#group' => 'main_form',
-//    );
-//    
-//    
-//    
-//    // GROUP: Development
-//    
-//        $form['dev_fieldset']['field_dev_contributor'] = array(
-//       '#type' => 'textfield',
-//       '#default_value' => '',
-//       '#title' => 'Contributor',
-//        '#group' => 'main_form',
-//    );
-//       $form['dev_fieldset']['field_dev_creator'] = array(
-//       '#type' => 'textfield',
-//       '#default_value' => '',
-//       '#title' => 'Creator',
-//        '#group' => 'main_form',
-//    );
-//        $form['dev_fieldset']['field_dev_create_date'] = array(
-//       '#type' => 'textfield',
-//       '#default_value' => '',
-//       '#title' => 'Creation Date',
-//        '#group' => 'main_form',
-//    );
-//        $form['dev_fieldset']['field_dev_contrib_date'] = array(
-//       '#type' => 'textfield',
-//       '#default_value' => '',
-//       '#title' => 'Contribute Date',
-//        '#group' => 'main_form',
-//    );
-//        $form['dev_fieldset']['field_dev_level'] = array(
-//       '#type' => 'select',
-//       '#title' => 'Development Level',
-//       '#default_value' => variable_get('field_dev_level','Level 1'),
-//       '#options' => array(
-//           'Level 1'=>t('Level 1'),
-//           'Level 2'=>t('Level 2'),
-//           'Level 3'=>t('Level 3'),
-//           'Level 4'=>t('Level 4'),      
-//       ),
-//        '#group' => 'main_form',
-//    );
-//        
-//    // GROUP: Contact
-//    
-//        $form['contact_fieldset']['field_contact_email'] = array(
-//       '#type' => 'textfield',
-//       '#default_value' => '',
-//       '#title' => 'Email',
-//        '#group' => 'main_form',
-//    );
-//       $form['contact_fieldset']['field_contact_phone'] = array(
-//       '#type' => 'textfield',
-//       '#default_value' => '',
-//       '#title' => 'Phone',
-//        '#group' => 'main_form',
-//    );
-//       $form['contact_fieldset']['field_contact_address'] = array(
-//       '#type' => 'textfield',
-//       '#default_value' => '',
-//       '#title' => 'Address',
-//        '#group' => 'main_form',
-//    );
-//       $form['contact_fieldset']['field_contact_uri'] = array(
-//       '#type' => 'textfield',
-//       '#default_value' => '',
-//       '#title' => 'URI',
-//        '#group' => 'main_form',
-//    );
-//       
-//  return $form;
 }
 
 /**
@@ -525,101 +364,60 @@ function hydrology_model_node_submit($node, $form, &$form_state){
     // set the resource creation date
     $node->created = !empty($node->date) ? strtotime($node->date) : REQUEST_TIME;
   
+    // move the model file location
+
+//    $file = null;
+//    $new_uri_path = null;
+//    data_model_get_file_from_node( $node, $file );
+//
+//    $title = $node->title;
+//    $file_uri = $file->uri;
+//    data_model_make_data_path( $title, $file_uri, $new_uri_path );
+//
+//    $fid =  $node->field_file['und'][0]['fid'];
+//    $f = file_load($fid);   
+//    $url = file_create_url($f->uri);
+//    $wrapper = file_stream_wrapper_get_instance_by_uri($file->uri);
+//    $real_path = $wrapper->realpath();
+//    $path_array = explode('/',$real_path);
+//                      
+//    
+//    // set the model path
+//    //$model_path = join(array_slice(explode('/',$url),0,-1),'/').'/model';
+//    //if(!file_exists(join(array_slice($path_array,0,-1),'/').'/model')){
+//
+//        //
+//        $zip = new ZipArchive;
+//        $res = $zip->open($real_path);
+//        if ($res == TRUE){
+//
+//          // get the model folder name by peeking into zip
+//          $z = zip_open($real_path);
+//          $zip_entry = zip_read($z);
+//          $model_folder = zip_entry_name($zip_entry);
+//          $model_folder = array_slice(explode('/',$model_folder),0,1);
+//
+//          // create the unzip directory
+//          $uri_instance = file_stream_wrapper_get_instance_by_uri($new_uri_path);
+//          $unzip_dir = $uri_instance->realpath();
+//          //$unzip_dir = array_slice($path_array,0,-1);
+//          //$unzip_dir = join($unzip_dir,'/');
+//
+//          // extract the model contents
+//          $zip->extractTo($unzip_dir);
+//          $zip->close();
+//
+//          // rename the model folder to something more standardized
+//          rename($unzip_dir.'/'.$model_folder[0], $unzip_dir.'/model');
+//
+//        }
+    //}
+                        
     // save changes
     node_save($node);
     
 }
 
-/**
- *
- * Parse the core metadata from SWAT model files
- */
-function parse_swat_metadata($form, &$form_state, $swat_path){
-  
-  // intialize variables
-  $duration = null;
-  $str_start = null;
-  $str_end = null;
-  $time_unit = null;
-  $date_created = null;
-  $model_desc = null;
-  $creation_date = null;
-  
-  $i = 1;
-  
-  // open the main swat file
-  $handle = @fopen($swat_path . '/file.cio','r');
-  if ($handle){
-    while (($buffer = fgets($handle, 4096)) !== false){
-      
-      switch($i){
-     
-        case 2:
-          // get model description
-          $str = explode(":", $buffer);
-          $model_desc = trim($str[1]);
-          break;
-        case 4:
-          // get creation date
-          $str = explode(":", $buffer);
-          $creation_date = substr(trim($str[0]),0,-2);
-          break;
-        case 8:
-          // get simulation year span
-          $str = explode("|", $buffer);
-          $duration = intval(trim($str[0]));
-          break;
-        case 9:
-          // get simulation start year
-          $str = explode("|", $buffer);
-          $st_year = intval(trim($str[0]));
-          break;
-        case 10:
-          // get simulation start julien day
-          $str = explode("|", $buffer);
-          $start_julian_day = intval(trim($str[0])) - 1;
-          break;
-        case 11:
-          // get simulation end julien day
-          $str = explode("|", $buffer);
-          $end_julian_day = ($duration * intval(trim($str[0]))) - 1;
-          break;
-        case 59:
-          // get output print interval
-          $str = explode('|',$buffer);
-          $interval_code = intval(trim($str[0]));
-          if ($interval_code == 0){$time_unit = 'monthly';}
-          elseif ($interval_code == 1){$time_unit = 'daily';}
-          else {$time_unit = 'yearly';}
-          break;
-      }
-      // increment the line counter
-      $i++;
-      
-    }
-    
-    // build start datetime
-    $start = new DateTime('1/1/' . $st_year);
-    $start->add(new DateInterval('P'.$start_julian_day.'D'));
-    $str_start = $start->format('m/d/Y');
-        
-    // build end datetime
-    $end = $start;
-    $end->add(new DateInterval('P'.$end_julian_day.'D'));
-    $str_end = $end->format('m/d/Y');
-
- 
-  }
-  
-  
-  // set form values --> $form_state['complete form']['post_fieldset']['post_id']['#value'] = $my_value;
-  $form_state['input']['field_temporal_begin']['und'][0]['value'] = $str_start;
-  $form_state['input']['field_temporal_end']['und'][0]['value'] = $str_end; 
-  $form_state['input']['field_id_description']['und'][0]['value'] = $model_desc;
-  $form_state['input']['field_temporal_interval']['und'][0]['value'] = $time_unit;
-  $form_state['input']['field_dev_create_date']['und'][0]['value'] = $creation_date;
-  
-}
 
 /**
  * Implements hook_help.

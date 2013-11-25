@@ -1,0 +1,5 @@
+name = hydroshare dashboard page
+description = the hydroshare dashboard page
+package = hydroshare
+core = 7.x
+files[] = page_example.test

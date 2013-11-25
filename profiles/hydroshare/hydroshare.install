@@ -11,7 +11,7 @@
  *
  * @see system_install()
  */
-function standard_install() {
+function hydroshare_install() {
   // Add text formats.
   $filtered_html_format = array(
     'format' => 'filtered_html',
@@ -69,8 +69,26 @@ function standard_install() {
   filter_format_save($full_html_format);
 
   // Enable some standard blocks.
-  $default_theme = variable_get('theme_default', 'qcl_hydroshare');
-  $admin_theme = 'seven';
+
+    $enable = array(
+        'theme_default' => 'qcl_hydroshare',
+        'admin_theme' => 'seven',
+        //'zen'
+    );
+    theme_enable($enable);
+
+    foreach ($enable as $var => $theme) {
+        if (!is_numeric($var)) {
+            variable_set($var, $theme);
+        }
+    }
+
+    // Disable the default Bartik theme
+    theme_disable(array('bartik'));
+    $default_theme = variable_get('theme_default', 'qcl_hydroshare');
+
+    $admin_theme = 'seven';
+
   $blocks = array(
     array(
       'module' => 'system',
@@ -432,4 +450,23 @@ function standard_install() {
     ->execute();
   variable_set('admin_theme', 'seven');
   variable_set('node_admin_theme', '1');
+}
+
+function hydroshare_create_content($formats, $dir = 'content', $ext = 'content', $account = NULL) {
+    $path = dirname(__FILE__);
+    $files = file_scan_directory($path . '/' . $dir, "\.${ext}$");
+    asort($files);
+
+    foreach ($files as $file) {
+        $node = array();
+        ob_start();
+        include $file->filename;
+        ob_end_clean();
+
+        $node = (object) $node;
+        $node->uid = $account ? $account->uid : 1;
+        $node->format = $formats['Full HTML'];
+        $node->field_body[0]['format'] = $formats['Full HTML'];
+        node_save($node);
+    }
 }

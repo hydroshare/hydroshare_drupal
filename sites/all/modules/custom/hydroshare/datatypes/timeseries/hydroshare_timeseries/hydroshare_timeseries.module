@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the hydroshare_timeseries feature.
+ */
+
+include_once 'hydroshare_timeseries.features.inc';

@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the hydroshare_geoanalytics feature.
+ */
+
+include_once 'hydroshare_geoanalytics.features.inc';

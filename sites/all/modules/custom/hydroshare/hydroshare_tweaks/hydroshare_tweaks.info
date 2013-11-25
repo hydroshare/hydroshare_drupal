@@ -1,0 +1,90 @@
+name = Hydroshare Tweaks
+; do not need a project. Nothing should be dependent on the module
+description = Tweaks a Drupal site into a Hydroshare Site
+core = 7.x
+package = HydroShare
+; Drupal core
+dependencies[] = block
+dependencies[] = color
+dependencies[] = comment
+dependencies[] = contextual
+dependencies[] = dashboard
+dependencies[] = dblog
+dependencies[] = field_ui
+dependencies[] = file
+dependencies[] = filter
+dependencies[] = help
+dependencies[] = image
+dependencies[] = list
+dependencies[] = locale
+dependencies[] = menu
+dependencies[] = number
+dependencies[] = openid
+dependencies[] = options
+dependencies[] = overlay
+dependencies[] = path
+dependencies[] = php
+dependencies[] = rdf
+dependencies[] = search
+dependencies[] = shortcut
+dependencies[] = system
+dependencies[] = taxonomy
+dependencies[] = toolbar
+dependencies[] = trigger
+dependencies[] = geophp
+dependencies[] = profile
+dependencies[] = user
+
+; Contrib
+dependencies[] = entity
+;dependencies[] = profile2
+dependencies[] = token
+dependencies[] = login_destination
+dependencies[] = og
+
+dependencies[] = ctools
+dependencies[] = views_content
+;dependencies[] = panels
+dependencies[] = libraries
+dependencies[] = views
+dependencies[] = views_bulk_operations
+
+dependencies[] = quicktabs
+dependencies[] = stringoverrides
+dependencies[] = switchtheme
+
+;dependencies[] = openlayers
+;dependencies[] = openlayers_field
+
+;dependencies[] = entitycache
+;dependencies[] = entityconnect
+;dependencies[] = link
+dependencies[] = relation
+dependencies[] = biblio
+;dependencies[] = eck
+;dependencies[] = rdfx
+
+;dependencies[] = taxonomy_manager
+;dependencies[] = sparql
+;dependencies[] = sparql_views
+dependencies[] = features
+dependencies[] = uuid
+dependencies[] = node_export
+;dependencies[] = Rules
+;dependencies[] = Advanced_help
+;title_field_ui causing errors in install
+;dependencies[] = title_field_ui
+
+; hydroshare modules
+dependencies[] = geoanalytics
+dependencies[] = data_model
+dependencies[] = time_series_visualization
+dependencies[] = invite
+dependencies[] = proj4js
+dependencies[] = renci_create_content
+
+dependencies[] = hydroshare_timeseries
+dependencies[] = hydroshare_geoanalytics
+dependencies[] = hydroshare_base
+dependencies[] = hydroshare_other
+

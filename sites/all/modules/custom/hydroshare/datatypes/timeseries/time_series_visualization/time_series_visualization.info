@@ -1,0 +1,5 @@
+name = Time Series Visualization
+description = Provides display of time series data
+core = 7.x
+package = HydroShare
+

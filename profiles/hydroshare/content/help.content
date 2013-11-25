@@ -1,0 +1,91 @@
+<h1>HydroShare: An Easier Way to Collaborate</h1>
+
+Hello scientists, engineers, and researchers of all sorts.  This page tells you about some of the features of HydroShare.  Once you have created an account and logged in, you will notice the main navigation at the top of the page.
+
+<h2>Pages within HydroShare</h2>
+
+<strong>Dashboard:</strong>  Here you will find the most recent items you have uploaded, access to your profile information, suggestions for people, groups and resources you might be interested in and announcements from the HydroShare team.
+
+<strong>My Content:</strong>  Here you will find the complete list of all of the items that you have uploaded to HydroShare.  Click on any of them to get a complete description as well as to access all of the functionality associated with each resource.
+
+<strong>Explore:</strong>  Here you will have the ability to discover resources that others have shared on HydroShare.  You can search by keyword, resource type, date, and geographic area.
+
+<strong>Collaborate:</strong>  Here you can find groups of researchers that you might be interested in joining.  Or, you can create your own group and invite other HydroShare users to join you.  Within Groups you can collaborate and share resources and participate in discussions related to your content.
+
+<strong>Support:</strong>  This page.  Here you will find all of the latest information on how to use HydroShare
+
+<h2>What Is HydroShare?</h2>
+
+HydroShare is an online, collaborative system being developed for the sharing of hydrologic data and models.  The goal of HydroShare is to enable you to easily discover and access data and models, retrieve them to your desktop or perform analyses in a distributed computing environment that includes grid, cloud or high performance computing model instances as necessary.  You are then be able to publish outcomes (data, results or models) back to the system, sharing with whom you choose and use the system as a platform for collaboration.  HydroShare expands the data sharing capability of the CUAHSI Hydrologic Information System by broadening the classes of data accommodated, expanding capability to include the sharing of models and model components, and taking advantage of social media functionality to enhance information about and collaboration around hydrologic data and models.
+
+<h2>Why Use HydroShare?</h2>
+
+For collaborative data analysis and modeling
+HydroShare provides a system for putting data resources online in standard formats and tools for the visualization, analysis and sharing of this data.  Data also includes model instances and model programs.  You control who has access to your data.  HydroShare provides social media functionality to enhance collaboration based on shared data and models, including commenting on and rating of resources among users and collaboration groups.
+
+<h3>For team data management</h3>
+HydroShare will help manage in an organized way your team's data.  It will serve small (university group) or large (observatory) teams and help nurture data through its life cycle from collection to publication and curation.
+
+<h3>To discover and access a broad class of hydrologic data</h3>
+HydroShare expands the classes of data supported by CUAHSI HIS and plans to facilitate access to multidimensional space-time data, remote sensing data and River Geometry data in formats readily compatible with hydrologic modeling and analysis tools.  Socially mediated data discovery based on who and for what purpose data has been used will enhance the effectiveness of HydroShare data discovery and selection.
+
+<h3>For cloud based and high performance computing capability</h3>
+HydroShare will facilitate online execution of models based on online data taking advantage of preconfigured high performance computing and cloud based modeling services.
+
+<h3>Get credit for sharing your data and models when cited by others</h3>
+HydroShare will provide formal data publication and citation capability to allow data and models you publish to be cited and for you to get credit for these citations.
+
+<h3>System Development Status</h3>
+HydroShare is at an early stage of development.  The social media and resource sharing functionality is under development and we are establishing the basic infrastructure for sharing resources using a few resource types.  Once these foundations are in place the system will be expanded to additional data types and functionality will be built out.
+
+<h2>HydroShare Resources</h2>
+
+<h3>About Resources</h3>
+
+In HydroShare everything is a resource.  We define a resource as digital content which includes the science data files or model files and their corresponding metadata information. HydroShare will ultimately support multiple resource types such as time series, geographic feature, geographic raster, multidimensional space time array data (NetCDF), model, document, etc. Currently, HydroShare beta system supports resource types of time series and geographic feature class (or Geoanalytics).  Current resource related functions are described below.
+
+<h3>Create a Resource</h3>
+1) Sign in the HydroShare system with a user account.
+2) Click on “MY CONTENT”.
+3) Click on “UPLOAD”.
+4) Select a type of resource you want to create.
+5) Enter the “Title” of your resource.
+6) Choose data files stored in the local computer to upload to the HydroShare system.
+7) Enter the other metadata information for the resource (optional).
+8) Click on “Preview” to see how the uploaded data is visualized in the system (optional).
+9) Click on “Save” to save the uploaded data files and metadata information in the system.
+
+<h3>View, Export, Edit, or Delete Resource</h3>
+1) Sign in the HydroShare system with a user account.
+2) Click on “MY CONTENT”.
+3) In the resource table, click on a resource which you want to view. The system will show the “Resource Detail” interface providing visualization, metadata and sharing functionality.
+
+<h3>Rate or Comment on a Resource</h3>
+1) Sign in the HydroShare system with a user account.
+2) Click on thumbnail image of that resource.
+3) To rate resource, give the stars to the resource for “Rating”.
+4) To comment resource, enter the “SUBJECT” and “COMMENT” information, and select a “TEXT FORMAT” for your comment, then click on “Save”.
+
+<h2>HydroShare Groups</h2>
+
+<h3>About Groups</h3>
+
+HydroShare groups are self-forming to allow users who have similar interests to collaborate. Eventually HydroShare will enable users to share their data and models in the group, participate in discussions, and add group blogs, etc. Currently, the HydroShare beta system supports the group related functions described below.
+
+<h3>Create Group</h3>
+1) Sign in the HydroShare system with a user account.
+2) Click on “COLLABORATE”.
+3) In the “COLLABORATE” interface, Click on “CREATE GROUP”.
+4) Enter the “Title” and “Description” (optional) of the group, then click on “Save”.
+
+<h3>Filter or Search Group</h3>
+1) Sign in the HydroShare system with a user account.
+2) Click on “COLLABORATE”.
+3) To filter the groups, click on the dropdown list of the “FILTER GROUPS”, chose one filter method. System will show the groups on the right which satisfies the requirement.
+4) To search a group, under “SEARCH GROUPS”, enter “Name” or “Description” of the group. System will show the groups on the right which satisfies the requirement.
+
+<h3>Join Group</h3>
+1) Sign in the HydroShare system with a user account.
+2) Find the group you want to join using “Filter GROUPS” or “SEARCH GROUP” function.
+3) Click on the group name.
+4) Click on “Request group membership”.

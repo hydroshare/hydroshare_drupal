@@ -1,0 +1,6 @@
+name = Geoanalytics
+description = Provides connection between Geoanalytics and HydroShare
+core = 7.x
+package = HydroShare
+version = 0.1
+project= geoanalytics

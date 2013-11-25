@@ -1,0 +1,20 @@
+
+
+Exporting a page
+Need the node export:
+http://ftp.drupal.org/files/projects/node_export-7.x-3.0.tar.gz
+and  Universally Unique IDentifier -- uuid
+http://ftp.drupal.org/files/projects/uuid-7.x-1.0-alpha5.tar.gz
+
+issues with hydroshare profile:
+* front page not configured
+** blocks not assigned to regions. (see scrathpads_tewak for HT)
+* "dashboard is a page
+** make a content type with a view
+* "menu" is not a durpal menu, configured as block
+** make menu the Main Menu
+* Header area "top links" should be a menu
+
+
+Hydrosahre tweaks
+* wil be the

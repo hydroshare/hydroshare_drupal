@@ -1,0 +1,12 @@
+name = "REST Auth"
+description = "Users can log into Drupal sites using credentials from a third-party RESTful web service."
+package = Authentication
+core = 7.x
+configure = admin/config/people/rest_auth
+
+; Information added by drupal.org packaging script on 2012-04-06
+version = "7.x-1.2"
+core = "7.x"
+project = "rest_auth"
+datestamp = "1333734667"
+

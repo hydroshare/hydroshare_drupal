@@ -1,0 +1,669 @@
+<?php
+
+/**
+ * @file
+ * Copyright (c) 2010, iPlant Collaborative, University of Arizona, Cold Spring Harbor Laboratories, University of Texas at Austin
+ * This software is licensed under the CC-GNU GPL version 2.0 or later.
+ * License: http://creativecommons.org/licenses/GPL/2.0/
+ */
+
+/**
+ * Helper function to get resources in place
+ *
+ * TODO: replace this with hook_library
+ */
+function thejit_spacetree_resources() {
+  thejit_resources();
+  drupal_add_js(drupal_get_path('module', 'thejit_spacetree') . '/thejit_spacetree.js');
+  drupal_add_css(drupal_get_path('module', 'thejit_spacetree') . '/thejit_spacetree.css');
+}
+
+/**
+ * Implements hook_menu().
+ */
+function thejit_spacetree_menu() {
+  $items = array();
+  if (variable_get('thejit_enable_debug', 0)) {
+    $items['jit/spacetree/debug'] = array(
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('_thejit_spacetree_debug_form'),
+      'title' => 'JIT Spacetree: DEBUG',
+      'type' => MENU_NORMAL_ITEM,
+      'access arguments' => array('access content'),
+    );
+    $items['jit/spacetree/debug/node_info/%'] = array(
+      'page callback' => '_thejit_spacetree_debug_node_info',
+      'page arguments' => array(4),
+      'title' => 'JIT Spacetree: DEBUG node info',
+      'type' => MENU_CALLBACK,
+      'access arguments' => array('access content'),
+    );
+    $items['jit/spacetree/debug/search'] = array(
+      'page callback' => '_thejit_spacetree_debug_node_search',
+      'title' => 'JIT Spacetree: DEBUG node search',
+      'type' => MENU_CALLBACK,
+      'access arguments' => array('access content'),
+    );
+  }
+  $items['admin/config/system/jit/spacetree'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('thejit_spacetree_admin_form'),
+    'title' => t('JIT Space Tree settings'),
+    'access arguments' => array('administer jit'),
+    'type' => MENU_LOCAL_TASK,
+  );
+  return $items;
+}
+
+function thejit_spacetree_admin_form($form, &$form_state) {
+  if (isset($form_state['values'])) {
+    $values = $form_state['values'];
+  }
+  else {
+    $values = array();
+  }
+  $form = thejit_spacetree_graphapi_settings_form($values, TRUE);
+  return system_settings_form($form);
+}
+
+function thejit_spacetree_theme() {
+  return array(
+    /*
+     * @param	$tree the tree to visualize;
+     * 				This object is a hierarchical collection of nodes with the following structure:
+     * 				$tree->id: string identifier, usually node id (nid) of node being visualized (used as HTML id attribute)
+     * 				$tree->name: text for label
+     * 				$tree->children: array of child nodes
+     * 				$tree->data: stdClass with additional data
+     *
+     * @param $params additional parameters for JIT, overrides $defaults
+     */
+    'thejit_spacetree' => array(
+      'arguments' => array(
+        'tree' => NULL,
+        'options' => NULL,
+      ),
+      'template' => 'theme/jit-spacetree',
+    ),
+    'thejit_spacetree_graphapi' => array(
+      'graph' => NULL,
+      'graph-config' => NULL,
+    ),
+  );
+}
+
+function thejit_spacetree_defaults($is_system = FALSE) {
+  $defaults = array(
+    'root_label' => 'Root',
+    'duration' => variable_get('thejit_spacetree_default_duration', 400),
+    'levels_to_show' => variable_get('thejit_spacetree_default_levels_to_show', 3),
+    'init_orient' => variable_get('thejit_spacetree_default_init_orient', 'bottom'),
+    'selected_node' => NULL, // initial node id in $tree to select
+    'enable_orient' => variable_get('thejit_spacetree_default_enable_orient', 0),
+    'enable_full_screen' => variable_get('thejit_spacetree_default_enable_full_screen', 0),
+    'enable_hiding' => variable_get('thejit_spacetree_default_enable_hiding', 0),
+    'enable_help' => variable_get('thejit_spacetree_default_enable_help', 0),
+    'help_function_name' => variable_get('thejit_spacetree_help_function_name', '_thejit_spacetree_debug_help'),
+    'enable_search' => variable_get('thejit_spacetree_default_enable_search', 0),
+    'search_path' => variable_get('thejit_spacetree_default_search_path', 'jit/spacetree/debug/search'),
+    'enable_node_info' => variable_get('thejit_spacetree_default_enable_node_info', 0),
+    'node_info_path' => variable_get('thejit_spacetree_default_node_info_path', 'jit/spacetree/debug/node_info'),
+    'cache_node_info' => variable_get('thejit_spacetree_default_cache_node_info', 1),
+    'edge_color' => variable_get('thejit_spacetree_default_edge_color', '#ffffff'),
+    'selected_edge_color' => variable_get('thejit_spacetree_default_selected_edge_color', '#25aef5'),
+    'before' => NULL,
+    'after' => NULL,
+  );
+  if ($is_system) {
+    $system = array(
+      'id' => 'spacetree', // id of spacetree HTML element
+      'height' => variable_get('thejit_spacetree_default_height', 300),
+      'width' => variable_get('thejit_spacetree_default_width', 400),
+      'background_color' => variable_get('thejit_spacetree_default_background_color', '#ffffff'),
+    );
+    $defaults += $system;
+  }
+
+  return $defaults;
+}
+
+/**
+ * Implements hook_graphapi_default_settings().
+ *
+ * We reuse the default settings from thejit_spacetree_defaults.
+ * Note we don't need the global settings.
+ *
+ * @see thejit_spacetree_defaults()
+ * @see views_object::option_definition()
+ */
+function thejit_spacetree_graphapi_default_settings() {
+  $engine = 'thejit_spacetree';
+  $values = thejit_spacetree_defaults(FALSE);
+  return graphapi_settings_to_views($engine, $values);
+}
+
+/**
+ * Preprocess the JIT spacetree visualization output.
+ */
+function thejit_spacetree_preprocess_thejit_spacetree(&$vars) {
+  thejit_spacetree_resources();
+
+  $options = $vars['options'] + thejit_spacetree_defaults(TRUE);
+  // Convert values to thejit_spacetree format
+  $options['height'] = intval($options['height']);
+  $options['width'] = intval($options['width']);
+  $options['duration'] = intval($options['duration']);
+
+  // Make id javascript compatible
+  $options['id'] = str_replace('-', '_', $options['id']);
+
+  $vars['options'] = $options;
+
+  $controller = array();
+  $controller['onBeforeCompute'] = theme('thejit_on_before_compute', array('tree_id' => $options['id']));
+  $controller['onAfterCompute'] = theme('thejit_on_after_compute', array('tree_id' => $options['id']));
+  $controller['onCreateLabel'] = theme('thejit_on_create_label', array('tree_id' => $options['id']));
+  $controller['onPlaceLabel'] = theme('thejit_on_place_label', array('tree_id' => $options['id']));
+  $controller['onComplete'] = theme('thejit_on_complete', array('tree_id' => $options['id']));
+  $controller['onBeforePlotLine'] = theme('thejit_on_before_plot_line', array('tree_id' => $options['id']));
+  $controller['onAfterPlotLine'] = theme('thejit_on_after_plot_line', array('tree_id' => $options['id']));
+  $controller['onBeforePlotNode'] = theme('thejit_on_before_plot_node', array('tree_id' => $options['id']));
+  $controller['onAfterPlotNode'] = theme('thejit_on_after_plot_node', array('tree_id' => $options['id']));
+  $controller['request'] = theme('thejit_request', array('tree_id' => $options['id']));
+
+  $vars['controller'] = $controller;
+}
+
+function thejit_spacetree_theme_registry_alter(&$registry) {
+  $registry['thejit_on_create_label']['template'] = 'jit-spacetree-on-create-label';
+  $registry['thejit_on_create_label']['path'] = drupal_get_path('module', 'thejit_spacetree') . '/theme';
+
+  $registry['thejit_on_before_plot_line']['template'] = 'jit-spacetree-on-before-plot-line';
+  $registry['thejit_on_before_plot_line']['path'] = drupal_get_path('module', 'thejit_spacetree') . '/theme';
+
+  $registry['thejit_on_before_plot_node']['template'] = 'jit-spacetree-on-before-plot-node';
+  $registry['thejit_on_before_plot_node']['path'] = drupal_get_path('module', 'thejit_spacetree') . '/theme';
+}
+
+function thejit_spacetree_node_search_form(&$form_state, $search_path) {
+  $form = array();
+  $form['search'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Search'),
+    '#size' => 45,
+    '#autocomplete_path' => $search_path
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Go'),
+  );
+  return $form;
+}
+
+function _thejit_spacetree_debug_node_search($search_text = '') {
+  // return dummy options
+  return drupal_json_encode(
+          array(
+            'Root' => 'Root',
+            '1.4.0' => '1.4.0',
+            '1.4.1' => '1.4.1',
+            '1.4.2' => '1.4.2',
+            '1.4.3' => '1.4.3',
+            '1.4.2.3.1.2.0.1.0' => '1.4.2.3.1.2.0.1.0',
+          )
+  );
+}
+
+function _thejit_spacetree_debug_generate($parent_id = '', $number_of_children = 0) {
+  if (!$parent_id) {
+    $tree = new stdClass;
+    $tree->id = 'jitnode_1';
+    $tree->name = 'Root';
+    $tree->data = new stdClass;
+    $tree->children = _thejit_spacetree_debug_generate($tree->id, 5);
+
+    return $tree;
+  }
+  else {
+    $children = array();
+    for ($i = 0; $i < 6 - $number_of_children; $i++) {
+      $child = new stdClass;
+      $temp_id = str_replace('jitnode_', '', $parent_id) . '_' . $number_of_children . '_' . $i;
+      $child->id = 'jitnode_' . $temp_id;
+      $child->name = 'node';
+      $child->data = new stdClass;
+      if ($number_of_children > 1) {
+        $child->children = _thejit_spacetree_debug_generate($child->id, $number_of_children - 1);
+      }
+      else {
+        $child->children = array();
+      }
+      $children[] = $child;
+    }
+    return $children;
+  }
+}
+
+function _thejit_spacetree_debug_form($form_id, &$form_state) {
+  $form = array();
+  $form['#multistep'] = TRUE;
+  $form['#redirect'] = FALSE;
+
+  // As this is a multistep form we need to reprocess the latest
+  // input values onto values
+  // input initially is an empty array
+  $inputs = $form_state['input'];
+  $values = &$form_state['values'];
+  $defaults = thejit_spacetree_default_settings(TRUE);
+  // Inject defaults
+  foreach ($defaults as $key => $value) {
+    // Reuse inputs
+    if (isset($inputs[$key])) {
+      $value = $inputs[$key];
+    }
+    // Update form values
+    $values[$key] = $value;
+  }
+
+  $params = array();
+  foreach ($defaults as $key => $value) {
+    $params[$key] = $values[$key];
+  }
+  $tree = _thejit_spacetree_debug_generate();
+
+  $form['tree'] = array(
+    '#markup' => theme('thejit_spacetree', array('tree' => $tree, 'options' => $params)),
+  );
+
+
+  $form += thejit_spacetree_graphapi_settings_form($values);
+  // Add 'global' settings
+  $form['thejit_spacetree']['width'] = array(
+    '#title' => t('Width'),
+    '#type' => 'textfield',
+    '#value' => $values['width'],
+    '#weight' => -2,
+  );
+  $form['thejit_spacetree']['height'] = array(
+    '#title' => t('Height'),
+    '#type' => 'textfield',
+    '#value' => $values['height'],
+    '#weight' => -1,
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Update configuration',
+  );
+
+  $form['debug'] = array(
+    '#markup' => _thejit_spacetree_debug_print_tree($tree),
+  );
+
+  return $form;
+}
+
+function _thejit_spacetree_debug_form_submit($form, &$form_state) {
+  // @see http://growingventuresolutions.com/blog/drupal-7-multistep-forms-using-variable-functions
+  // Trigger multistep.
+  $form_state['rebuild'] = TRUE;
+  // Store values that will be available when we return to the definition.
+  $form_state['storage']['values'] = $form_state['values'];
+}
+
+function _thejit_spacetree_debug_print_tree($tree) {
+  $html = '<div style="max-height: 400px; overflow-y: scroll;">';
+  $html .= '<h1>Visualizing the following tree:</h1>';
+  $html .= '<pre>' . print_r($tree, TRUE) . '</pre>';
+  $html .= '</div>';
+  return $html;
+}
+
+function _thejit_spacetree_debug_help() {
+  $help = array();
+  $help[] = 'Topic 1';
+  $help[] = 'Topic 2';
+  $help[] = 'Topic 3';
+  return theme('item_list', $help);
+}
+
+function _thejit_spacetree_debug_node_info($node_id) {
+  $info = array();
+  $info[] = 'Topic 1';
+  $info[] = 'Topic 2';
+  $info[] = 'Topic 3';
+
+  $node_info = array(
+    'title' => '<strong>' . $node_id . '</strong>',
+    'body' => theme('item_list', array('items' => $info)),
+  );
+
+  print drupal_json_encode($node_info);
+  die;
+}
+
+/**
+ * Implementation of hook_graphapi_formats().
+ */
+function thejit_spacetree_graphapi_formats() {
+  return array(
+    'thejit_spacetree' => t('JIT - Spacetree'),
+  );
+}
+
+/**
+ * Convert a graph data structure into an spacetree structure.
+ *
+ * As a space tree must be a tree so we try to convert the graph into a tree.
+ * We assume the graph is a directed graph
+ * - We first decide for the root node.
+ * - Next we try to find all path starting from the root node
+ * - We must prevent to dive (to deep) into recursion
+ * This is a depth first algoritm
+ *
+ * @param array $graph
+ *
+ * @see graphapi.api.php for the incoming data structure
+ */
+function thejit_spacetree_graph_to_tree($graph, $config = array()) {
+  if (isset($config['root_label'])) {
+    $root_label = $config['root_label'];
+  }
+  else {
+    $root_label = 'Root';
+  }
+
+  if (isset($config['selected_node'])) {
+    $selected_node = $config['selected_node'];
+  }
+  else {
+    $selected_node = NULL;
+  }
+
+  if (!$graph) {
+    graphapi_add_node($graph, '_root');
+    graphapi_set_node_title($graph, '_root', $root_label);
+    $root = '_root';
+  }
+  else {
+    // Possible root nodes do not have incoming edges
+    $roots = array_keys($graph);
+    foreach ($graph as $root => $data) {
+      // Removing incoming edges from our list
+      $roots = array_diff($roots, array_keys($data['edges']));
+    }
+    // Only when having 0 or >1 we should add 'Root'
+    if (!$roots) {
+      // Just pick one node
+      $root = array_shift(array_keys($graph));
+    }
+    elseif (count($roots) > 1) {
+      // We add a root node to make sure it's a tree
+      graphapi_add_node($graph, '_root');
+      graphapi_set_node_title($graph, '_root', $root_label);
+      foreach ($roots as $root) {
+        graphapi_add_link($graph, '_root', $root);
+      }
+      $root = '_root';
+    }
+    elseif (count($roots) == 1) {
+      $root = array_shift($roots);
+    }
+  }
+  $tree = new stdClass;
+  $tree->id = (string) $root;
+  // the ID within the graph
+  $tree->graphID = (string) $root;
+  $tree->name = $graph[$root]['data']['title'];
+  $tree->data = new stdClass;
+  $tree->children = array();
+
+  $agenda = array($tree);
+  $hits = array();
+  while ($agenda) {
+    $current = array_shift($agenda);
+    $id = $current->id;
+    // Make sure to mark the remember the selected node.
+    if (isset($selected_node) && $current->graphID == $selected_node) {
+      $tree->node_to_select_id = $id;
+    }
+    if (isset($graph[$current->graphID]['edges'])) {
+      foreach ($graph[$current->graphID]['edges'] as $to => $d) {
+        // We need to prevent recursion so concat IDs and scan for a repeating ID
+        // By using substr_count we recurse once max as we need to inform the user.
+        if (substr_count($id, '__' . $to . '__') < 2) {
+          $n = new stdClass();
+          $n->id = $id . '__' . $to;
+          $n->graphID = $to;
+          $n->name = $graph[$to]['data']['title'];
+          $n->data = new stdClass;
+          $n->children = array();
+          $current->children[] = $n;
+          // Add this node for further processing
+          array_push($agenda, $n);
+        }
+      }
+    }
+  }
+  return $tree;
+}
+
+/**
+ * Implementation of theme_ENGINE_graphapi
+ *
+ * We make spacetree capable for graphapi data structures
+ */
+function theme_thejit_spacetree_graphapi($vars) {
+  $graph = $vars['graph'];
+  $config = $vars['config'];
+
+  // The given $graph is supposed to be a tree ... so we force it here
+  $tree = thejit_spacetree_graph_to_tree($graph, $config);
+
+  // TODO: Something breaks so unset mostly all
+  $unset = array(
+    'help',
+//    'node_info',
+    'engine',
+  );
+  foreach ($unset as $key) {
+    unset($config[$key]);
+  }
+
+  // We need to flatten the settings
+  $params = _thejit_spacetree_deflate($config);
+
+  $params['width'] = intval($params['width']);
+  $params['height'] = intval($params['height']);
+  $params['duration'] = 1; // intval($params['duration']);
+  if (isset($tree->node_to_select_id)) {
+    $params['node_to_select_id'] = $tree->node_to_select_id;
+  }
+
+  // TODO: We must drop colors as the can be named colors like yellow
+  unset($params['background-color']);
+
+  return theme('thejit_spacetree', array('tree' => $tree, 'options' => $params));
+}
+
+function _thejit_spacetree_deflate($values) {
+  $result = array();
+  foreach ($values as $key => $value) {
+    if (!is_array($value)) {
+      $result[$key] = $value;
+    }
+    else {
+      $result = array_merge($result, $value);
+    }
+  }
+  return $result;
+}
+
+function thejit_spacetree_default_settings($is_system = FALSE) {
+  $defaults = thejit_spacetree_defaults($is_system);
+
+  return $defaults;
+}
+
+function thejit_spacetree_graphapi_settings_form($values, $is_system = FALSE) {
+  $engine = 'thejit_spacetree';
+  $values = _thejit_spacetree_deflate($values);
+  if ($is_system) {
+    // This is the system settings prefix
+    $prefix = $engine . '_default_';
+  }
+  else {
+    $prefix = '';
+  }
+  $values += thejit_spacetree_default_settings($is_system);
+  $form[$engine] = array(
+    '#title' => t('Space Tree settings'),
+    '#type' => 'fieldset',
+    '#collapsed' => FALSE,
+  );
+  if (!$is_system) {
+    $form[$engine]['#description'] = 'You can change the ' . l('global settings', 'admin/config/system/jit/spacetree');
+  }
+  else {
+    // We only ask these for our own global admin setting
+    $form[$engine][$prefix . 'width'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Default width'),
+      '#default_value' => $values['width'],
+    );
+    $form[$engine][$prefix . 'height'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Default height'),
+      '#default_value' => $values['height'],
+    );
+    $form[$engine][$prefix . 'background_color'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Default background color'),
+      '#default_value' => $values['background_color'],
+    );
+  }
+
+  $form[$engine][$prefix . 'root_label'] = array(
+    '#title' => t('Default Root label'),
+    '#type' => 'textfield',
+    '#default_value' => $values['root_label'],
+  );
+
+  $form[$engine][$prefix . 'selected_node'] = array(
+    '#title' => t('Selected node'),
+    '#type' => 'textfield',
+    '#default_value' => $values['selected_node'],
+  );
+
+  $form[$engine][$prefix . 'duration'] = array(
+    '#title' => t('duration'),
+    '#type' => 'textfield',
+    '#default_value' => $values['duration'],
+  );
+
+  $form[$engine]['orient'] = array(
+    '#title' => t('Orientation'),
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form[$engine]['orient'][$prefix . 'enable_orient'] = array(
+    '#title' => t('Enable user orientation options'),
+    '#type' => 'checkbox',
+    '#default_value' => $values['enable_orient'],
+  );
+  $form[$engine]['orient'][$prefix . 'init_orient'] = array(
+    '#title' => t('Initial orientation'),
+    '#type' => 'radios',
+    '#options' => array('bottom' => t('Bottom'), 'top' => t('Top'), 'left' => t('Left'), 'right' => t('Right')),
+    '#default_value' => $values['init_orient'],
+  );
+
+  $form[$engine]['search'] = array(
+    '#title' => t('Search'),
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form[$engine]['search'][$prefix . 'enable_search'] = array(
+    '#title' => t('Enable search'),
+    '#type' => 'checkbox',
+    '#default_value' => $values['enable_search'],
+  );
+  $form[$engine]['search'][$prefix . 'search_path'] = array(
+    '#title' => t('Search autocomplete path'),
+    '#type' => 'textfield',
+    '#default_value' => $values['search_path'],
+    '#description' => t('The Drupal menu path for the AHAH autocomplete')
+  );
+
+  $form[$engine]['edge_colors'] = array(
+    '#title' => t('Edge colors'),
+    '#type' => 'fieldset',
+    '#description' => t('Since edges are drawn by Canvas, the colors cannot be configured with CSS.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form[$engine]['edge_colors'][$prefix . 'edge_color'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Edge color'),
+    '#default_value' => $values['edge_color'],
+  );
+  $form[$engine]['edge_colors'][$prefix . 'selected_edge_color'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Selected edge color'),
+    '#default_value' => $values['selected_edge_color'],
+  );
+  $form[$engine][$prefix . 'enable_full_screen'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable fullscreen view'),
+    '#default_value' => $values['enable_full_screen'],
+  );
+  $form[$engine][$prefix . 'enable_hiding'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable hiding'),
+    '#default_value' => $values['enable_hiding'],
+  );
+  $form[$engine]['help'] = array(
+    '#title' => t('Help'),
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form[$engine]['help'][$prefix . 'enable_help'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable help tray'),
+    '#default_value' => $values['enable_help'],
+  );
+  $form[$engine]['help'][$prefix . 'help_function_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Help function name'),
+    '#description' => t('The name of the drupal function to call to generate help HTML content.  This is not dynamic.'),
+    '#default_value' => $values['help_function_name'],
+  );
+  $form[$engine][$prefix . 'node_info'] = array(
+    '#title' => t('Node Info'),
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form[$engine][$prefix . 'node_info'][$prefix . 'enable_node_info'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable node info'),
+    '#default_value' => $values['enable_node_info'],
+    '#collapsed' => TRUE,
+  );
+  $form[$engine][$prefix . 'node_info'][$prefix . 'node_info_path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Node info path'),
+    '#description' => t('The menu path to call with the node\'s id attribute as an argument to retrieve node info.'),
+    '#default_value' => $values['node_info_path'],
+  );
+  $form[$engine][$prefix . 'node_info'][$prefix . 'cache_node_info'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Cache node info'),
+    '#description' => t('Whether to cache the node info locally, or refresh it each time the node is selected.'),
+    '#default_value' => $values['cache_node_info'],
+  );
+  return $form;
+}

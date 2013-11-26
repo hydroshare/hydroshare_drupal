@@ -8,9 +8,9 @@ files[] = og_field_access.module
 ; Tests
 files[] = og_field_access.test
 
-; Information added by drupal.org packaging script on 2013-04-22
-version = "7.x-2.2"
+; Information added by  packaging script on 2013-11-20
+version = "7.x-2.4"
 core = "7.x"
 project = "og"
-datestamp = "1366630883"
+datestamp = "1384971519"
 

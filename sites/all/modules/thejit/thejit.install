@@ -1,0 +1,57 @@
+<?php
+
+/**
+ * @file
+ * Copyright (c) 2010, iPlant Collaborative, University of Arizona, Cold Spring Harbor Laboratories, University of Texas at Austin
+ * This software is licensed under the CC-GNU GPL version 2.0 or later.
+ * License: http://creativecommons.org/licenses/GPL/2.0/
+ */
+
+/**
+ * Implements hook_enable().
+ *
+ * @see thejit_spacetree_install().
+ */
+function thejit_enable() {
+  $num_updated = db_update('system')
+      ->fields(
+          array(
+            'weight' => -11,
+          )
+      )
+      ->condition('name', 'thejit')
+      ->execute()
+  ;
+}
+
+function thejit_uninstall() {
+  variable_del('thejit_enable_debug');
+}
+
+function thejit_requirements($phase) {
+  $requirements = array();
+  // Ensure translations don't break at install time
+  $t = get_t();
+  // Report Drupal version
+  if ($phase == 'runtime') {
+    $requirements['thejit'] = array(
+      'title' => $t('theJit javascript library'),
+      'value' => 'Found',
+      'severity' => REQUIREMENT_OK,
+    );
+
+    $lib_path = libraries_get_path('jit');
+    if (!file_exists($lib_path . '/jit.js')) {
+      $requirements['thejit']['value'] = 'Missing. Please follow the instruction from README.txt';
+      $requirements['thejit']['severity'] = REQUIREMENT_ERROR;
+    }
+  }
+  return $requirements;
+}
+
+function thejit_update_6001() {
+  $ret = array();
+  $ret[] = update_sql("UPDATE {system} SET weight = -11 WHERE name = 'thejit'");
+
+  return $ret;
+}

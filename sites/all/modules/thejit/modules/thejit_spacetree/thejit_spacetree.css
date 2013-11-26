@@ -1,0 +1,70 @@
+/**
+ * Copyright (c) 2010, iPlant Collaborative, University of Arizona, Cold Spring Harbor Laboratories, University of Texas at Austin
+ * This software is licensed under the CC-GNU GPL version 2.0 or later.
+ * License: http://creativecommons.org/licenses/GPL/2.0/
+ */
+
+.jit-spacetree {
+	position: relative;
+}
+
+.spacetree-wrapper {
+	clear: both;
+}
+
+.spacetree {
+	background-color: #333333;
+	background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#666666), to(#333333));
+	background: -moz-linear-gradient(center top, #666666, #333333);
+	overflow: hidden;
+	position: relative;
+}
+
+.spacetree .node {
+	color: #ffffff;
+	cursor:pointer;
+	text-align:center;
+	border: none;
+	margin: 0;
+	padding: 0;
+	position: absolute;
+}
+
+.spacetree .node.selected {
+	font-size: 120%;
+	color: #f04e19;
+	z-index: 5;
+}
+
+.spacetree-search-form {
+	display: none;
+	position: absolute;
+	background-color: white;
+	border: 1px solid #454545;
+	padding: 3px;
+	z-index: 21;
+}
+
+.spacetree-search-form-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 20;
+}
+
+.jit-modal .spacetree {
+	width: 100%;
+	height: 100%;
+}
+
+#thejit__spacetree__scratch__ {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	margin-left: -100%;
+	word-wrap: break-word;
+	visibility: hidden;
+}

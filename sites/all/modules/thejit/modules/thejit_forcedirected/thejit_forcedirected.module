@@ -1,0 +1,442 @@
+<?php
+
+function thejit_forcedirected_resources() {
+  thejit_resources();
+  drupal_add_js(drupal_get_path('module', 'thejit_forcedirected') . '/thejit_forcedirected.js');
+  drupal_add_css(drupal_get_path('module', 'thejit_forcedirected') . '/thejit_forcedirected.css');
+}
+
+function thejit_forcedirected_menu() {
+
+  $items = array();
+  if (variable_get('thejit_enable_debug', 0)) {
+    $items['jit/forcedirected/debug'] = array(
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('_thejit_forcedirected_debug_form'),
+      'title' => 'JIT Force Directed: DEBUG',
+      'type' => MENU_NORMAL_ITEM,
+      'access arguments' => array('access content'),
+    );
+// 		$items['jit/forcedirected/debug/node_info/%'] = array(
+// 			'page callback' => '_thejit_forcedirected_debug_node_info',
+// 			'page arguments' => array(4),
+// 			'title' => 'JIT Force Directed: DEBUG node info',
+// 			'type' => MENU_CALLBACK,
+// 			'access arguments' => array('access content'),
+// 			);
+// 		$items['jit/forcedirected/debug/search'] = array(
+// 			'page callback' => '_thejit_forcedirected_debug_node_search',
+// 			'title' => 'JIT Force Directed: DEBUG node search',
+// 			'type' => MENU_CALLBACK,
+// 			'access arguments' => array('access content'),
+// 			);
+  }
+  $items['admin/config/system/jit/forcedirected'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('thejit_forcedirected_admin_form'),
+    'title' => t('JIT Force Directed settings'),
+    'access arguments' => array('administer jit'),
+    'type' => MENU_LOCAL_TASK,
+  );
+  return $items;
+}
+
+function thejit_forcedirected_theme() {
+  return array(
+    /*
+     * @param	$json the JSON data to visualize;
+     * @param $options additional parameters for JIT, overrides $defaults
+     */
+    'thejit_forcedirected' => array(
+      'arguments' => array(
+        'json' => null,
+        'options' => null,
+      ),
+      'template' => 'theme/jit-forcedirected',
+    ),
+    'thejit_forcedirected_graphapi' => array(
+      'graph' => NULL,
+      'graph-config' => NULL,
+    ),
+  );
+}
+
+function thejit_forcedirected_preprocess_thejit_forcedirected(&$vars) {
+  thejit_forcedirected_resources();
+
+  // We are theming so use all defaults
+  $defaults = thejit_forcedirected_default_settings(TRUE);
+  $defaults['id'] = 'forcedirected';
+  // Map Drupal value to theJit
+  $defaults['levelDistance'] = $defaults['level_distance'];
+  unset($defaults['level_distance']);
+  // Merge defaults
+  $vars['options'] = $vars['options'] + $defaults;
+  $options = &$vars['options'];
+  // Make id javascript compatible
+  $options['id'] = str_replace('-', '_', $options['id']);
+
+  $node_prefix = $options['id'] . '_node_';
+  foreach ($vars['json'] as &$node) {
+    $node->id = $node_prefix . $node->id;
+    if (!isset($node->data->{'$type'})) {
+      $node->data->{'$type'} = $options['shape'];
+    }
+    if (!isset($node->data->{'$color'})) {
+      $node->data->{'$color'} = $options['node_color'];
+    }
+    foreach ($node->adjacencies as &$adj) {
+      $adj->nodeTo = $node_prefix . $adj->nodeTo;
+      $adj->nodeFrom = $node_prefix . $adj->nodeFrom;
+    }
+  }
+  $styles = array(
+    'width' => $options['width'] . 'px',
+    'height' => $options['height'] . 'px',
+    'background-color' => $options['background-color'],
+    'position' => 'relative',
+    'display' => 'inline-block',
+  );
+  $s = '';
+  foreach ($styles as $style => $value) {
+    $s .= "$style: $value; ";
+  }
+  $attributes = array(
+    'id' => $options['id'],
+    'class' => 'graphapi',
+    'width' => $options['width'],
+    'height' => $options['height'],
+    'style' => $s,
+  );
+  $vars['options']['attributes'] = drupal_attributes($attributes);
+}
+
+function _thejit_forcedirected_debug_form($form_id, &$form_state) {
+  $form = array();
+
+  $defaults = thejit_forcedirected_default_settings(TRUE);
+
+  $vars = array(
+    'json' => _thejit_forcedirected_debug_generate(),
+    'options' => $defaults,
+  );
+  $form['demo'] = array(
+    '#markup' => theme('thejit_forcedirected', $vars),
+  );
+
+  return $form;
+}
+
+/**
+ * Implementation of hook_ctools_plugin_directory().
+ *
+ * It simply tells panels where to find the .inc files that define various
+ * args, contexts, content_types. In this case the subdirectories of
+ * ctools_plugin_example/panels are used.
+ */
+function thejit_forcedirected_ctools_plugin_directory($module, $plugin) {
+  if ($module == 'ctools' && !empty($plugin)) {
+    return "ctools_plugins/$plugin";
+  }
+}
+
+function _thejit_forcedirected_debug_generate($nodes = 10) {
+  $types = array('circle', 'square', 'triangle', 'star');
+  $colors = array('#83548B', '#EBB056', '#416D9C', '#C74243', '#70A35E');
+  $graph = array();
+
+  for ($i = 0; $i < $nodes; $i++) {
+    $id = $name = "graphnode$i";
+    $node = thejit_forcedirected_create_node($graph, $id, $name);
+
+    $node->data->{'$type'} = $types[array_rand($types)];
+    $node->data->{'$dim'} = rand(10, 15);
+    $node->data->{'$color'} = $colors[array_rand($colors)];
+  }
+
+  for ($i = 0; $i < $nodes; $i++) {
+    $keys = array_rand($graph, rand(2, $nodes - 1));
+    foreach ($keys as $key) {
+      $adj = new stdClass;
+      $to = "graphnode$key";
+      $from = "graphnode$i";
+      $adj = thejit_forcedirected_create_adjacency($graph, $from, $to);
+      $adj->data->{'$color'} = '#2d89b2';
+    }
+  }
+
+  return $graph;
+}
+
+/**
+ * Add a new node to the given graph.
+ *
+ * The node is added to the graph and returned for further processing.
+ *
+ * @param array $graph
+ * @param string $id
+ * @param string $name
+ * @return stdClass new node
+ */
+function thejit_forcedirected_create_node(&$graph, $id, $name) {
+  $node = new stdClass;
+  $node->adjacencies = array();
+  $node->data = new stdClass;
+  $node->id = $id;
+  $node->name = $name;
+
+  $graph[] = $node;
+  return $node;
+}
+
+function thejit_forcedirected_create_adjacency(&$graph, $from, $to) {
+  if (is_object($from)) {
+    $from_id = $from->id;
+  }
+  else {
+    $from_id = $from;
+    $from = NULL;
+  }
+
+  // We need the index of the from node
+  foreach ($graph as $index => $node) {
+    if ($node->id == $from_id) {
+      $from_index = $index;
+      $from = $node;
+      break;
+    }
+  }
+  if (is_object($to)) {
+    $to_id = $to->id;
+  }
+  else {
+    $to_id = $to;
+    $to = NULL;
+  }
+
+  $adj = new stdClass;
+  $adj->nodeFrom = $from->id;
+  $adj->nodeTo = $to_id;
+  $adj->data = new stdClass;
+  $graph[$from_index]->adjacencies[] = $adj;
+  return $adj;
+}
+
+function thejit_forcedirected_admin_form($form, &$form_state) {
+  if (isset($form_state['values'])) {
+    $values = $form_state['values'];
+  }
+  else {
+    $values = array();
+  }
+  $form = thejit_forcedirected_graphapi_settings_form($values, TRUE);
+
+  if (variable_get('thejit_enable_debug', 0)) {
+    $form['thejit_forcedirected_debug_link'] = array(
+      '#type' => 'markup',
+      '#title' => t('Test your %type settings here.', array('%t' => 'Force Directed')),
+      '#markup' => l('Debug force directed', 'jit/forcedirected/debug'),
+    );
+  }
+
+  // TODO: remove this in favour of thejit_forcedirected_admin_form_validate()
+  $form['#validate'] = array('thejit_forcedirected_admin_form_submit');
+  return system_settings_form($form);
+}
+
+function thejit_forcedirected_admin_form_validate($form, &$form_state) {
+  // Validation logic.
+  //TODO move submit validation to here
+}
+
+function thejit_forcedirected_admin_form_submit($form, &$form_state) {
+  $nodeColor = $form_state['values']['thejit_forcedirected_default_node_color'];
+  if (strpos($nodeColor, '#') === 0) {
+    $nodeColor = substr($nodeColor, 1);
+  }
+  if (strlen($nodeColor) === 3 || strlen($nodeColor) === 6) {
+    if (!preg_match('/[a-fA-F0-9]+/', $nodeColor)) {
+      form_set_error('thejit_forcedirected_default_node_color', t('Please provide a valid hexadecimal color code for the node color.'));
+    }
+  }
+  else {
+    form_set_error('thejit_forcedirected_default_node_color', t('Please provide a valid hexadecimal color code for the node color.'));
+  }
+  $edgeColor = $form_state['values']['thejit_forcedirected_default_edge_color'];
+  if (strpos($edgeColor, '#') === 0) {
+    $edgeColor = substr($edgeColor, 1);
+  }
+  if (strlen($edgeColor) === 3 || strlen($edgeColor) === 6) {
+    if (!preg_match('/[a-fA-F0-9]+/', $edgeColor)) {
+      form_set_error('thejit_forcedirected_default_edge_color', t('Please provide a valid hexadecimal color code for the edge color.'));
+    }
+  }
+  else {
+    form_set_error('thejit_forcedirected_default_edge_color', t('Please provide a valid hexadecimal color code for the edge color.'));
+  }
+  if (!is_numeric($form_state['values']['thejit_forcedirected_default_level_distance'])) {
+    form_set_error('thejit_forcedirected_default_level_distance', t('Edge length must be a numeric value.'));
+  }
+}
+
+/**
+ * Implementation of hook_graphapi_formats().
+ */
+function thejit_forcedirected_graphapi_formats() {
+  return array(
+    'thejit_forcedirected' => t('JIT - Force Directed'),
+  );
+}
+
+/**
+ * Convert a graph data structure into an forcedirected structure
+ *
+ * @param array $graph
+ *
+ * @see graphapi.api.php for the incoming data structure
+ */
+function thejit_forcedirected_graph_to_forcedirected($graph_in) {
+  $graph = array();
+  foreach ($graph_in as $id => $data) {
+    $name = $graph_in[$id]['data']['title'];
+    $node = thejit_forcedirected_create_node($graph, (string) $id, $name);
+    $node->data->{'$dim'} = 10;
+    $node->data->{'$color'} = isset($data['data']['background-color']) ? $data['data']['background-color'] : 'white';
+  }
+  foreach ($graph_in as $from => $data) {
+    foreach ($graph_in[$from]['edges'] as $to => $data) {
+      // we flip from/to as thejit draws the arrow reverse
+      $adj = thejit_forcedirected_create_adjacency($graph, (string) $from, (string) $to);
+      $adj->data->{'$type'} = 'arrow';
+    }
+  }
+  return $graph;
+}
+
+/**
+ * Implementation of theme_ENGINE_graphapi
+ *
+ * We make forcedirected capable for graphapi data structures
+ */
+function theme_thejit_forcedirected_graphapi($vars) {
+  $graph = $vars['graph'];
+  $config = $vars['config'];
+
+  $tree = thejit_forcedirected_graph_to_forcedirected($graph);
+  return theme('thejit_forcedirected', array('json' => $tree, 'options' => $config));
+}
+
+/**
+ * Returns default settings used by system and widget settings forms.
+ *
+ * @param type $is_system
+ *   Indicated we are requesting all settings.
+ * @return array tree of key-value
+ */
+function thejit_forcedirected_default_settings($is_system = FALSE) {
+  //TODO: get more default values
+  //    'label_color' => '#454545',
+  $defaults = array(
+    'node_color' => variable_get('thejit_forcedirected_default_node_color', '#0000cd'),
+    'edge_color' => variable_get('thejit_forcedirected_default_edge_color', '#888888'),
+    'shape' => variable_get('thejit_forcedirected_default_shape', 'circle'),
+    'level_distance' => variable_get('thejit_forcedirected_default_level_distance', 150),
+  );
+  if ($is_system) {
+    // the following are ie not needed for graph API
+    $system['width'] = variable_get('thejit_forcedirected_default_width', 400);
+    $system['height'] = variable_get('thejit_forcedirected_default_height', 300);
+    $system['background-color'] = variable_get('thejit_forcedirected_default_background_color', 300);
+    $defaults += $system;
+  }
+  return $defaults;
+}
+
+/**
+ * Implements hook_graphapi_default_settings().
+ *
+ * We reuse the default settings from thejit_forcedirected_default_settings.
+ *
+ * @see thejit_forcedirected_default_settings()
+ * @see views_object::option_definition()
+ */
+function thejit_forcedirected_graphapi_default_settings() {
+  $engine = 'thejit_forcedirected';
+  $values = thejit_forcedirected_default_settings(FALSE);
+  return graphapi_settings_to_views($engine, $values);
+}
+
+/**
+ * Implementation of hook_graphapi_settings_form
+ *
+ * This form is used both for the system default settings as for widgets.
+ *
+ * @see thejit_forcedirected_admin_form().
+ * @see graphapi_settings_form().
+ */
+function thejit_forcedirected_graphapi_settings_form($values, $is_system = FALSE) {
+  $engine = 'thejit_forcedirected';
+
+  if ($is_system) {
+    // This is the system settings prefix
+    $prefix = $engine . '_default_';
+  }
+  else {
+    $prefix = '';
+  }
+  // TODO: should this be array_merge_recurse?
+  $values += thejit_forcedirected_default_settings($is_system);
+
+  $form[$engine] = array(
+    '#title' => t('Force Directed settings'),
+    '#type' => 'fieldset',
+    '#collapsed' => FALSE,
+  );
+  if (!$is_system) {
+    $form[$engine]['#description'] = 'You can change the ' . l('global settings', 'admin/config/system/jit/forcedirected');
+  }
+  else {
+    // We only ask these for our own global admin setting
+    $form[$engine][$prefix . 'width'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Default width'),
+      '#default_value' => variable_get('thejit_forcedirected_default_width', 400),
+    );
+    $form[$engine][$prefix . 'height'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Default height'),
+      '#default_value' => variable_get('thejit_forcedirected_default_height', 300),
+    );
+    $form[$engine][$prefix . 'background_color'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Default bacground color'),
+      '#default_value' => variable_get('thejit_forcedirected_default_background_color', 'white'),
+    );
+  }
+  $form[$engine][$prefix . 'node_color'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Default node color'),
+    '#default_value' => $values['node_color'],
+  );
+
+  $form[$engine][$prefix . 'edge_color'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Default edge color'),
+    '#default_value' => $values['edge_color'],
+  );
+
+  $form[$engine][$prefix . 'shape'] = array(
+    '#type' => 'select',
+    '#options' => array('circle' => 'circle', 'square' => 'square', 'triangle' => 'triangle', 'star' => 'star'),
+    '#title' => t('Default node shape'),
+    '#default_value' => $values['shape'],
+  );
+
+  $form[$engine][$prefix . 'level_distance'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Edge length/Level distance'),
+    '#description' => t('The distance between nodes for the Force Directed layout algorithm.  The large the number, the farther apart nodes will be.'),
+    '#default_value' => $values['level_distance'],
+  );
+  return $form;
+}

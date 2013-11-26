@@ -1,0 +1,14 @@
+; $Id$
+name = JIT Spacetree Visualization
+description = "The JIT Spacetree Visualization."
+core = 7.x
+package = "Visualization"
+
+dependencies[] = thejit
+
+; Information added by drupal.org packaging script on 2013-10-01
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "thejit"
+datestamp = "1380639957"
+

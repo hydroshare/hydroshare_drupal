@@ -1,0 +1,12 @@
+name = Graph API Demo
+description = Displays various aspect of Graph API
+package = Demo
+core = 7.x
+dependencies[] = graphapi
+
+; Information added by drupal.org packaging script on 2013-09-30
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "graphapi"
+datestamp = "1380581400"
+

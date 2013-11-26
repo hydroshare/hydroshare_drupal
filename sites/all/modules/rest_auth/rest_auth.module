@@ -1,0 +1,297 @@
+<?php
+
+/**
+ * @file
+ * Allow users to login using an external web service.
+ *
+ * Users can login to the site using a RESTful web service. If the user is
+ * associated with a Drupal user, that user is logged in. If not, a new user is
+ * created.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function rest_auth_menu() {
+  $items['admin/config/people/rest_auth'] = array(
+    'title' => 'REST Auth',
+    'description' => 'Administer REST Auth settings.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('rest_auth_settings_form'),
+    'access arguments' => array('administer users'),
+  );
+  return $items;
+}
+
+/**
+ * Form to administer REST Auth settings.
+ */
+function rest_auth_settings_form($form, &$form_state) {
+  $form = array();
+  $form['rest_auth_general'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('General settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['rest_auth_general']['rest_auth_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Host'),
+    '#description' => t('Enter the fully-formed URL of the authentication service.'),
+    '#default_value' => variable_get('rest_auth_url'),
+    '#required' => TRUE,
+  );
+  $form['rest_auth_general']['rest_auth_param_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Username parameter'),
+    '#description' => t('Enter the username parameter name that will get passed to the web service. If the username is buried inside the JSON response object, enter the hierarchy using <strong>\\</strong> as level delimiter. For example, if the username is inside <code>{"User": {"name": "Druplicon"}}</code>, enter <code>User\\name</code> in this box.'),
+    '#default_value' => variable_get('rest_auth_param_name'),
+    '#required' => TRUE,
+  );
+  $form['rest_auth_general']['rest_auth_param_pass'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Password parameter'),
+    '#description' => t('Enter the password parameter name that will get passed to the web service. If the password is buried inside the JSON response object, enter the hierarchy using <strong>\\</strong> as level delimiter. For example, if the password is inside <code>{"User": {"password": "letmein"}}</code>, enter <code>User\\password</code> in this box.'),
+    '#default_value' => variable_get('rest_auth_param_pass'),
+    '#required' => TRUE,
+  );
+  $form['rest_auth_advanced'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Advanced settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['rest_auth_advanced']['rest_auth_auth_side'] = array(
+    '#type' => 'radios',
+    '#title' => t('Authentication side'),
+    '#description' => t('This options allows you to determine where authentication happens.<br /><em>Note: It is more secure to authenticate provider-side, but it may require additional code from the web service provider.</em>'),
+    '#options' => array(
+      'provider' => t('Provider (Web service)'),
+      'consumer' => t('Consumer (Drupal)'),
+    ),
+    '#default_value' => variable_get('rest_auth_auth_side', 'provider'),
+  );
+  $form['rest_auth_advanced']['rest_auth_response_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Response username'),
+    '#description' => t('If your authentication is consumer-side, and the username is located in a different part of the JSON response object, enter that location here. If the username is burried inside the JSON response object, enter the hierarchy using <strong>\\</strong> as level delimiter. For example, if the username is inside <code>{"User": {"username": "Druplicon"}}</code>, enter <code>User\\username</code> in this box.'),
+    '#default_value' => variable_get('rest_auth_response_name'),
+  );
+  $form['rest_auth_advanced']['rest_auth_param_email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Email parameter'),
+    '#description' => t('If the response contains an email address, enter the email parameter name that will be returned from the web service. If this is left empty or if the parameter is not found, the module will try to use the username as the account email. If the email is buried inside the JSON response object, enter the hierarchy using <strong>\\</strong> as level delimiter. For example, if the email is inside <code>{"User": {"email": "mail@example.com"}}</code>, enter <code>User\\email</code> in this box.'),
+    '#default_value' => variable_get('rest_auth_param_email'),
+  );
+  $roles = user_roles(TRUE);
+  unset($roles[DRUPAL_AUTHENTICATED_RID]);
+  $form['rest_auth_advanced']['rest_auth_roles'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Roles'),
+    '#description' => t('Select the role(s) you would like to assign to new users created by REST Auth.'),
+    '#options' => $roles,
+    '#default_value' => variable_get('rest_auth_roles', array()),
+  );
+  if (module_exists('devel')) {
+    $form['rest_auth_advanced']['rest_auth_debug'] = array(
+      '#type' => 'radios',
+      '#title' => t('Debug'),
+      '#description' => t('This option allows you to view the response object. Turn off for production websites.'),
+      '#options' => array(
+        0 => t('Disabled'),
+        1 => t('Enabled'),
+      ),
+      '#default_value' => variable_get('rest_auth_debug', 0),
+    );
+  }
+  return system_settings_form($form);
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function rest_auth_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'user_login' || $form_id == 'user_login_block') {
+    if (isset($form_state['input']['name'])) {
+      $final = array_pop($form['#validate']);
+      $form['#validate'][] = 'rest_auth_authenticate';
+      $form['#validate'][] = $final;
+    }
+  }
+}
+
+/**
+ * Authenticates the user.
+ */
+function rest_auth_authenticate($form, &$form_state) {
+  $url = variable_get('rest_auth_url');
+  $name = $form_state['values']['name'];
+  $pass = $form_state['values']['pass'];
+  $data = array(
+    variable_get('rest_auth_param_name', 'name') => $name,
+    variable_get('rest_auth_param_pass', 'pass') => md5($pass),
+  );
+  $options = array(
+    'headers' => array(
+      'Accept' => 'application/json',
+      'Content-Type' => 'application/x-www-form-urlencoded',
+    ),
+    'method' => 'POST',
+    'data' => drupal_http_build_query($data),
+  );
+  $response = drupal_http_request($url, $options);
+  if (module_exists('devel') && variable_get('rest_auth_debug', 0)) {
+    dpm($response, t('Response'));
+  }
+  // Verify for response error
+  if (isset($response->error)) {
+    drupal_set_message($response->error, 'error');
+  }
+  else {
+    // Parse response data
+    $data = json_decode($response->data, TRUE);
+    if (module_exists('devel') && variable_get('rest_auth_debug', 0)) {
+      dpm($data, t('Data'));
+    }
+    if ($error = json_last_error()) {
+      // Error
+      switch ($error) {
+        case JSON_ERROR_DEPTH:
+          drupal_set_message(t('The maximum stack depth has been exceeded'), 'error');
+          break;
+        case JSON_ERROR_STATE_MISMATCH:
+          drupal_set_message(t('Underflow or mode mismatch'), 'error');
+          break;
+        case JSON_ERROR_CTRL_CHAR:
+          drupal_set_message(t('Unexpected control character found'), 'error');
+          break;
+        case JSON_ERROR_SYNTAX:
+          drupal_set_message(t('Syntax error. Invalid or malformed JSON'), 'error');
+          break;
+        case JSON_ERROR_UTF8:
+          drupal_set_message(t('Malformed UTF-8 characters, possibly incorrectly encoded'), 'error');
+          break;
+        default:
+          drupal_set_message(t('Unknown error parsing data'), 'error');
+          break;
+      }
+    }
+    else {
+      // Success
+      if ($uid = _rest_auth_login_register($data, $name, $pass)) {
+        $form_state['uid'] = $uid;
+      }
+    }
+  }
+}
+
+/**
+ * Log in the user, registering if the user doesn't exist yet.
+ */
+function _rest_auth_login_register($data, $name, $pass) {
+  $account = user_external_load($name);
+  if (!$account) {
+    // Automatically log in local users
+    if ($local_account = user_load_by_name($name)) {
+      return user_authenticate($local_account->name, $pass);
+    }
+  }
+  // Authenticate if necessary
+  if (variable_get('rest_auth_auth_side') == 'consumer') {
+    // Override username from response
+    if (variable_get('rest_auth_response_name')) {
+      $response_name = _rest_auth_parse_data($data, variable_get('rest_auth_response_name'));
+      if ($response_name) {
+        $name = $response_name;
+      }
+    }
+    // Verify entered password against server response
+    $response_pass = _rest_auth_parse_data($data, variable_get('rest_auth_param_pass'));
+    if (!$response_pass || is_array($response_pass) || (md5($pass) != strtolower($response_pass))) {
+      return FALSE;
+    }
+  }
+  // Create account if it does not exist
+  if (!$account) {
+    // Determine what the email for the user should be
+    $mail_candidate = _rest_auth_parse_data($data, variable_get('rest_auth_param_email'));
+    if (valid_email_address($mail_candidate)) {
+      // Use if it is a valid email
+      $mail = $mail_candidate;
+    }
+    elseif (valid_email_address($name)) {
+      // Default to username as email
+      $mail = $name;
+    }
+    else {
+      drupal_set_message(t('A valid email was not found for this user'), 'error');
+      return FALSE;
+    }
+    $num = 1;
+    // If the username already exists, add a number to the end of it
+    while (_rest_auth_user_exists($name)) {
+      $name .= $num;
+      $num++;
+    }
+    // Create and save new user
+    $userinfo = array(
+      'name' => $name,
+      'pass' => $pass,
+      'mail' => $mail,
+      'init' => $mail,
+      'status' => 1,
+      'roles' => variable_get('rest_auth_roles', array()),
+      'access' => REQUEST_TIME,
+      'data' => $data,
+    );
+    // Provide hook to alter user information
+    drupal_alter('rest_auth_user', $userinfo, $data);
+    $account = user_save(drupal_anonymous_user(), $userinfo);
+    // Set an error if the account creation failed
+    if (!$account) {
+      drupal_set_message(t('Error saving user account.'), 'error');
+      return FALSE;
+    }
+    user_set_authmaps($account, array('authname_rest_auth' => $name));
+  }
+  else {
+    // Update $user->data with information from the server
+    $userinfo = array('data' => $data);
+    // Provide hook to alter user information
+    $context = array('user' => clone $account);
+    drupal_alter('rest_auth_user', $userinfo, $data, $context);
+    user_save($account, $userinfo);
+  }
+  // Log the user in
+  $form_state['uid'] = $account->uid;
+  user_login_submit(array(), $form_state);
+  return $account->uid;
+}
+
+/**
+ * Checks if a username already exists.
+ */
+function _rest_auth_user_exists($name) {
+  if (db_query_range('SELECT 1 FROM {users} WHERE name = :name', 0, 1, array(':name' => $name))->fetchField()) {
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * Get the email based on the configured response path.
+ */
+function _rest_auth_parse_data($data, $xpath) {
+  if ($xpath) {
+    $xpath = explode('\\', $xpath);
+    $value = $data;
+    foreach ($xpath as $key) {
+      if (isset($value[$key])) {
+        $value = $value[$key];
+      }
+    }
+    return $value;
+  }
+}

@@ -1,0 +1,188 @@
+<?php
+
+/**
+ * Copyright (c) 2010, iPlant Collaborative, University of Arizona, Cold Spring Harbor Laboratories, University of Texas at Austin
+ * This software is licensed under the CC-GNU GPL version 2.0 or later.
+ * License: http://creativecommons.org/licenses/GPL/2.0/
+ */
+
+/**
+ * Implements hook_permission().
+ */
+function thejit_permission() {
+  return array(
+    'administer jit' => array(
+      'title' => t('Administer The Jit'),
+      'description' => t('Administer jit configuration.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function thejit_menu() {
+  $items = array();
+
+  $items['admin/config/system/jit'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('thejit_admin_form'),
+    'title' => 'The JIT',
+    'description' => 'Javascript InfoVis Toolkit',
+    'access arguments' => array('administer jit'),
+  );
+  $items['admin/config/system/jit/the'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('thejit_admin_form'),
+    'title' => 'The JIT',
+    'description' => 'Javascript InfoVis Toolkit',
+    'access arguments' => array('administer jit'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -1,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_libraries_info().
+ *
+ * @see libraries.module
+ */
+function thejit_libraries_info() {
+  $libraries['jit'] = array(
+    'name' => 'JavaScript InfoVis Toolkit',
+    'vendor url' => 'http://thejit.org/',
+    'download url' => 'http://thejit.org/downloads/Jit-2.0.1.zip',
+    'version arguments' => array(
+      'file' => 'jit.js',
+      // Best practice: Document the actual version strings for later reference.
+      // 2.0.0b : $jit.version = '2.0.0b';
+      // 2.0.1  : $jit.version = '2.0.1';
+      'pattern' => "/jit.version = '(.*)';/",
+      'lines' => 50,
+    ),
+    //TODO what files to list here
+    'files' => array(
+      'js' => array('jit.js'),
+    ),
+  );
+  return $libraries;
+}
+
+/**
+ * Adds all necessary js to request
+ */
+function thejit_resources() {
+  static $done;
+  // Prevent from running this code twice.
+  if (!isset($done)) {
+    $done = TRUE;
+  }
+  else {
+    return;
+  }
+  if (strpos($_SERVER['HTTP_USER_AGENT'], 'MSIE')) {
+    //preprocess causes js errors
+    drupal_add_js(libraries_get_path('jit') . '/Extras/excanvas.js');
+  }
+
+  if (variable_get('thejit_enable_debug', 0)) {
+    drupal_add_js(libraries_get_path('jit') . '/jit.js');
+  }
+  else {
+    drupal_add_js(libraries_get_path('jit') . '/jit-yc.js');
+  }
+
+  if (module_exists('jquery_ui')) {
+    jquery_ui_add('effects.core');
+  }
+
+  drupal_add_js(drupal_get_path('module', 'thejit') . '/js/thejit.js');
+  drupal_add_css(drupal_get_path('module', 'thejit') . '/css/thejit.css');
+}
+
+function thejit_admin_form() {
+  $form = array();
+
+  $form['thejit_enable_debug'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable JIT Example Pages'),
+    '#description' => t('JIT Visualizations provide an example page (usually at `jit/[viz name]/debug`) that showcase the options available for each visualization.  This option should probably be disabled in production environments.'),
+    '#default_value' => variable_get('thejit_enable_debug', 0),
+  );
+
+  $form['#submit'] = array('thejit_admin_form_submit');
+
+  return system_settings_form($form);
+}
+
+function thejit_admin_form_submit($form, &$form_state) {
+  menu_router_build(TRUE);
+  menu_cache_clear_all();
+}
+
+function thejit_theme($existing, $typs, $theme, $path) {
+  return array(
+    'thejit_on_before_compute' => array(
+      'arguments' => array(
+        'tree_id' => NULL,
+      ),
+      'template' => 'theme/jit-on-before-compute'
+    ),
+    'thejit_on_after_compute' => array(
+      'arguments' => array(
+        'tree_id' => NULL,
+      ),
+      'template' => 'theme/jit-on-after-compute'
+    ),
+    'thejit_on_create_label' => array(
+      'arguments' => array(
+        'tree_id' => NULL,
+      ),
+      'template' => 'theme/jit-on-create-label'
+    ),
+    'thejit_on_place_label' => array(
+      'arguments' => array(
+        'tree_id' => NULL,
+      ),
+      'template' => 'theme/jit-on-place-label'
+    ),
+    'thejit_on_complete' => array(
+      'arguments' => array(
+        'tree_id' => NULL,
+      ),
+      'template' => 'theme/jit-on-complete'
+    ),
+    'thejit_on_before_plot_line' => array(
+      'arguments' => array(
+        'tree_id' => NULL,
+      ),
+      'template' => 'theme/jit-on-before-plot-line'
+    ),
+    'thejit_on_after_plot_line' => array(
+      'arguments' => array(
+        'tree_id' => NULL,
+      ),
+      'template' => 'theme/jit-on-after-plot-line'
+    ),
+    'thejit_on_before_plot_node' => array(
+      'arguments' => array(
+        'tree_id' => NULL,
+      ),
+      'template' => 'theme/jit-on-before-plot-node'
+    ),
+    'thejit_on_after_plot_node' => array(
+      'arguments' => array(
+        'tree_id' => NULL,
+      ),
+      'template' => 'theme/jit-on-after-plot-node'
+    ),
+    'thejit_request' => array(
+      'arguments' => array(
+        'tree_id' => NULL,
+      ),
+      'template' => 'theme/jit-request'
+    ),
+  );
+}

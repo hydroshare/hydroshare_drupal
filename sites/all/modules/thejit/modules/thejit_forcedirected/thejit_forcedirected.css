@@ -1,0 +1,41 @@
+.jit-forcedirected {
+	-moz-box-shadow:	0 0 3px 1px #444;
+	-webkit-box-shadow:	0 0 3px 1px #444;
+	box-shadow:	0 0 3px 1px #444;
+	
+	-moz-border-radius: 3px 3px;
+	-webkit-border-radius: 3px 3px;
+	border-radius: 3px 3px;
+	
+	background-color: #b4d6ac;
+	background-image: -moz-radial-gradient(#d3e7ce, #9fcb95);
+	background-image: -webkit-gradient(radial, 50% 50%, 100, 50% 50%, 400, color-stop(0,#d3e7ce), color-stop(1,#9fcb95));
+	background-image: -webkit-radial-gradient(#d3e7ce, #9fcb95);
+	background-image: -o-radial-gradient(#d3e7ce, #9fcb95);
+}
+
+.jit-forcedirected .node {
+	border: none;
+	margin: 0;
+	padding: 0;
+}
+
+.tip {
+	position: absolute;
+	z-index: 10000;
+	background-color: #fefbf4;
+	background-image: -moz-linear-gradient(#fefbf4, #fcf4e5);
+	background-image: -webkit-gradient(linear, 0 0, 0 100%, color-stop(0, #fefbf4), color-stop(1, #fcf4e5));
+	background-image: -webkit-linear-gradient(#fefbf4, #fcf4e5);
+	background-image: -o-linear-gradient(#fefbf4, #fcf4e5);
+	
+	-moz-box-shadow:	0 0 2px 0px #444;
+	-webkit-box-shadow:	0 0 2px 0px #444;
+	box-shadow:	0 0 2px 0px #444;
+	
+	-moz-border-radius: 3px 3px;
+	-webkit-border-radius: 3px 3px;
+	border-radius: 3px 3px;
+	
+	padding: 0.5em;
+}

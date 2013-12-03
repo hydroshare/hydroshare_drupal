@@ -18,4 +18,107 @@ $node->body[$node->language][0]['format'] = 'filtered_html'; // If field has a f
 $node = node_submit($node); // Prepare node for a submit
 node_save($node); // After this call we'll get a nid
 
+    // Enable some standard blocks.
+    $values = array(
+        array(
+            'module' => 'system',
+            'delta' => 'main',
+            'theme' => 'scratchpads',
+            'status' => 1,
+            'weight' => 0,
+            'region' => 'content',
+            'pages' => '',
+            'cache' => -1
+        ),
+        array(
+            'module' => 'search',
+            'delta' => 'form',
+            'theme' => 'qcl_hydroshare',
+            'status' => 1,
+            'weight' => -1,
+            'region' => 'slide_top',
+            'pages' => '',
+            'cache' => -1
+        ),
+        array(
+            'module' => 'user',
+            'delta' => 'login',
+            'theme' => 'qcl_hydroshare',
+            'status' => 1,
+            'weight' => 0,
+            'region' => 'slide_top',
+            'pages' => '',
+            'cache' => -1
+        ),
+        array(
+            'module' => 'system',
+            'delta' => 'help',
+            'theme' => 'qcl_hydroshare',
+            'status' => 1,
+            'weight' => 0,
+            'region' => 'slide_top',
+            'pages' => '',
+            'cache' => -1
+        ),
+        array(
+            'module' => 'system',
+            'delta' => 'main',
+            'theme' => 'qcl_hydroshare_admin',
+            'status' => 1,
+            'weight' => 0,
+            'region' => 'content',
+            'pages' => '',
+            'cache' => -1
+        ),
+        array(
+            'module' => 'system',
+            'delta' => 'help',
+            'theme' => 'qcl_hydroshare_admin',
+            'status' => 1,
+            'weight' => 0,
+            'region' => 'help',
+            'pages' => '',
+            'cache' => -1
+        ),
+        array(
+            'module' => 'user',
+            'delta' => 'login',
+            'theme' => 'qcl_hydroshare_admin',
+            'status' => 1,
+            'weight' => 10,
+            'region' => 'content',
+            'pages' => '',
+            'cache' => -1
+        ),
+        array(
+            'module' => 'menu_block',
+            'delta' => 'scratchpads_pages-1',
+            'theme' => 'qcl_hydroshare',
+            'status' => 1,
+            'weight' => -10,
+            'region' => 'sidebar',
+            'pages' => '',
+            'cache' => -1
+        ),
+        array(
+            'module' => 'creative_commons',
+            'delta' => 'creative_commons',
+            'theme' => 'qcl_hydroshare',
+            'status' => 1,
+            'weight' => 10,
+            'region' => 'footer',
+            'pages' => '',
+            'cache' => -1
+        ),
+
+
+    );
+    foreach($values as $record){
+        db_merge('block')->key(array(
+            'module' => $record['module'],
+            'delta' => $record['delta'],
+            'theme' => $record['theme']
+        ))->fields($record)->execute();
+    }
+
 }

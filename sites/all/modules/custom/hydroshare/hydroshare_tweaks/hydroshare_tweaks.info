@@ -68,6 +68,7 @@ dependencies[] = biblio
 ;dependencies[] = sparql
 ;dependencies[] = sparql_views
 dependencies[] = features
+dependencies[] = fe_block
 dependencies[] = uuid
 dependencies[] = node_export
 ;dependencies[] = Rules
@@ -83,6 +84,7 @@ dependencies[] = invite
 dependencies[] = proj4js
 dependencies[] = renci_create_content
 
+dependencies[] = hydroshare_roles_and_permissions
 dependencies[] = hydroshare_timeseries
 dependencies[] = hydroshare_geoanalytics
 dependencies[] = hydroshare_base

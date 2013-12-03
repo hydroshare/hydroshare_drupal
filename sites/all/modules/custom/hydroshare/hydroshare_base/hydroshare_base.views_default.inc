@@ -240,7 +240,7 @@ function hydroshare_base_views_default_views() {
   $view = new view();
   $view->name = 'explore_resources';
   $view->description = '';
-  $view->tag = 'default, hydroshare';
+  $view->tag = 'default';
   $view->base_table = 'node';
   $view->human_name = 'Explore Resources';
   $view->core = 7;
@@ -471,7 +471,7 @@ function hydroshare_base_views_default_views() {
   $view = new view();
   $view->name = 'mycontent';
   $view->description = '';
-  $view->tag = 'default, hydroshare';
+  $view->tag = 'default';
   $view->base_table = 'node';
   $view->human_name = 'My Content';
   $view->core = 7;
@@ -578,7 +578,7 @@ function hydroshare_base_views_default_views() {
   $view = new view();
   $view->name = 'nc_storm_surge';
   $view->description = 'North Carolina storm surge, current forecast.';
-  $view->tag = 'default, hydroshare';
+  $view->tag = 'default';
   $view->base_table = 'node';
   $view->human_name = 'NC Storm Surge';
   $view->core = 7;

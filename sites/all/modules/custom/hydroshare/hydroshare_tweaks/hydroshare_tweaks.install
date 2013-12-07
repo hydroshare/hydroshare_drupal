@@ -4,7 +4,7 @@ function hydroshare_tweaks_install() {
 
 $node = new stdClass(); // We create a new node object
 $node->type = "page"; // Or any other content type you want
-$node->title = "Your title goes jere";
+$node->title = "Your title goes Here";
 $node->language = LANGUAGE_NONE; // Or any language code if Locale module is enabled. More on this below *
 $node->uid = 1; // Or any id you wish
 $node->path = array('alias' => 'abce'); // Setting a node path

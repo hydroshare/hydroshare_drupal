@@ -69,12 +69,17 @@ dependencies[] = biblio
 ;dependencies[] = sparql_views
 dependencies[] = features
 dependencies[] = fe_block
+dependencies[] = boxes
+
 dependencies[] = uuid
 dependencies[] = node_export
 ;dependencies[] = Rules
 ;dependencies[] = Advanced_help
 ;title_field_ui causing errors in install
 ;dependencies[] = title_field_ui
+dependencies[] = string_translation
+dependencies[] = Internationalization
+dependencies[] = Variable
 
 ; hydroshare modules
 dependencies[] = geoanalytics

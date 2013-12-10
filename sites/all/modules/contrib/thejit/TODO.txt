@@ -1,0 +1,13 @@
+This file lists current "TODO" items for the JIT Drupal Module
+
+* implement the 'request' action in spacetree
+	- allows additional tree nodes to be added dynamically via ajax request
+		instead of sending the entire tree at once–better performance!
+
+* develop views integration
+	- while useful in the current form for other module developers,
+		this module becomes especially useful when it can render views that
+		are set up through the views interface.
+
+* implement other JIT visualizations
+	- currently only SpaceTree and ForceDirected implemented

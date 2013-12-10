@@ -1,0 +1,14 @@
+name = "Migrate UI"
+description = "UI for managing migration processes"
+package = "Migration"
+configure = admin/content/migrate/configure
+core = 7.x
+dependencies[] = migrate
+files[] = migrate_ui.wizard.inc
+
+; Information added by drupal.org packaging script on 2013-06-26
+version = "7.x-2.6-rc1"
+core = "7.x"
+project = "migrate"
+datestamp = "1372276551"
+

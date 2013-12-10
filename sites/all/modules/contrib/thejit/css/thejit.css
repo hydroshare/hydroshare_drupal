@@ -1,0 +1,226 @@
+/**
+ * Copyright (c) 2010, iPlant Collaborative, University of Arizona, Cold Spring Harbor Laboratories, University of Texas at Austin
+ * This software is licensed under the CC-GNU GPL version 2.0 or later.
+ * License: http://creativecommons.org/licenses/GPL/2.0/
+ */
+
+.jit {
+	overflow: hidden;
+}
+
+.jit-controls {
+	position: relative;
+}
+
+.jit-control {
+	margin-right: 3px;
+	margin-bottom: 3px;
+	float: right;
+	width: 15px;
+	height: 15px;
+	z-index: 10;
+	cursor: pointer;
+}
+
+.jit-hide {
+	background: url('../images/arrow_up_down.png') no-repeat 0 -15px;
+}
+
+.jit-show {
+	background: url('../images/arrow_up_down.png') no-repeat 0 0;
+}
+
+.jit-full {
+	background: url('../images/full_screen_windowed.png') no-repeat 0 0;
+}
+
+.jit-search {
+	background: url('../images/search.png') no-repeat 0 0;
+}
+
+.jit-search-form {
+	display: none;
+	position: absolute;
+	z-index: 10;
+	background-color: white;
+	border: 1px solid #454545;
+	padding: 3px;
+}
+
+.jit-search-form-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+div.jit-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 1000;
+	background-color: #333333;
+	opacity: 0.5;
+}
+
+div.jit-modal {
+	position: fixed;
+	top: 5%;
+	left: 5%;
+	width: 90%;
+	height: 90%;
+	z-index: 1001;
+	border-color: #000000;
+	border-width: 2px;
+	border-style: solid;
+	-moz-box-shadow: 3px 3px 3px #666666;
+	-webkit-box-shadow: 3px 3px 3px #666666;
+	box-shadow: 3px 3px 3px #666666;
+}
+
+div.jit-modal.tozoom {
+	top: 50%;
+	left: 50%;
+	width: 0%;
+	height: 0%;
+}
+
+div.jit-modal-close {
+	position: fixed;
+	top: 5%;
+	right: 5%;
+	overflow: show;
+	z-index: 1002;
+}
+
+div.jit-modal-close .button {
+	background: url('../images/modal-close.png');
+	width: 38px;
+	height: 38px;
+	position: relative;
+	top: -16px;
+	right: -22px;
+}
+
+.jit-help {
+	padding: 0;
+	margin: 0;
+	position: absolute;
+	right: -141px;
+	bottom: 25px;
+	z-index: 10;
+	cursor: default;
+}
+
+.jit-help .header
+{
+	float: left;
+	height: 150px;
+	width: 25px;
+}
+
+.jit-help .header .title
+{
+	background-image: url('../images/about_header.png');
+	background-repeat: no-repeat;
+	width: 25px;
+	height: 150px;
+}
+
+.jit-help .content
+{
+	float: left;
+	border-width: 1px 0 1px 1px;
+	border-style: solid;
+	border-color: #454545;
+	background-color: #ffffff;
+	background: -webkit-gradient(linear, 0% 0%, 100% 0%, from(#c9c9c9), to(#ffffff));
+	background: -moz-linear-gradient(center left, #c9c9c9, #ffffff);
+	height: 148px;
+	width: 140px;
+	-moz-box-shadow: 1px 1px 3px #666;
+	-webkit-box-shadow: 1px 1px 3px #666;
+	box-shadow: 1px 1px 3px #666;
+}
+
+.jit-help-shadow
+{
+	position: absolute;
+	right: 0;
+	bottom: 25px;
+	height: 150px;
+	width: 3px;
+	z-index: 11;
+	cursor: default;
+	background-image: url('../images/shadow-v-l.png');
+	background-repeat: repeat-y;
+}
+
+.jit-node-info {
+	position: absolute;
+	background-color: white;
+	z-index: 10;
+	border-radius: 3px;
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+	box-shadow: 1px 1px 3px #666;
+	-moz-box-shadow: 1px 1px 3px #666;
+	-webkit-box-shadow: 1px 1px 3px #666;
+	cursor: default;
+	max-width: 200px;
+	opacity: 0.0; /* initially hidden */
+}
+
+.jit-node-info .header {
+	border: 1px solid #454545;
+	padding: 3px;
+	min-height: 18px;
+	font-size: 18px;
+	color: #333333;
+	text-shadow: 1px 1px 0px #ffffff;
+	background-color: #aaff00;
+	background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#aaff00), to(#7dbb00));
+	background: -moz-linear-gradient(top center, #aaff00, #7dbb00);
+	border-radius: 3px 3px 0 0;
+	-webkit-border-radius: 3px 3px 0 0;
+	-moz-border-radius: 3px 3px 0 0;
+}
+
+.jit-node-info .header .title {
+	word-wrap: break-word;
+}
+
+.jit-node-info .content {
+	border-color: #454545;
+	border-style: solid;
+	border-width: 0 1px 1px;
+	color: black;
+	padding: 6px;
+	border-radius: 0 0 3px 3px;
+	-webkit-border-radius: 0 0 3px 3px;
+	-moz-border-radius: 0 0 3px 3px;
+	max-width: 200px;
+}
+
+.jit-node-info .content ul,
+.jit-help .content ul {
+	margin: 0 0.5em;
+	padding: 0 0 0 1em;
+}
+
+.jit-node-info .content ul li,
+.jit-help .content ul li {
+	margin: 0;
+	padding: 0 0 0 1em;
+}
+
+.jit-before {
+	margin-bottom: 0.5em;
+}
+
+.jit-after {
+	margin-top: 0.5em;
+}

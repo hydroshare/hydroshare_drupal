@@ -37,17 +37,46 @@ dependencies[] = user
 
 ; Contrib
 dependencies[] = entity
-;dependencies[] = profile2
+dependencies[] = entity_token
+
+dependencies[] = og
+dependencies[] = og_ui
+dependencies[] = og_access
+dependencies[] = og_context
+
+dependencies[] = profile2
+dependencies[] = profile2_page
+
 dependencies[] = token
 dependencies[] = login_destination
-dependencies[] = og
+dependencies[] = invite_cancel_account
+dependencies[] = invite_stats
+dependencies[] = requestinvitation
+dependencies[] = messaging
+dependencies[] = messaging_template
+dependencies[] = messaging_simple
+
+dependencies[] = notifications
+dependencies[] = notifications_content
+dependencies[] = notifications_ui
+dependencies[] = notifications_user
+dependencies[] = notifications_account
 
 dependencies[] = ctools
+dependencies[] = page_manager
 dependencies[] = views_content
-;dependencies[] = panels
 dependencies[] = libraries
 dependencies[] = views
 dependencies[] = views_bulk_operations
+dependencies[] = views_ui
+dependencies[] = views_jqfx
+dependencies[] = views_jqfx_cycle
+
+dependencies[] = panels
+dependencies[] = panels_mini
+dependencies[] = panels_node
+dependencies[] = panels_ipe
+dependencies[] = multiform
 
 dependencies[] = quicktabs
 dependencies[] = stringoverrides
@@ -71,6 +100,8 @@ dependencies[] = features
 dependencies[] = fe_block
 dependencies[] = node_export
 dependencies[] = boxes
+dependencies[] = colorbox
+
 dependencies[] = uuid
 dependencies[] = uuid_features
 
@@ -84,7 +115,27 @@ dependencies[] = variable
 ;title_field_ui causing errors in install
 ;dependencies[] = title_field_ui
 
+dependencies[] = media
+dependencies[] = file_entity
+dependencies[] = allow_all_file_extensions
 
+dependencies[] = services
+dependencies[] = services_api_key_auth
+dependencies[] = services_basic_auth
+dependencies[] = services_documentation
+dependencies[] = services_oauth
+dependencies[] = rest_server
+dependencies[] = xmlrpc_server
+dependencies[] = restws
+dependencies[] = restws_basic_auth
+
+dependencies[] = oauth_common
+dependencies[] = oauth_common_providerui
+;dependencies[] = rest_auth
+
+; for models?
+dependencies[] = graphapi
+dependencies[] = thejit
 ; hydroshare modules
 dependencies[] = geoanalytics
 dependencies[] = data_model
@@ -92,6 +143,8 @@ dependencies[] = time_series_visualization
 dependencies[] = invite
 dependencies[] = proj4js
 dependencies[] = renci_create_content
+dependencies[] = renci_custom
+dependencies[] = irods
 
 dependencies[] = hydroshare_roles_and_permissions
 dependencies[] = hydroshare_timeseries

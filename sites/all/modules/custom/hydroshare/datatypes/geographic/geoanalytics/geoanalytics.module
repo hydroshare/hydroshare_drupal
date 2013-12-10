@@ -304,8 +304,8 @@ function geoanalytics_menu() {
       $items = array();
 
       $items['admin/settings/geoanalytics'] = array(
-            'title' => 'On this date module settings',
-            'description' => 'Description of your On this date settings page',
+            'title' => 'Geoanalytics',
+            'description' => 'Geoanalytics -- https://github.com/JeffHeard/geoanalytics',
             'page callback' => 'drupal_get_form',
             'page arguments' => array('geoanalytics_admin'),
             'access arguments' => array('administer geoanalytics settings'),

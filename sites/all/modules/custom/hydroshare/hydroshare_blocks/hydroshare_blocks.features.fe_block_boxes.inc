@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * hydroshare_base.features.fe_block_boxes.inc
+ * hydroshare_blocks.features.fe_block_boxes.inc
  */
 
 /**
  * Implements hook_default_fe_block_boxes().
  */
-function hydroshare_base_default_fe_block_boxes() {
+function hydroshare_blocks_default_fe_block_boxes() {
   $export = array();
 
   $fe_block_boxes = new stdClass();

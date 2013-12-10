@@ -2,6 +2,10 @@
 
 function hydroshare_tweaks_install() {
 
+    $feature = features_get_features('hydroshare');
+    $components = array_keys($feature->info['features']);
+    features_revert(array('hydroshare_base' => $components));
+
 $node = new stdClass(); // We create a new node object
 $node->type = "page"; // Or any other content type you want
 $node->title = "Your title goes Here";
@@ -18,7 +22,7 @@ $node->body[$node->language][0]['format'] = 'filtered_html'; // If field has a f
 $node = node_submit($node); // Prepare node for a submit
 node_save($node); // After this call we'll get a nid
 
-    // Enable some standard blocks.
+/*    // Enable some standard blocks.
     $values = array(
         array(
             'module' => 'system',
@@ -120,5 +124,5 @@ node_save($node); // After this call we'll get a nid
             'theme' => $record['theme']
         ))->fields($record)->execute();
     }
-
+*/
 }

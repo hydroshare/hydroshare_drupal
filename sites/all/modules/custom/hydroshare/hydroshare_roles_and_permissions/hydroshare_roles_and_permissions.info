@@ -1,0 +1,10 @@
+name = hydroshare_roles_and_permissions
+description = Roles and Permissions Feature: Open Groups and Base Drupal
+core = 7.x
+package = HydroShare
+dependencies[] = features
+dependencies[] = og
+dependencies[] = og_ui
+features[features_api][] = api:2
+features[user_role][] = hydroshare author
+features[user_role][] = hydroshare manager

@@ -151,6 +151,41 @@ function hydroshare_base_views_default_views() {
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
   $handler->display->display_options['path'] = 'explore-resources';
+  $translatables['explore_resources'] = array(
+    t('Master'),
+    t('Explore Resources'),
+    t('more'),
+    t('Do Search'),
+    t('Reset'),
+    t('Sort by'),
+    t('Asc'),
+    t('Desc'),
+    t('Items per page'),
+    t('- All -'),
+    t('Offset'),
+    t('« first'),
+    t('‹ previous'),
+    t('next ›'),
+    t('last »'),
+    t('<h1>EXPLORE | Discover and access resources published by others</h1>
+<br/>
+
+'),
+    t('author'),
+    t('Title'),
+    t('Summary'),
+    t('Created by [name]'),
+    t('<table cellpadding="10">
+<tr>
+<td width="200" valign="top">[title]</td>
+<td width="400">[body]</td>
+<td width="100" valign="bottom">[name]</td>
+</tr>
+</table>'),
+    t('Keywords'),
+    t('Type'),
+    t('Page'),
+  );
   $export['explore_resources'] = $view;
 
   $view = new view();
@@ -234,6 +269,30 @@ function hydroshare_base_views_default_views() {
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
   $handler->display->display_options['path'] = 'mycontent';
+  $translatables['mycontent'] = array(
+    t('Master'),
+    t('My Content'),
+    t('more'),
+    t('Apply'),
+    t('Reset'),
+    t('Sort by'),
+    t('Asc'),
+    t('Desc'),
+    t('Items per page'),
+    t('- All -'),
+    t('Offset'),
+    t('« first'),
+    t('‹ previous'),
+    t('next ›'),
+    t('last »'),
+    t('author'),
+    t('Type'),
+    t('Title'),
+    t('Body'),
+    t('Date'),
+    t('All'),
+    t('Page'),
+  );
   $export['mycontent'] = $view;
 
   $view = new view();
@@ -283,10 +342,10 @@ function hydroshare_base_views_default_views() {
   $handler->display->display_options['defaults']['title'] = FALSE;
   $handler->display->display_options['title'] = 'Current NC storm surge forecast';
   $handler->display->display_options['defaults']['style_plugin'] = FALSE;
-  $handler->display->display_options['style_plugin'] = 'openlayers_map';
-  $handler->display->display_options['style_options']['map'] = 'ncstormsurge';
+  $handler->display->display_options['style_plugin'] = 'default';
   $handler->display->display_options['defaults']['style_options'] = FALSE;
   $handler->display->display_options['defaults']['row_plugin'] = FALSE;
+  $handler->display->display_options['row_plugin'] = 'fields';
   $handler->display->display_options['defaults']['row_options'] = FALSE;
   $handler->display->display_options['defaults']['footer'] = FALSE;
   /* Footer: Global: Text area */
@@ -331,6 +390,28 @@ function hydroshare_base_views_default_views() {
     'default' => 0,
   );
   $handler->display->display_options['attachment_position'] = 'after';
+  $translatables['nc_storm_surge'] = array(
+    t('Master'),
+    t('NC Storm Surge'),
+    t('more'),
+    t('Apply'),
+    t('Reset'),
+    t('Sort by'),
+    t('Asc'),
+    t('Desc'),
+    t('Items per page'),
+    t('- All -'),
+    t('Offset'),
+    t('« first'),
+    t('‹ previous'),
+    t('next ›'),
+    t('last »'),
+    t('NC Storm Surge map page'),
+    t('Current NC storm surge forecast'),
+    t('This map displays the current forecasted maximal water elevation for all storms in the NC area.  The bathymetry is highest resolution in Pamlico Sound and the Outer Banks.'),
+    t('Body'),
+    t('Attachment'),
+  );
   $export['nc_storm_surge'] = $view;
 
   return $export;

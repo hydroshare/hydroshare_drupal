@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * hydroshare_base.features.fe_block_settings.inc
+ * hydroshare_blocks.features.fe_block_settings.inc
  */
 
 /**
  * Implements hook_default_fe_block_settings().
  */
-function hydroshare_base_default_fe_block_settings() {
+function hydroshare_blocks_default_fe_block_settings() {
   $export = array();
 
   $export['version'] = '2.0';
@@ -21,12 +21,6 @@ function hydroshare_base_default_fe_block_settings() {
     'pages' => 'dashboard',
     'roles' => array(),
     'themes' => array(
-      'bartik' => array(
-        'region' => '',
-        'status' => 0,
-        'theme' => 'bartik',
-        'weight' => 0,
-      ),
       'qcl_hydroshare' => array(
         'region' => 'contentbottom',
         'status' => 1,
@@ -53,12 +47,6 @@ function hydroshare_base_default_fe_block_settings() {
     'pages' => '<front>',
     'roles' => array(),
     'themes' => array(
-      'bartik' => array(
-        'region' => '',
-        'status' => 0,
-        'theme' => 'bartik',
-        'weight' => 0,
-      ),
       'qcl_hydroshare' => array(
         'region' => 'banner',
         'status' => 1,
@@ -85,12 +73,6 @@ function hydroshare_base_default_fe_block_settings() {
     'pages' => 'collaborate*',
     'roles' => array(),
     'themes' => array(
-      'bartik' => array(
-        'region' => '',
-        'status' => 0,
-        'theme' => 'bartik',
-        'weight' => 0,
-      ),
       'qcl_hydroshare' => array(
         'region' => 'right',
         'status' => 1,
@@ -117,12 +99,6 @@ function hydroshare_base_default_fe_block_settings() {
     'pages' => 'allgroups*',
     'roles' => array(),
     'themes' => array(
-      'bartik' => array(
-        'region' => '',
-        'status' => 0,
-        'theme' => 'bartik',
-        'weight' => 0,
-      ),
       'qcl_hydroshare' => array(
         'region' => 'subheader',
         'status' => 1,
@@ -149,12 +125,6 @@ function hydroshare_base_default_fe_block_settings() {
     'pages' => 'node/1',
     'roles' => array(),
     'themes' => array(
-      'bartik' => array(
-        'region' => '',
-        'status' => 0,
-        'theme' => 'bartik',
-        'weight' => 0,
-      ),
       'qcl_hydroshare' => array(
         'region' => 'right',
         'status' => 1,
@@ -181,12 +151,6 @@ function hydroshare_base_default_fe_block_settings() {
     'pages' => 'allgroups*',
     'roles' => array(),
     'themes' => array(
-      'bartik' => array(
-        'region' => 'sidebar_first',
-        'status' => 1,
-        'theme' => 'bartik',
-        'weight' => -16,
-      ),
       'qcl_hydroshare' => array(
         'region' => 'left',
         'status' => 1,
@@ -213,12 +177,6 @@ function hydroshare_base_default_fe_block_settings() {
     'pages' => '',
     'roles' => array(),
     'themes' => array(
-      'bartik' => array(
-        'region' => '',
-        'status' => 0,
-        'theme' => 'bartik',
-        'weight' => 0,
-      ),
       'qcl_hydroshare' => array(
         'region' => 'footer',
         'status' => 1,
@@ -245,12 +203,6 @@ function hydroshare_base_default_fe_block_settings() {
     'pages' => '',
     'roles' => array(),
     'themes' => array(
-      'bartik' => array(
-        'region' => '',
-        'status' => 0,
-        'theme' => 'bartik',
-        'weight' => 0,
-      ),
       'qcl_hydroshare' => array(
         'region' => 'menu',
         'status' => 1,
@@ -277,12 +229,6 @@ function hydroshare_base_default_fe_block_settings() {
     'pages' => 'dashboard',
     'roles' => array(),
     'themes' => array(
-      'bartik' => array(
-        'region' => '',
-        'status' => 0,
-        'theme' => 'bartik',
-        'weight' => 0,
-      ),
       'qcl_hydroshare' => array(
         'region' => 'right',
         'status' => 1,
@@ -309,12 +255,6 @@ function hydroshare_base_default_fe_block_settings() {
     'pages' => 'node/2',
     'roles' => array(),
     'themes' => array(
-      'bartik' => array(
-        'region' => '',
-        'status' => 0,
-        'theme' => 'bartik',
-        'weight' => 0,
-      ),
       'qcl_hydroshare' => array(
         'region' => 'right',
         'status' => 1,
@@ -341,12 +281,6 @@ function hydroshare_base_default_fe_block_settings() {
     'pages' => '',
     'roles' => array(),
     'themes' => array(
-      'bartik' => array(
-        'region' => '',
-        'status' => 0,
-        'theme' => 'bartik',
-        'weight' => 0,
-      ),
       'qcl_hydroshare' => array(
         'region' => 'header',
         'status' => 1,
@@ -360,7 +294,7 @@ function hydroshare_base_default_fe_block_settings() {
         'weight' => 0,
       ),
     ),
-    'title' => 'Top Links',
+    'title' => '',
     'visibility' => 0,
   );
 
@@ -373,12 +307,6 @@ function hydroshare_base_default_fe_block_settings() {
     'pages' => 'dashboard',
     'roles' => array(),
     'themes' => array(
-      'bartik' => array(
-        'region' => '',
-        'status' => 0,
-        'theme' => 'bartik',
-        'weight' => 0,
-      ),
       'qcl_hydroshare' => array(
         'region' => 'right',
         'status' => 1,
@@ -394,102 +322,6 @@ function hydroshare_base_default_fe_block_settings() {
     ),
     'title' => '<none>',
     'visibility' => 1,
-  );
-
-  $export['views--exp-allgroups-page'] = array(
-    'cache' => -1,
-    'custom' => 0,
-    'delta' => '-exp-allgroups-page',
-    'module' => 'views',
-    'node_types' => array(),
-    'pages' => 'allgroups*',
-    'roles' => array(),
-    'themes' => array(
-      'bartik' => array(
-        'region' => 'sidebar_first',
-        'status' => 1,
-        'theme' => 'bartik',
-        'weight' => -15,
-      ),
-      'qcl_hydroshare' => array(
-        'region' => 'left',
-        'status' => 1,
-        'theme' => 'qcl_hydroshare',
-        'weight' => 0,
-      ),
-      'seven' => array(
-        'region' => '',
-        'status' => 0,
-        'theme' => 'seven',
-        'weight' => 0,
-      ),
-    ),
-    'title' => 'SEARCH GROUPS:',
-    'visibility' => 1,
-  );
-
-  $export['views-og_members-block_1'] = array(
-    'cache' => -1,
-    'custom' => 0,
-    'delta' => 'og_members-block_1',
-    'module' => 'views',
-    'node_types' => array(),
-    'pages' => 'node/9',
-    'roles' => array(),
-    'themes' => array(
-      'bartik' => array(
-        'region' => '',
-        'status' => 0,
-        'theme' => 'bartik',
-        'weight' => 0,
-      ),
-      'qcl_hydroshare' => array(
-        'region' => 'content',
-        'status' => 1,
-        'theme' => 'qcl_hydroshare',
-        'weight' => 0,
-      ),
-      'seven' => array(
-        'region' => '',
-        'status' => 0,
-        'theme' => 'seven',
-        'weight' => 0,
-      ),
-    ),
-    'title' => '',
-    'visibility' => 1,
-  );
-
-  $export['views-og_members_admin-block_1'] = array(
-    'cache' => -1,
-    'custom' => 0,
-    'delta' => 'og_members_admin-block_1',
-    'module' => 'views',
-    'node_types' => array(),
-    'pages' => '',
-    'roles' => array(),
-    'themes' => array(
-      'bartik' => array(
-        'region' => '',
-        'status' => 0,
-        'theme' => 'bartik',
-        'weight' => 0,
-      ),
-      'qcl_hydroshare' => array(
-        'region' => '',
-        'status' => 0,
-        'theme' => 'qcl_hydroshare',
-        'weight' => 0,
-      ),
-      'seven' => array(
-        'region' => '',
-        'status' => 0,
-        'theme' => 'seven',
-        'weight' => 0,
-      ),
-    ),
-    'title' => '',
-    'visibility' => 0,
   );
 
   return $export;

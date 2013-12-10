@@ -88,6 +88,9 @@ function hydroshare_install() {
     $default_theme = variable_get('theme_default', 'qcl_hydroshare');
 
     $admin_theme = 'seven';
+
+    // enable blocks after theme installed as per https://drupal.org/node/1901116
+    module_enable(array('hydroshare_blocks'));
 /*
     // this is the place to set the qcl_hydroshare blocks in the structure blocks
     //
@@ -297,56 +300,67 @@ function hydroshare_install() {
   // Allow visitor account creation with administrative approval.
   variable_set('user_register', USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL);
 
-  // Create a default vocabulary named "Tags", enabled for the 'article' content type.
-  $description = st('Use tags to group articles on similar topics into categories.');
-  $help = st('Enter a comma-separated list of words to describe your content.');
-  $vocabulary = (object) array(
-    'name' => st('Tags'),
-    'description' => $description,
-    'machine_name' => 'tags',
-    'help' => $help,
+/*
+        $vocabularies = taxonomy_get_vocabularies();
 
-  );
-  taxonomy_vocabulary_save($vocabulary);
 
-  $field = array(
-    'field_name' => 'field_' . $vocabulary->machine_name,
-    'type' => 'taxonomy_term_reference',
-    // Set cardinality to unlimited for tagging.
-    'cardinality' => FIELD_CARDINALITY_UNLIMITED,
-    'settings' => array(
-      'allowed_values' => array(
-        array(
-          'vocabulary' => $vocabulary->machine_name,
-          'parent' => 0,
-        ),
-      ),
-    ),
-  );
-  field_create_field($field);
+        if ($vocabularies['tags']) {
+            ;
+        }
+        else {
+            // Create a default vocabulary named "Tags", enabled for the 'article' content type.
+            $description = st('Use tags to group articles on similar topics into categories.');
+            $help = st('Enter a comma-separated list of words to describe your content.');
+            $vocabulary = (object) array(
+                'name' => st('Tags'),
+                'description' => $description,
+                'machine_name' => 'tags',
+                'help' => $help,
 
-  $instance = array(
-    'field_name' => 'field_' . $vocabulary->machine_name,
-    'entity_type' => 'node',
-    'label' => 'Tags',
-    'bundle' => 'article',
-    'description' => $vocabulary->help,
-    'widget' => array(
-      'type' => 'taxonomy_autocomplete',
-      'weight' => -4,
-    ),
-    'display' => array(
-      'default' => array(
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 10,
-      ),
-      'teaser' => array(
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 10,
-      ),
-    ),
-  );
-  field_create_instance($instance);
+            );
+            taxonomy_vocabulary_save($vocabulary);
+
+            $field = array(
+                'field_name' => 'field_' . $vocabulary->machine_name,
+                'type' => 'taxonomy_term_reference',
+                // Set cardinality to unlimited for tagging.
+                'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+                'settings' => array(
+                    'allowed_values' => array(
+                        array(
+                            'vocabulary' => $vocabulary->machine_name,
+                            'parent' => 0,
+                        ),
+                    ),
+                ),
+            );
+            field_create_field($field);
+
+            $instance = array(
+                'field_name' => 'field_' . $vocabulary->machine_name,
+                'entity_type' => 'node',
+                'label' => 'Tags',
+                'bundle' => 'article',
+                'description' => $vocabulary->help,
+                'widget' => array(
+                    'type' => 'taxonomy_autocomplete',
+                    'weight' => -4,
+                ),
+                'display' => array(
+                    'default' => array(
+                        'type' => 'taxonomy_term_reference_link',
+                        'weight' => 10,
+                    ),
+                    'teaser' => array(
+                        'type' => 'taxonomy_term_reference_link',
+                        'weight' => 10,
+                    ),
+                ),
+            );
+            field_create_instance($instance);
+        }
+
+*/
 
 
   // Create an image field named "Image", enabled for the 'article' content type.
@@ -455,6 +469,10 @@ function hydroshare_install() {
     ->execute();
   variable_set('admin_theme', 'seven');
   variable_set('node_admin_theme', '1');
+
+    $feature = features_get_features('hydroshare');
+    $components = array_keys($feature->info['features']);
+    features_revert(array('hydroshare_base' => $components));
 }
 
 function hydroshare_create_content($formats, $dir = 'content', $ext = 'content', $account = NULL) {

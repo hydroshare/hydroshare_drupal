@@ -2,7 +2,9 @@ name = QCL HYDROSHARE
 description = Theme based on HYDROSHARE html template
 version = VERSION
 core = 7.x
+package = "Hydroshare theme"
 engine = phptemplate
+
 
 scripts[] = js/custom-form-elements.js
 stylesheets[all][] = css/style.css

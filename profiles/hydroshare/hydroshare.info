@@ -1,7 +1,9 @@
 name = Hydroshare Core Profile
 description = This tweakes drupal to create the standard hydroshare profile.
 core = 7.x
+; test. don't forget to change in install
 theme = qcl_hydroshare
+theme = bartik
 dependencies[] = hydroshare_tweaks
 
 files[] = hydroshare.profile

@@ -1,0 +1,647 @@
+diff --git a/login_destination.admin.inc b/login_destination.admin.inc
+old mode 100755
+new mode 100644
+index a2743ac..f8628ae
+--- a/login_destination.admin.inc
++++ b/login_destination.admin.inc
+@@ -10,46 +10,58 @@
+  */
+ function login_destination_overview() {
+   $header = array(
++    t('Machine Name'),
+     t('Destination'),
+     t('Triggers'),
+     t('Pages'),
+     t('Roles'),
+-    array('data' => t('Operations'), 'colspan' => 2),
++    array('data' => t('Operations'), 'colspan' => 3),
+   );
+   $rows = array();
+
+-  // Get all login destination rules from the database.
+-  $result = db_select('login_destination', 'l')
+-    ->fields('l', array('id', 'triggers', 'roles', 'pages_type', 'pages', 'destination'))
+-    ->orderBy('weight')
+-    ->execute()
+-    ->fetchAll();
+-
+   // Loop through the categories and add them to the table.
+-  foreach ($result as $data) {
++  foreach (login_destination_load_all() as $rule) {
++    $triggers = array_map('check_plain', $rule->triggers);
++    $roles = array_map('check_plain', $rule->roles);
+
+-    $triggers = array_map('check_plain', unserialize($data->triggers));
+-    if (empty($triggers))
+-      $triggers = array();
++    if ($rule->export_type & EXPORT_IN_DATABASE) {
++      $op = 'delete';
++      $op_label = t('Delete');
++    }
++    if ($rule->export_type & EXPORT_IN_CODE) {
++      if (empty($rule->disabled)) {
++        $toggle_op_label = t('Disable');
++        $toggle_op = 'disable';
++      }
++      else {
++        $toggle_op_label = t('Enable');
++        $toggle_op = 'enable';
++      }
++      if ($rule->export_type & EXPORT_IN_DATABASE) {
++        $op = 'revert';
++        $op_label = t('Revert');
++      }
++    }
+
+-    $roles = array_map('check_plain', unserialize($data->roles));
+-    if (empty($roles))
+-      $roles = array();
++    $delete_op = !empty($op) ? l($op_label, "admin/config/people/login-destination/{$op}/{$rule->machine_name}") : '';
++    $toggle_op = !empty($toggle_op) ? l($toggle_op_label, "admin/config/people/login-destination/{$toggle_op}/{$rule->machine_name}") : '';
+
+     $rows[] = array(
+-      theme('login_destination_destination', array('destination' => $data->destination)),
++      check_plain($rule->machine_name),
++      theme('login_destination_destination', array('destination' => $rule->destination)),
+       theme('login_destination_triggers', array('items' => $triggers)),
+-      theme('login_destination_pages', array('pages' => $data->pages, 'pages_type' => $data->pages_type)),
++      theme('login_destination_pages', array('pages' => $rule->pages, 'pages_type' => $rule->pages_type)),
+       theme('login_destination_roles', array('items' => $roles)),
+-      l(t('Edit'), 'admin/config/people/login-destination/edit/' . $data->id),
+-      l(t('Delete'), 'admin/config/people/login-destination/delete/' . $data->id),
++      l(t('Edit'), 'admin/config/people/login-destination/edit/' . $rule->machine_name),
++      $toggle_op,
++      $delete_op,
+     );
+   }
+
+   if (!$rows) {
+     $rows[] = array(array(
+       'data' => t('No rules available.'),
+-      'colspan' => 6,
++      'colspan' => 8,
+     ));
+   }
+
+@@ -96,7 +108,7 @@ function theme_login_destination_triggers($variables) {
+
+ function theme_login_destination_pages($variables) {
+   $type = $variables['pages_type'];
+-
++
+   if ($type == LOGIN_DESTINATION_REDIRECT_PHP) {
+     return nl2br(check_plain($variables['pages']));
+   }
+@@ -120,7 +132,7 @@ function theme_login_destination_pages($variables) {
+       $output .= "~ ";
+     }
+     $output .= $page . "<br/>";
+-  }
++  }
+
+   return $output;
+ }
+@@ -138,22 +150,37 @@ function theme_login_destination_roles($variables) {
+ /**
+  * Category edit page.
+  */
+-function login_destination_edit_form($form, &$form_state, array $rule = array()) {
+-  // default values
+-  $rule += array(
+-    'triggers' => array(),
+-    'roles' => array(),
+-    'pages_type' => LOGIN_DESTINATION_REDIRECT_NOTLISTED,
+-    'pages' => '',
+-    'destination_type' => LOGIN_DESTINATION_STATIC,
+-    'destination' => '<front>',
+-    'id' => NULL,
+-    'weight' => 0,
+-  );
++function login_destination_edit_form($form, &$form_state, $rule = NULL) {
++  if (!isset($rule)) {
++    // default values
++    $rule = array(
++      'machine_name' => '',
++      'triggers' => array(),
++      'roles' => array(),
++      'pages_type' => LOGIN_DESTINATION_REDIRECT_NOTLISTED,
++      'pages' => '',
++      'destination_type' => LOGIN_DESTINATION_STATIC,
++      'destination' => '<front>',
++      'id' => NULL,
++      'weight' => 0,
++    );
++    $rule = (object) $rule;
++  }
+
+   $access = user_access('use PHP for settings');
+
+-  $type = $rule['destination_type'];
++  $type = $rule->destination_type;
++
++  $form['machine_name'] = array(
++    '#type' => 'machine_name',
++    '#label' => t('Machine Name'),
++    '#default_value' => $rule->machine_name,
++    '#maxlength' => 255,
++    '#machine_name' => array(
++      'exists' => 'login_destination_load',
++    ),
++    '#disabled' => !empty($rule->machine_name),
++  );
+
+   if ($type == LOGIN_DESTINATION_SNIPPET && !$access) {
+     $form['destination_type'] = array(
+@@ -162,7 +189,7 @@ function login_destination_edit_form($form, &$form_state, array $rule = array())
+     );
+     $form['destination'] = array(
+       '#type' => 'value',
+-      '#value' => $rule['destination'],
++      '#value' => $rule->destination,
+     );
+   }
+   else {
+@@ -184,12 +211,12 @@ function login_destination_edit_form($form, &$form_state, array $rule = array())
+     );
+     $form['destination'] = array(
+       '#type' => 'textarea',
+-      '#default_value' => $rule['destination'],
++      '#default_value' => $rule->destination,
+       '#description' => $description,
+     );
+   }
+
+-  $triggers = array_map('check_plain', $rule['triggers']);
++  $triggers = array_map('check_plain', $rule->triggers);
+   if (empty($triggers)) {
+     $triggers = array();
+   }
+@@ -202,7 +229,7 @@ function login_destination_edit_form($form, &$form_state, array $rule = array())
+     '#description' => 'Redirect only upon selected trigger(s). If you select no triggers, all of them will be used.',
+   );
+
+-  $type = $rule['pages_type'];
++  $type = $rule->pages_type;
+
+   if ($type == LOGIN_DESTINATION_REDIRECT_PHP && !$access) {
+     $form['pages_type'] = array(
+@@ -211,7 +238,7 @@ function login_destination_edit_form($form, &$form_state, array $rule = array())
+     );
+     $form['pages'] = array(
+       '#type' => 'value',
+-      '#value' => $rule['destination'],
++      '#value' => $rule->destination,
+     );
+   }
+   else {
+@@ -234,12 +261,12 @@ function login_destination_edit_form($form, &$form_state, array $rule = array())
+     );
+     $form['pages'] = array(
+       '#type' => 'textarea',
+-      '#default_value' => $rule['pages'],
++      '#default_value' => $rule->pages,
+       '#description' => $description,
+     );
+   }
+
+-  $default_role_options = array_map('check_plain', $rule['roles']);
++  $default_role_options = array_map('check_plain', $rule->roles);
+   if (empty($default_role_options)) {
+     $default_role_options = array();
+   }
+@@ -255,7 +282,7 @@ function login_destination_edit_form($form, &$form_state, array $rule = array())
+   $form['weight'] = array(
+     '#type' => 'weight',
+     '#title' => t('Weight'),
+-    '#default_value' => $rule['weight'],
++    '#default_value' => $rule->weight,
+     '#description' => t('When evaluating login destination rules, those with lighter (smaller) weights get evaluated before rules with heavier (larger) weights.'),
+   );
+
+@@ -265,10 +292,10 @@ function login_destination_edit_form($form, &$form_state, array $rule = array())
+     '#value' => t('Save'),
+   );
+
+-  if ($rule['id']) {
++  if (!empty($rule->id)) {
+     $form['id'] = array(
+       '#type' => 'hidden',
+-      '#value' => $rule['id'],
++      '#value' => $rule->id,
+     );
+   }
+
+@@ -285,51 +312,58 @@ function login_destination_edit_form_validate($form, &$form_state) {
+  * Process the contact category edit page form submission.
+  */
+ function login_destination_edit_form_submit($form, &$form_state) {
+-  $form_state['values']['triggers'] = serialize(array_filter($form_state['values']['triggers']));
+-  $form_state['values']['roles'] = serialize(array_filter($form_state['values']['roles']));
++  $form_state['values']['triggers'] = array_filter($form_state['values']['triggers']);
++  $form_state['values']['roles'] = array_filter($form_state['values']['roles']);
+
+-  if (empty($form_state['values']['id'])) {
+-    drupal_write_record('login_destination', $form_state['values']);
+-  }
+-  else {
+-    drupal_write_record('login_destination', $form_state['values'], array('id'));
+-  }
++  login_destination_save($form_state['values']);
+
+   drupal_set_message(t('Login destination to %destination has been saved.', array('%destination' => $form_state['values']['destination'])));
+-
++
+   $form_state['redirect'] = 'admin/config/people/login-destination';
+ }
+
+ /**
+- * Form builder for deleting a login destination.
++ * Form for deleting/reverting/enabling/disabling a login destination.
+  */
+-function login_destination_delete_form($form, &$form_state, array $rule) {
+-  $form['login_destination'] = array(
+-    '#type' => 'value',
+-    '#value' => $rule,
+-  );
++function login_destination_op_form($form, &$form_state, $op, $rule) {
++  $form['#rule'] = $rule;
++  $t_args['@op'] = $form['#op'] = $op;
++  $t_args['%name'] = $rule->machine_name;
+
+   return confirm_form(
+     $form,
+-    t('Are you sure you want to delete the login destination %destination ?', array('%destination' => $rule['destination'])),
++    t('Are you sure you want to @op the login destination %name?', $t_args),
+     'admin/config/people/login-destination',
+     t('This action cannot be undone.'),
+-    t('Delete'),
++    t(ucfirst($op)),
+     t('Cancel')
+   );
+ }
+
+ /**
+- * Submit handler for the confirm delete login destination form.
++ * Submit handler for deleting/reverting/enabling/disabling a login destination.
+  */
+-function login_destination_delete_form_submit($form, &$form_state) {
+-  $rule = $form['login_destination']['#value'];
+-
+-  db_delete('login_destination')
+-    ->condition('id', $rule['id'])
+-    ->execute();
++function login_destination_op_form_submit($form, &$form_state) {
++  $rule = $form['#rule'];
++  $op = $form['#op'];
++
++  $t_args['%name'] = $rule->machine_name;
++  $t_args['@op'] = ($op == 'revert') ? 'reverted' : "{$op}d";
++
++  switch ($op) {
++    case 'revert':
++    case 'delete':
++      login_destination_delete($rule->machine_name);
++      break;
++    case 'enable':
++    case 'disable':
++      $status = ($op != 'enable');
++      ctools_include('export');
++      ctools_export_crud_set_status('login_destination', $rule, $status);
++      break;
++  }
+
+-  drupal_set_message(t('The login destination %destination has been deleted.', array('%destination' => $rule['destination'])));
++  drupal_set_message(t('The login destination %name has been @op.', $t_args));
+
+   $form_state['redirect'] = 'admin/config/people/login-destination';
+ }
+diff --git a/login_destination.info b/login_destination.info
+index 39aff7f..e17a854 100644
+--- a/login_destination.info
++++ b/login_destination.info
+@@ -2,9 +2,9 @@
+ name = Login Destination
+ description = Customize the destination that the user is redirected to after login.
+ core = 7.x
+-files[] = login_destination.module
+-files[] = login_destination.admin.inc
++dependencies[] = ctools
+ configure = admin/config/people/login-destination
++
+ ; Information added by drupal.org packaging script on 2012-12-18
+ version = "7.x-1.1"
+ core = "7.x"
+diff --git a/login_destination.install b/login_destination.install
+index 0c306e0..d7c3910 100644
+--- a/login_destination.install
++++ b/login_destination.install
+@@ -11,28 +11,51 @@
+ function login_destination_schema() {
+   $schema['login_destination'] = array(
+     'description' => 'Login Destination rules.',
++    'export' => array(
++      'key' => 'machine_name',
++      'key name' => 'Machine Name',
++      'primary key' => 'id',
++      'identifier' => 'rule', // Exports will be as $rule
++      'default hook' => 'default_login_destinations',  // Function hook name.
++      'api' => array(
++        'owner' => 'login_destination',
++        'api' => 'login_destinations',  // Base name for api include files.
++        'minimum_version' => 1,
++        'current_version' => 1,
++      ),
++    ),
+     'fields' => array(
+       'id' => array(
+         'type' => 'serial',
+         'unsigned' => TRUE,
+         'not null' => TRUE,
+         'description' => 'Primary Key: Unique ID.',
++        'no export' => TRUE,
++      ),
++      'machine_name' => array(
++        'type' => 'varchar',
++        'length' => '255',
++        'description' => 'Unique ID for this object. Used to identify it programmatically.',
+       ),
+       'triggers' => array(
+         'type' => 'text',
+         'not null' => TRUE,
+         'description' => 'Triggers on which to perform redirect',
++        'serialize' => TRUE,
++        'serialized default' => 'a:0:{}',
+       ),
+       'roles' => array(
+         'type' => 'text',
+         'not null' => TRUE,
+         'description' => 'Roles to perform redirect for',
++        'serialize' => TRUE,
++        'serialized default' => 'a:0:{}',
+       ),
+       'pages_type' => array(
+         'type' => 'int',
+         'not null' => TRUE,
+         'default' => 0,
+-        'size' => 'tiny',
++        'size' => 'small',
+         'description' => 'Flag to indicate from which pages to redirect. (0 = all pages except listed pages, 1 = only listed pages, 2 = Use custom PHP code)',
+       ),
+       'pages' => array(
+@@ -44,7 +67,7 @@ function login_destination_schema() {
+         'type' => 'int',
+         'not null' => TRUE,
+         'default' => 0,
+-        'size' => 'tiny',
++        'size' => 'small',
+         'description' => 'Flag to indicate the destination type. (0 = static URL, 1 = PHP code)',
+       ),
+       'destination' => array(
+@@ -60,6 +83,9 @@ function login_destination_schema() {
+       ),
+     ),
+     'primary key' => array('id'),
++    'unique keys' => array(
++      'machine_name' => array('machine_name'),
++    ),
+     'indexes' => array(
+       'list' => array('weight'),
+     ),
+@@ -98,37 +124,38 @@ function login_destination_update_7000() {
+   $type = variable_get('ld_condition_type', 'always');
+   $snippet = variable_get('ld_condition_snippet', '');
+
++  $rule = new stdClass();
+   if ($type == 'snippet') {
+-    $form_state['values']['pages_type'] = 2;
++    $rule->pages_type = 2;
+     // We introduced php tags.
+-    $form_state['values']['pages'] = '<?php ' . $snippet . '?>';
++    $rule->pages = '<?php ' . $snippet . '?>';
+   }
+   elseif ($type == 'pages') {
+-    $form_state['values']['pages_type'] = 1;
+-    $form_state['values']['pages'] = $snippet;
++    $rule->pages_type = 1;
++    $rule->pages = $snippet;
+   }
+   else {
+-    $form_state['values']['pages_type'] = 0;
+-    $form_state['values']['pages'] = $snippet;
++    $rule->pages_type = 0;
++    $rule->pages = $snippet;
+   }
+
+   $type = variable_get('ld_url_type', 'static');
+   $snippet = variable_get('ld_url_destination', '');
+
+   if ($type == 'snippet') {
+-    $form_state['values']['destination_type'] = 1;
++    $rule->destination_type = 1;
+     // syntax for return value has changed.
+-    $form_state['values']['destination'] = '<?php /* ' . $snippet . ' */ ?>';
++    $rule->destination = '<?php /* ' . $snippet . ' */ ?>';
+   }
+   else {
+-    $form_state['values']['destination_type'] = 0;
+-    $form_state['values']['destination'] = $snippet;
++    $rule->destination_type = 0;
++    $rule->destination = $snippet;
+   }
+
+-  $form_state['values']['triggers'] = serialize(array('login'));
+-  $form_state['values']['roles'] = serialize(array());
++  $rule->triggers = array('login');
++  $rule->roles = array();
+
+-  drupal_write_record('login_destination', $form_state['values']);
++  login_destination_save($rule);
+
+   variable_set('login_destination_preserve_destination', variable_get('ld_destination', 0));
+
+@@ -138,3 +165,58 @@ function login_destination_update_7000() {
+   variable_del('ld_url_type');
+   variable_del('ld_url_destination');
+ }
++
++/**
++ * - Add a machine name to all rules.
++ * - Add empty arrays to serialized fields.
++ * - Ctools assumes that tiny int fields are booleans, so change pages_type and
++ *   destination_type to small ints. See http://drupal.org/node/1760752.
++ */
++function login_destination_update_7001() {
++  db_add_field('login_destination', 'machine_name', array(
++    'type' => 'varchar',
++    'length' => '255',
++    'description' => 'Unique ID for this object. Used to identify it programmatically.',
++  ));
++
++  // Create machine names for existing rules. We must do this before we add the
++  // unique key to ensure all rows contain unique values.
++  $ids = db_query('SELECT id FROM {login_destination}')->fetchCol();
++  foreach ($ids as $id) {
++    $machine_name = 'rule_' . $id;
++    db_update('login_destination')
++      ->fields(array('machine_name' => $machine_name))
++      ->condition('id', $id)
++      ->execute();
++  }
++
++  // The machine_name unique key can only be added after we ensure the
++  // machine_name column contains unique values.
++  db_add_unique_key('login_destination', 'machine_name', array('machine_name'));
++
++  // Update any empty serialized rows with an empty array.
++  foreach (array('roles', 'triggers') as $field) {
++    $update = db_update('login_destination')
++      ->fields(array(
++        $field => 'a:0:{}',
++      ))
++      ->condition(
++        db_or()
++          ->isNull($field)
++          ->condition($field, '')
++      );
++
++    $update->execute();
++  }
++
++  // Change pages_type and destination_type to small ints so that Ctools doesn't
++  // export the values as booleans.
++  $spec = array(
++    'type' => 'int',
++    'not null' => TRUE,
++    'default' => 0,
++    'size' => 'small',
++  );
++  db_change_field('login_destination', 'pages_type', 'pages_type', $spec);
++  db_change_field('login_destination', 'destination_type', 'destination_type', $spec);
++}
+diff --git a/login_destination.module b/login_destination.module
+index 2ad4262..83d35ef 100644
+--- a/login_destination.module
++++ b/login_destination.module
+@@ -1,5 +1,7 @@
+ <?php
+
++require_once 'login_destination.crud.inc';
++
+ /**
+  * @file
+  * Control where users are directed to, once they login
+@@ -57,13 +59,21 @@ function login_destination_menu() {
+     'access arguments' => array('administer users'),
+     'file' => 'login_destination.admin.inc',
+   );
+-  $items['admin/config/people/login-destination/delete/%login_destination'] = array(
+-    'title' => 'Delete login destination rule',
++  $op_item = array(
+     'page callback' => 'drupal_get_form',
+-    'page arguments' => array('login_destination_delete_form', 5),
++    'page arguments' => array('login_destination_op_form', 4, 5),
+     'access arguments' => array('administer users'),
+     'file' => 'login_destination.admin.inc',
+   );
++  $items['admin/config/people/login-destination/delete/%login_destination']           = $op_item;
++  $items['admin/config/people/login-destination/delete/%login_destination']['title']  = 'Delete login destination rule';
++  $items['admin/config/people/login-destination/revert/%login_destination']           = $op_item;
++  $items['admin/config/people/login-destination/revert/%login_destination']['title']  = 'Revert login destination rule';
++  $items['admin/config/people/login-destination/enable/%login_destination']           = $op_item;
++  $items['admin/config/people/login-destination/enable/%login_destination']['title']  = 'Enable login destination rule';
++  $items['admin/config/people/login-destination/disable/%login_destination']          = $op_item;
++  $items['admin/config/people/login-destination/disable/%login_destination']['title'] = 'Disable login destination rule';
++
+   $items['admin/config/people/login-destination/list'] = array(
+     'title' => 'List',
+     'type' => MENU_DEFAULT_LOCAL_TASK,
+@@ -84,29 +94,6 @@ function login_destination_menu() {
+ }
+
+ /**
+- * Load a login destination.
+- */
+-function login_destination_load($id) {
+-  $result = db_select('login_destination', 'l')
+-    ->fields('l')
+-    ->condition('id', $id)
+-    ->execute()
+-    ->fetchAssoc();
+-
+-  $result['triggers'] = unserialize($result['triggers']);
+-  if (empty($result['triggers'])) {
+-    $result['triggers'] = array();
+-  }
+-
+-  $result['roles'] = unserialize($result['roles']);
+-  if (empty($result['roles'])) {
+-    $result['roles'] = array();
+-  }
+-
+-  return $result;
+-}
+-
+-/**
+  * Implements hook_theme
+  */
+ function login_destination_theme() {
+@@ -187,14 +174,14 @@ function login_destination_validate($form, &$form_state) {
+       }
+       break;
+   }
+-
++
+   // Fix the current page in case of 403 page.
+   if ($form['#form_id'] == 'user_login') {
+     if(drupal_get_http_header('Status') == '403 Forbidden') {
+       $_GET['current'] = $_GET['destination'];
+     }
+   }
+-
++
+ }
+
+ /**
+@@ -333,20 +320,16 @@ function login_destination_perform_redirect($trigger = '', $current = NULL) {
+  * This function is intended to be used by external modules.
+  */
+ function login_destination_get_destination($trigger = '', $current = NULL) {
+-  // Get all the login destination rules from the database.
+-  $result = db_select('login_destination', 'l')
+-    //->addTag('translatable')
+-    ->fields('l', array('triggers', 'roles', 'pages_type', 'pages', 'destination_type', 'destination'))
+-    ->orderBy('weight')
+-    ->execute()
+-    ->fetchAll();
+-
+   if ($current == NULL) {
+     $current = $_GET['q'];
+   }
+
+   // examine path matches
+-  foreach ($result as $data) {
++  foreach (login_destination_load_all() as $data) {
++    // If this rule is disabled, skip it.
++    if (!empty($data->disabled)) {
++      continue;
++    }
+     // try to match the subsequent rule
+     if (_login_destination_match_rule($data, $trigger, $current)) {
+       // Note: Matching rule with empty destination will cancel redirect.
+@@ -405,14 +388,8 @@ function _login_destination_match_rule($rule, $trigger = '', $current = NULL) {
+
+   $type = $rule->pages_type;
+   $pages = $rule->pages;
+-
+-  $triggers = unserialize($rule->triggers);
+-  if (empty($triggers))
+-    $triggers = array();
+-
+-  $roles = unserialize($rule->roles);
+-  if (empty($roles))
+-    $roles = array();
++  $triggers = $rule->triggers;
++  $roles = $rule->roles;
+
+   // remove non-existent roles
+   $roles = array_intersect_key(_login_destination_role_options(), $roles);

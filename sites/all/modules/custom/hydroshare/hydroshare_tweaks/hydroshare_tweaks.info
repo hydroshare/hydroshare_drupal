@@ -68,12 +68,18 @@ dependencies[] = biblio
 ;dependencies[] = sparql
 ;dependencies[] = sparql_views
 dependencies[] = features
+dependencies[] = fe_block
+dependencies[] = boxes
+
 dependencies[] = uuid
 dependencies[] = node_export
 ;dependencies[] = Rules
 ;dependencies[] = Advanced_help
 ;title_field_ui causing errors in install
 ;dependencies[] = title_field_ui
+dependencies[] = string_translation
+dependencies[] = Internationalization
+dependencies[] = Variable
 
 ; hydroshare modules
 dependencies[] = geoanalytics
@@ -83,6 +89,7 @@ dependencies[] = invite
 dependencies[] = proj4js
 dependencies[] = renci_create_content
 
+dependencies[] = hydroshare_roles_and_permissions
 dependencies[] = hydroshare_timeseries
 dependencies[] = hydroshare_geoanalytics
 dependencies[] = hydroshare_base

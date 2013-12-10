@@ -324,5 +324,31 @@ function hydroshare_blocks_default_fe_block_settings() {
     'visibility' => 1,
   );
 
+  $export['system-help'] = array(
+    'cache' => -1,
+    'custom' => 0,
+    'delta' => 'help',
+    'module' => 'system',
+    'node_types' => array(),
+    'pages' => '',
+    'roles' => array(),
+    'themes' => array(
+      'qcl_hydroshare' => array(
+        'region' => '',
+        'status' => 0,
+        'theme' => 'qcl_hydroshare',
+        'weight' => 5,
+      ),
+      'seven' => array(
+        'region' => 'help',
+        'status' => 1,
+        'theme' => 'seven',
+        'weight' => 5,
+      ),
+    ),
+    'title' => '',
+    'visibility' => 0,
+  );
+
   return $export;
 }

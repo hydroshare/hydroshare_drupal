@@ -26,4 +26,5 @@ features[fe_block_settings][] = block-qcl_resource_reccommendations
 features[fe_block_settings][] = block-qcl_support_right
 features[fe_block_settings][] = block-qcl_top_links
 features[fe_block_settings][] = block-qcl_user_profile
+features[fe_block_settings][] = system-help
 features[features_api][] = api:2

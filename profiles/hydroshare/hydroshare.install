@@ -91,139 +91,7 @@ function hydroshare_install() {
 
     // enable blocks after theme installed as per https://drupal.org/node/1901116
     module_enable(array('hydroshare_blocks'));
-/*
-    // this is the place to set the qcl_hydroshare blocks in the structure blocks
-    //
-  $blocks = array(
-    array(
-      'module' => 'system',
-      'delta' => 'main',
-      'theme' => $default_theme,
-      'status' => 1,
-      'weight' => 0,
-      'region' => 'content',
-      'pages' => '',
-      'cache' => -1,
-    ),
-    array(
-      'module' => 'search',
-      'delta' => 'form',
-      'theme' => $default_theme,
-      'status' => 1,
-      'weight' => -1,
-      'region' => 'right_block',
-      'pages' => '',
-      'cache' => -1,
-    ),
-    array(
-      'module' => 'node',
-      'delta' => 'recent',
-      'theme' => $admin_theme,
-      'status' => 1,
-      'weight' => 10,
-      'region' => 'dashboard_main',
-      'pages' => '',
-      'cache' => -1,
-    ),
-    array(
-      'module' => 'user',
-      'delta' => 'login',
-      'theme' => $default_theme,
-      'status' => 1,
-      'weight' => 0,
-      'region' => 'header',
-      'pages' => '',
-      'cache' => -1,
-    ),
-    array(
-      'module' => 'system',
-      'delta' => 'navigation',
-      'theme' => $default_theme,
-      'status' => 1,
-      'weight' => 0,
-      'region' => 'content_bottom',
-      'pages' => '',
-      'cache' => -1,
-    ),
-    array(
-      'module' => 'system',
-      'delta' => 'powered-by',
-      'theme' => $default_theme,
-      'status' => 1,
-      'weight' => 10,
-      'region' => 'footer',
-      'pages' => '',
-      'cache' => -1,
-    ),
-    array(
-      'module' => 'system',
-      'delta' => 'help',
-      'theme' => $default_theme,
-      'status' => 1,
-      'weight' => 0,
-      'region' => 'help',
-      'pages' => '',
-      'cache' => -1,
-    ),
-    array(
-      'module' => 'system',
-      'delta' => 'main',
-      'theme' => $admin_theme,
-      'status' => 1,
-      'weight' => 0,
-      'region' => 'content',
-      'pages' => '',
-      'cache' => -1,
-    ),
-    array(
-      'module' => 'system',
-      'delta' => 'help',
-      'theme' => $admin_theme,
-      'status' => 1,
-      'weight' => 0,
-      'region' => 'help',
-      'pages' => '',
-      'cache' => -1,
-    ),
-    array(
-      'module' => 'user',
-      'delta' => 'login',
-      'theme' => $admin_theme,
-      'status' => 1,
-      'weight' => 10,
-      'region' => 'content',
-      'pages' => '',
-      'cache' => -1,
-    ),
-    array(
-      'module' => 'user',
-      'delta' => 'new',
-      'theme' => $admin_theme,
-      'status' => 1,
-      'weight' => 0,
-      'region' => 'dashboard_sidebar',
-      'pages' => '',
-      'cache' => -1,
-    ),
-    array(
-      'module' => 'search',
-      'delta' => 'form',
-      'theme' => $admin_theme,
-      'status' => 1,
-      'weight' => -10,
-      'region' => 'dashboard_sidebar',
-      'pages' => '',
-      'cache' => -1,
-    ),
 
-
-  );
-  $query = db_insert('block')->fields(array('module', 'delta', 'theme', 'status', 'weight', 'region', 'pages', 'cache'));
-  foreach ($blocks as $block) {
-    $query->values($block);
-  }
-  $query->execute();
-*/
 
   // Insert default pre-defined node types into the database. For a complete
   // list of available node type attributes, refer to the node type API
@@ -470,9 +338,10 @@ function hydroshare_install() {
   variable_set('admin_theme', 'seven');
   variable_set('node_admin_theme', '1');
 
-    $feature = features_get_features('hydroshare');
+/*    $feature = features_get_features('hydroshare');
     $components = array_keys($feature->info['features']);
     features_revert(array('hydroshare_base' => $components));
+*/
 }
 
 function hydroshare_create_content($formats, $dir = 'content', $ext = 'content', $account = NULL) {

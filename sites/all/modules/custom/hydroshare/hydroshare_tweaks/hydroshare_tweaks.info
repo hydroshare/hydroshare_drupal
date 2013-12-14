@@ -143,7 +143,8 @@ dependencies[] = time_series_visualization
 dependencies[] = invite
 dependencies[] = proj4js
 dependencies[] = renci_create_content
-dependencies[] = renci_custom
+; on dev machines renci_custom causing inability to create accounts
+;dependencies[] = renci_custom
 dependencies[] = irods
 
 dependencies[] = hydroshare_roles_and_permissions
